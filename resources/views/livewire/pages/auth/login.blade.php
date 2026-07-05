@@ -20,13 +20,33 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // 🚀 টেন্যান্ট কনটেক্সট চেক করে ডাইনামিক রিডাইরেকশন
+        if (tenant()) {
+            // টেন্যান্ট ইউজার হলে তাকে তার নিজস্ব লাইভওয়্যার ড্যাশবোর্ডে রিডাইরেক্ট করুন
+            $this->redirect(route('tenant.dashboard'), navigate: true);
+        } else {
+            // সেন্ট্রাল সুপার এডমিন হলে ডিফল্ট ড্যাশবোর্ডে যাবে
+            $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        }
     }
 }; ?>
 
 <div>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
+
+    <!-- 🏢 ডাইনামিক টাইটেল (সেন্ট্রাল বনাম টেন্যান্ট) -->
+    <div class="mb-6 text-center">
+        @if(tenant())
+            <!-- টেন্যান্ট সাবডোমেইনে থাকলে তার কোম্পানির নাম দেখাবে -->
+            <h2 class="text-xl font-bold text-gray-800">Login to {{ tenant('company_name') ?? 'Your Store' }}</h2>
+            <p class="text-xs text-gray-500 mt-1">Tenant Dashboard Portal</p>
+        @else
+            <!-- মেইন সেন্ট্রাল ডোমেইনে থাকলে সুপার অ্যাডমিন টাইটেল দেখাবে -->
+            <h2 class="text-xl font-bold text-gray-800">Central Admin Portal</h2>
+            <p class="text-xs text-gray-500 mt-1">Sign in to manage the SaaS</p>
+        @endif
+    </div>
 
     <form wire:submit="login">
         <!-- Email Address -->

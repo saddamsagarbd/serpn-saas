@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Notifications\TenantCredentialsNotification;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
+use Stancl\Tenancy\Events\DatabaseMigrated;
 use Stancl\Tenancy\Events\TenantCreated;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,30 +27,37 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // যখনই সেন্ট্রাল প্যানেলে নতুন Tenant তৈরি শেষ হবে
         ini_set('max_execution_time', 120); // ডাটাবেজ তৈরি ও মাইগ্রেশনের জন্য সেফটি টাইম
 
-        // ২. Event ফাসাদ ব্যবহার করে TenantCreated ইভেন্টটি লিসেন করুন
-        Event::listen(TenantCreated::class, function (TenantCreated $event) {
+        // Event ফাসাদ ব্যবহার করে TenantCreated ইভেন্টটি লিসেন করুন
+        // Event::listen(TenantCreated::class, function (TenantCreated $event) {
+        Event::listen(DatabaseMigrated::class, function ($event) {
             $tenant = $event->tenant;
+            $defaultPassword = '12345678';
 
-            // ১. সাবডোমেইন কানেক্ট করা
-            $centralDomain = config('tenancy.central_domains')[0] ?? 'saas-erp.test';
-            $slug = strtolower(str_replace([" ", "-"], "", $tenant->company_name));
-            $tenant->domains()->create([
-                'domain' => $slug . '.' . $centralDomain
-            ]);
-
-            // ২. ভেন্ডরের নিজস্ব ডাটাবেজ কনটেক্সটে সুইচ করে অটোমেটিক Admin User তৈরি করা
-            $tenant->run(function () use ($tenant) {
+            // ভেন্ডরের নিজস্ব ডাটাবেজ কনটেক্সটে সুইচ করে অটোমেটিক Admin User তৈরি করা
+            $tenant->run(function () use ($tenant, $defaultPassword) {
                 User::create([
                     'name'     => $tenant->owner_name,
                     'email'    => $tenant->owner_email,
                     'phone'    => $tenant->owner_phone,
-                    'password' => Hash::make('12345678'), // ডিফল্ট পাসওয়ার্ড
+                    'password' => Hash::make($defaultPassword), // ডিফল্ট পাসওয়ার্ড
                     'role'     => 'admin', // ভেন্ডর প্যানেলের মেইন সুপার ইউজার
                 ]);
             });
+
+            // ২. মেইল পাঠানোর প্রসেসকে আলাদা ট্রাই-ক্যাচ-এ রাখা হলো যেন মেইল ফেইল করলেও ডাটাবেজ ডিলিট না হয়
+            try {
+                $centralDomain = config('tenancy.central_domains')[0] ?? 'serpn-saas.test';
+                $loginUrl = 'http://' . $tenant->id . '.' . $centralDomain . '/login';
+
+                Notification::route('mail', $tenant->owner_email)
+                    ->notify(new TenantCredentialsNotification($tenant, $defaultPassword, $loginUrl));
+                    
+            } catch (\Exception $mailException) {
+                // ইমেইল যদি কনফিগারেশনের কারণে ফেইল করে, তবে সেটি ব্যাকএন্ড লগে সেভ হবে, কিন্তু মূল প্রসেস থামবে না
+                Log::error('Tenant Mail Delivery Failed: ' . $mailException->getMessage());
+            }
         });
     }
 }

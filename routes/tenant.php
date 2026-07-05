@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Tenant\Dashboard as TenantDashboard;
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -23,13 +25,9 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    // ১. ভেন্ডরের মেইন ড্যাশবোর্ড (Real-time Mockup View)
-    Route::get('/', function () {
-        return view('tenant.dashboard');
-    });
+    Route::get('/dashboard', TenantDashboard::class)->name('tenant.dashboard');
 
-    // ২. ডামি ইনভয়েস/ক্যাশ মেমো ভিউ
-    Route::get('/invoice-demo', function () {
-        return view('tenant.invoice');
-    });
+    Route::get('/login', function() {
+        return view('livewire.pages.auth.login'); 
+    })->name('login');
 });

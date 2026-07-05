@@ -64,7 +64,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 text-center text-gray-400 text-xs font-semibold col-span-3">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 text-center text-gray-400 text-xs font-semibold col-span-12">
                         কোনো প্যাকেজ প্ল্যান তৈরি করা হয়নি। ডানপাশের বাটন থেকে প্রথম প্ল্যানটি তৈরি করুন।
                     </div>
                 @endforelse

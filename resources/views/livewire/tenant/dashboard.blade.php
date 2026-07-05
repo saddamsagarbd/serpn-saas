@@ -1,7 +1,4 @@
-@extends('layouts.tenant')
-@section('content')
-<div class="space-y-6" x-data="{ currentTab: 'dashboard', openModal: false }">
-
+<div>
     <!-- 📊 স্ট্যাটিস্টিকস কার্ড গ্রিড -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
@@ -61,6 +58,4 @@
             </table>
         </div>
     </div>
-
 </div>
-@endsection
