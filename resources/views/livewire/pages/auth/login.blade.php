@@ -20,16 +20,15 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        // 🚀 টেন্যান্ট কনটেক্সট চেক করে ডাইনামিক রিডাইরেকশন
         if (tenant()) {
-            // টেন্যান্ট ইউজার হলে তাকে তার নিজস্ব লাইভওয়্যার ড্যাশবোর্ডে রিডাইরেক্ট করুন
             $this->redirect(route('tenant.dashboard'), navigate: true);
         } else {
-            // সেন্ট্রাল সুপার এডমিন হলে ডিফল্ট ড্যাশবোর্ডে যাবে
             $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
         }
     }
-}; ?>
+}; 
+
+?>
 
 <div>
     <!-- Session Status -->

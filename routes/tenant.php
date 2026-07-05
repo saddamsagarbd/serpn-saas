@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use App\Livewire\Tenant\Dashboard as TenantDashboard;
 use Illuminate\Support\Facades\Route;
-use Livewire\Volt\Volt;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use Livewire\Volt\Volt;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,7 +27,9 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', TenantDashboard::class)->name('tenant.dashboard');
 
-    Route::get('/login', function() {
-        return view('livewire.pages.auth.login'); 
-    })->name('login');
+    Route::get('/', function() {
+        return redirect()->route('tenant.login');
+    });
+
+    Volt::route('/login', 'pages.auth.login')->name('tenant.login');
 });

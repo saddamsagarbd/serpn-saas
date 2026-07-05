@@ -8,4 +8,11 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        host: 'localhost',
+        cors: true,
+        hmr: {
+            host: 'serpn-saas.test', // আপনার মেইন সেন্ট্রাল ডোমেন
+        },
+    },
 });
