@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\TenantController;
+use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Route;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -39,6 +40,12 @@ foreach (config('tenancy.central_domains') as $domain) {
 
             // New Tenant Add (POST Request)
             Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+
+            Route::post('/logout', function (Request $request, Logout $logout) {
+                $logout();
+
+                return redirect()->route('login');
+            })->name('logout');
 
         });
 

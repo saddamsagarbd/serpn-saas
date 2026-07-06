@@ -8,7 +8,7 @@
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
             <nav class="space-y-1">
-                <a href="{{ route('dashboard') }}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('tenant.dashboard') }}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
                     <span class="text-base">📊</span> Dashboard
                 </a>
             </nav>
@@ -17,11 +17,8 @@
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">User Management</p>
             <nav class="space-y-1">
-                <a href="{{ route('plans') }}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('plans') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <span class="text-base">🏪</span> Plans
-                </a>
-                <a href="{{ route('tenants') }}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('tenants') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <span class="text-base">🏪</span> Tenants / Vendors
+                <a href="#" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('plans') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <span class="text-base">🏪</span> Plan wise features
                 </a>
             </nav>
         </div>

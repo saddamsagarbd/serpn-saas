@@ -23,6 +23,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     protected $casts = [
         'plan_id' => 'integer',
+        'features' => 'array',
     ];
 
     /**

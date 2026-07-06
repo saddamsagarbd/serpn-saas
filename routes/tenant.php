@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Actions\Logout;
 use App\Livewire\Tenant\Dashboard as TenantDashboard;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Event;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use Livewire\Volt\Volt;
@@ -20,16 +24,22 @@ use Livewire\Volt\Volt;
 |
 */
 
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-    Route::get('/dashboard', TenantDashboard::class)->name('tenant.dashboard');
+Route::domain('{tenant}.serpn-saas.test')
+    ->middleware([
+        'web',
+        InitializeTenancyByDomain::class,
+        PreventAccessFromCentralDomains::class,
+    ])->group(function () {
+        Route::get('/dashboard', TenantDashboard::class)->name('tenant.dashboard');
 
-    Route::get('/', function() {
-        return redirect()->route('tenant.login');
+        Route::get('/', function() {
+            return redirect()->route('tenant.login');
+        });
+
+        Volt::route('/login', 'pages.auth.login')->name('tenant.login');
+
+        Route::post('/logout', function (Request $request, Logout $logout) {
+            $logout();
+            return redirect()->route('tenant.login');
+        })->name('tenant.logout');
     });
-
-    Volt::route('/login', 'pages.auth.login')->name('tenant.login');
-});

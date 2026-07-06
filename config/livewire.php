@@ -119,7 +119,7 @@ return [
     */
 
     'inject_assets' => false,
-    'update_uri' => 'http://serpn-saas.test/livewire/update',
+    'update_uri' => '/livewire/update',
 
     /*
     |---------------------------------------------------------------------------
