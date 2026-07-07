@@ -112,6 +112,14 @@ class TenancyServiceProvider extends ServiceProvider
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+
+        Livewire::setUpdateRoute(function ($handle) {
+            return Route::post('/livewire/update', $handle)->middleware([
+                'web',
+                'universal',
+                InitializeTenancyByDomain::class,
+            ]);
+        });
     }
 
     protected function bootEvents()
