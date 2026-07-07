@@ -8,18 +8,55 @@
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
             <nav class="space-y-1">
-                <a href="{{ route('tenant.dashboard') }}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <span class="text-base">📊</span> Dashboard
+                <a href="{{ route('tenant.dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">
+                    <i data-lucide="{{ "layout-dashboard" }}" class="w-4 h-4"></i>
+                    <span>{{ "Dashboard" }}</span>
                 </a>
             </nav>
         </div>
 
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">User Management</p>
-            <nav class="space-y-1">
-                <a href="#" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm {{ request()->routeIs('plans') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <span class="text-base">🏪</span> Plan wise features
-                </a>
+            <nav class="space-y-1 px-2">
+                {{-- Top-level links: Dashboard, Profile, Settings --}}
+                @foreach(config('menu.default_features') as $link)
+                    <a href="{{ route($link['route']) }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($link['route']) ? 'bg-blue-50 text-blue-600' : '' }}">
+                        <i data-lucide="{{ $link['icon'] }}" class="w-4 h-4"></i>
+                        <span>{{ $link['label'] }}</span>
+                    </a>
+                @endforeach
+
+                <div class="pt-2 mt-2 border-t border-gray-100"></div>
+
+                {{-- Feature-wise dropdown menus --}}
+                @foreach(config('menu.menus') as $key => $menu)
+                    @if(hasFeature($key))
+                        <div x-data="{ open: {{ request()->is($key.'/*') || request()->is($key) ? 'true' : 'false' }} }" class="select-none">
+            
+                            <button @click="open = !open"
+                                    type="button"
+                                    class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="{{ $menu['icon'] }}" class="w-4 h-4"></i>
+                                    <span>{{ $menu['label'] }}</span>
+                                </span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+            
+                            <div x-show="open" x-collapse class="ml-7 mt-1 space-y-1">
+                                @foreach($menu['items'] as $item)
+                                    <a href="{{ route($item['route']) }}"
+                                    class="block px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($item['route']) ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+            
+                        </div>
+                    @endif
+                @endforeach
             </nav>
         </div>
     </div>

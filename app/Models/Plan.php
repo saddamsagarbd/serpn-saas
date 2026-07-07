@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFeatures;
 use Illuminate\Database\Eloquent\Model;
 
 class Plan extends Model
 {
+    use HasFeatures;
     protected $fillable = [
         'code', 'title', 'price', 'currency', 
         'billing_interval', 'billing_period', 

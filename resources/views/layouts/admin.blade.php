@@ -1,33 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'SERPN SaaS Admin' }}</title>
-    <!-- Tailwind CSS এবং Alpine.js CDN (প্রয়োজন অনুযায়ী) -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="bg-[#f4f7f6] font-sans antialiased">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <div class="flex h-screen overflow-hidden" x-data="{ openModal: false }">
-        
-        <!-- ১. সাইডবার ইনক্লুড -->
-        @include('partials.sidebar')
+        <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- ডানপাশের কন্টেন্ট এরিয়া wrapper -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="bg-[#f4f7f6] font-sans antialiased">
+
+        <div class="flex h-screen overflow-hidden" x-data="{ openModal: false }">
             
-            <!-- ২. হেডার ইনক্লুড -->
-            @include('partials.header')
+            <!-- ১. সাইডবার ইনক্লুড -->
+            @include('partials.sidebar')
 
-            <!-- ৩. মেইন ডাইনামিক কন্টেন্ট সেকশন -->
-            <main class="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
-                @yield('content')
-            </main>
-            
+            <!-- ডানপাশের কন্টেন্ট এরিয়া wrapper -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                
+                <!-- ২. হেডার ইনক্লুড -->
+                @include('partials.header')
+
+                <!-- ৩. মেইন ডাইনামিক কন্টেন্ট সেকশন -->
+                <main class="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
+                    @yield('content')
+                </main>
+                
+            </div>
         </div>
-    </div>
 
-</body>
+    </body>
 </html>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
@@ -9,7 +10,7 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
-    use HasDatabase, HasDomains;
+    use HasDatabase, HasDomains, HasFactory;
 
     /**
      * The attributes that aren't mass assignable.
@@ -23,7 +24,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
      */
     protected $casts = [
         'plan_id' => 'integer',
-        'features' => 'array',
     ];
 
     /**
@@ -40,5 +40,30 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'owner_email',
             'owner_phone',
         ];
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    /**
+     * Check whether this tenant's plan has a given feature/module enabled.
+     * Delegates to Plan::hasFeature() since features live on the plan,
+     * not on the tenant itself.
+     */
+    public function hasFeature(string $key): bool
+    {
+        return $this->plan?->hasFeature($key) ?? false;
+    }
+ 
+    public function hasFeatures(array $keys): bool
+    {
+        return $this->plan?->hasFeatures($keys) ?? false;
+    }
+ 
+    public function hasAnyFeature(array $keys): bool
+    {
+        return $this->plan?->hasAnyFeature($keys) ?? false;
     }
 }

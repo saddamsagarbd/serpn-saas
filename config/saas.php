@@ -3,7 +3,6 @@
 return [
 
     'default_features' => [
-        'Dashboard',
         'Profile',
         'Settings',
     ],
@@ -80,6 +79,25 @@ return [
         'Income Report',
         'Expense Report',
         'Customer Report',
+    ],
+
+    /**
+     * Used to build the "Enable Core Modules" checkbox list
+     * (see config('saas.selectable_features') in the features blade).
+     * 'default_features' is intentionally excluded here since it
+     * already has its own dedicated checkbox above the loop.
+     */
+
+    'selectable_features' => [
+        'inventory' => 'Inventory',
+        'sales'     => 'Sales',
+        'purchase'  => 'Purchase',
+        'accounts'  => 'Accounts',
+        'hrm'       => 'HRM',
+        'crm'       => 'CRM',
+        'website'   => 'Website',
+        'sms'       => 'SMS',
+        'reports'   => 'Reports',
     ],
 
 ];
