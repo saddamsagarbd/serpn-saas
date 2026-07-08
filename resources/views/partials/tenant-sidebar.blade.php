@@ -34,7 +34,8 @@
                 @foreach(config('menu.menus') as $key => $menu)
                     @if(hasFeature($key))
                         <div x-data="{ open: {{ request()->is($key.'/*') || request()->is($key) ? 'true' : 'false' }} }" class="select-none">
-            
+                            
+                            <!-- 📂 Level 1: Main Menu Button (e.g., Inventory) -->
                             <button @click="open = !open"
                                     type="button"
                                     class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
@@ -44,16 +45,47 @@
                                 </span>
                                 <i data-lucide="chevron-down" class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                             </button>
-            
-                            <div x-show="open" x-collapse class="ml-7 mt-1 space-y-1">
+
+                            <!-- Level 1 Wrapper -->
+                            <div x-show="open" x-collapse class="pl-4 mt-1 space-y-1">
                                 @foreach($menu['items'] as $item)
-                                    <a href="{{ route($item['route']) }}"
-                                    class="block px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($item['route']) ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
-                                        {{ $item['label'] }}
-                                    </a>
+                                    
+                                    @if(isset($item['sub'])) 
+                                        <!-- 🛠️ Level 2: Nested Sub-Group (e.g., Item Master) -->
+                                        <div x-data="{ subOpen: {{ request()->is($key.'/categories*') || request()->is($key.'/units*') || request()->is($key.'/products*') ? 'true' : 'false' }} }" class="space-y-1">
+                                            <button @click="subOpen = !subOpen" 
+                                                    type="button"
+                                                    class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                                                <span class="flex items-center gap-3">
+                                                    <i data-lucide="{{ $item['sub']['icon'] ?? '' }}" class="w-4 h-4 text-slate-400"></i>
+                                                    <span>{{ $item['sub']['label'] }}</span>
+                                                </span>
+                                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform" :class="subOpen ? 'rotate-180' : ''"></i>
+                                            </button>
+                                            
+                                            <div x-show="subOpen" x-collapse class="ml-5 border-l-2 border-slate-100 pl-5 space-y-1">
+                                                @foreach($item['sub']['items'] as $subItem)
+                                                    <a href="{{ route($subItem['route']) }}"
+                                                    class="block px-8 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
+                                                        {{ $subItem['label'] }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @else
+                                        <!-- 📄 Level 2: Standard Single Link (Suppliers, PO, GRN) -->
+                                        <a href="{{ route($item['route']) }}"
+                                        class="block px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($item['route']) ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
+                                            <span class="flex items-center gap-3">
+                                                <i data-lucide="{{ $item['icon'] ?? '' }}" class="w-4 h-4 text-slate-400"></i>
+                                                <span>{{ $item['label'] }}</span>
+                                            </span>
+                                        </a>
+                                    @endif
+
                                 @endforeach
                             </div>
-            
+
                         </div>
                     @endif
                 @endforeach

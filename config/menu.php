@@ -10,62 +10,75 @@ return [
 
     // Feature-wise dropdown menus — one dropdown per module in saas.php,
     // only rendered if the tenant/plan has that feature enabled.
-    'menus' => [
-
-        // 'inventory' => [
-        //     'label' => 'Inventory',
-        //     'icon'  => 'package',
-        //     'items' => [
-        //         ['label' => 'Products',          'route' => 'inventory.products.index'],
-        //         ['label' => 'Categories',        'route' => 'inventory.categories'],
-        //         ['label' => 'Brands',            'route' => 'inventory.brands'],
-        //         ['label' => 'Units',             'route' => 'inventory.units'],
-        //         ['label' => 'Stock',             'route' => 'inventory.stock'],
-        //         ['label' => 'Stock Adjustment',  'route' => 'inventory.stock-adjustment'],
-        //         ['label' => 'Barcode',           'route' => 'inventory.barcode'],
-        //     ],
-        // ],
-
-        // 'sales' => [
-        //     'label' => 'Sales',
-        //     'icon'  => 'shopping-cart',
-        //     'items' => [
-        //         ['label' => 'POS',            'route' => 'sales.pos'],
-        //         ['label' => 'Sales',          'route' => 'sales.sales'],
-        //         ['label' => 'Customers',      'route' => 'sales.customers'],
-        //         ['label' => 'Sales Return',   'route' => 'sales.sales-return'],
-        //         ['label' => 'Quotation',      'route' => 'sales.quotation'],
-        //     ],
-        // ],
-
-        // 'purchase' => [
-        //     'label' => 'Purchase',
-        //     'icon'  => 'shopping-bag',
-        //     'items' => [
-        //         ['label' => 'Purchase',         'route' => 'purchase.purchase'],
-        //         ['label' => 'Suppliers',        'route' => 'purchase.suppliers'],
-        //         ['label' => 'Purchase Return',  'route' => 'purchase.purchase-return'],
-        //     ],
-        // ],
-
-        'accounts' => [
-            'label' => 'Accounts',
-            'icon'  => 'calculator',
+    'menus' => [  
+    
+        'inventory' => [
+            'label' => 'Inventory',
+            'icon'  => 'package',
             'items' => [
-                ['label' => 'Dashboard',          'route' => 'accounts.dashboard'],
-                ['label' => 'Income',             'route' => 'accounts.income'],
-                ['label' => 'Expense',            'route' => 'accounts.expense'],
-                ['label' => 'Transactions',       'route' => 'accounts.transactions'],
-                ['label' => 'Chart of Accounts',  'route' => 'accounts.chart-of-accounts'],
-                ['label' => 'Cash Book',          'route' => 'accounts.cash-book'],
-                ['label' => 'Bank Accounts',      'route' => 'accounts.bank-accounts'],
-                ['label' => 'Ledger',             'route' => 'accounts.ledger'],
-                ['label' => 'Journal Entry',      'route' => 'accounts.journal-entry'],
-                ['label' => 'Trial Balance',      'route' => 'accounts.trial-balance'],
-                ['label' => 'Profit & Loss',      'route' => 'accounts.profit-loss'],
-                ['label' => 'Balance Sheet',      'route' => 'accounts.balance-sheet'],
+                ['sub' => [
+                    'label' => 'Setup',
+                    'icon'  => 'cog', 
+                    'items' => [
+                        ['label' => 'Categories',       'route' => 'inventory.categories'],
+                        // ['label' => 'Brands',         'route' => 'inventory.brands'],
+                        ['label' => 'Units',            'route' => 'inventory.units'],
+                        ['label' => 'Warehouse',        'route' => 'inventory.warehouses.index'], // 💡 রুটটি ঠিক করে দেওয়া হয়েছে
+                    ],
+                ]],
+                ['label' => 'Items', 'icon'  => 'package', 'route' => 'inventory.products.index'],
+                ['label' => 'Stock Ledger', 'icon'  => 'layers', 'route' => 'inventory.stock'],
+                ['label' => 'Stock Adjustment',  'icon'  => 'layers', 'route' => 'inventory.stock-adjustment'],
+                ['label' => 'Barcode','icon'  => 'tag', 'route' => 'inventory.barcode'],
             ],
         ],
+
+        'purchase' => [
+            'label' => 'Purchase',
+            'icon'  => 'shopping-bag',
+            'items' => [
+                ['label' => 'Purchase Order',         'route' => 'purchase.purchase'],
+                ['label' => 'GRN/MRR',          'route' => 'purchase.grn'],
+                ['label' => 'Suppliers',        'route' => 'purchase.suppliers'],
+                // ['label' => 'Purchase Return',  'route' => 'purchase.purchase-return'],
+            ],
+        ],
+
+        'sales' => [
+            'label' => 'Sales',
+            'icon'  => 'shopping-cart',
+            'items' => [
+                ['label' => 'POS',            'route' => 'sales.pos'],
+                ['label' => 'Sales',          'route' => 'sales.sales'],
+                ['label' => 'Customers',      'route' => 'sales.customers'],
+                ['label' => 'Sales Return',   'route' => 'sales.sales-return'],
+                ['label' => 'Quotation',      'route' => 'sales.quotation'],
+            ],
+        ],
+
+        /*
+        *   1= Super Admin
+            2= Tenant
+        */
+
+        // 'accounts' => [
+        //     'label' => 'Accounts',
+        //     'icon'  => 'calculator',
+        //     'items' => [
+        //         ['label' => 'Dashboard',          'route' => 'accounts.dashboard'],
+        //         ['label' => 'Income',             'route' => 'accounts.income'],
+        //         ['label' => 'Expense',            'route' => 'accounts.expense'],
+        //         ['label' => 'Transactions',       'route' => 'accounts.transactions'],
+        //         ['label' => 'Chart of Accounts',  'route' => 'accounts.chart-of-accounts', 'for' => 1],
+        //         ['label' => 'Cash Book',          'route' => 'accounts.cash-book'],
+        //         ['label' => 'Bank Accounts',      'route' => 'accounts.bank-accounts'],
+        //         ['label' => 'Ledger',             'route' => 'accounts.ledger'],
+        //         ['label' => 'Journal Entry',      'route' => 'accounts.journal-entry'],
+        //         ['label' => 'Trial Balance',      'route' => 'accounts.trial-balance'],
+        //         ['label' => 'Profit & Loss',      'route' => 'accounts.profit-loss'],
+        //         ['label' => 'Balance Sheet',      'route' => 'accounts.balance-sheet'],
+        //     ],
+        // ],
 
         // 'hrm' => [
         //     'label' => 'HRM',

@@ -8,11 +8,23 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        return id.toString().split('node_modules/')[1].split('/')[0].toString();
+                    }
+                }
+            }
+        }
+    },
     server: {
         host: 'localhost',
         cors: true,
         hmr: {
-            host: 'serpn-saas.test', // আপনার মেইন সেন্ট্রাল ডোমেন
+            host: 'serpn-saas.test',
         },
     },
 });

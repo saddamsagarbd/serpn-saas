@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    @media print {
+        /* ১. প্রিন্ট মোডে লেআউটের সাইডবার, হেডার ও মেইনের অন্য কন্টেন্ট হাইড */
+        aside, nav, header, [class*="print:hidden"], .print\:hidden { 
+            display: none !important; 
+        }
+
+        /* ২. শুধুমাত্র মডাল ওপেন থাকা অবস্থায় মেইন স্ক্রিন ও স্ক্রোল লক ভেঙে ফেলা (Safe for other pages) */
+        body, html, main {
+            overflow: visible !important;
+            height: auto !important;
+            background: #ffffff !important;
+        }
+        
+        /* মডালের ভেতরের এবং প্যারেন্টের ফ্লেক্সবক্স ও গ্রিড কন্টেইনারগুলোকে প্রিন্ট ফ্রেন্ডলি করা */
+        div[x-show="showPreviewModal"],
+        div[x-show="showPreviewModal"] .flex,
+        div[x-show="showPreviewModal"] .grid {
+            display: block !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+
+        /* ৩. মডাল কন্টেইনারকে ফুল পেজে রূপান্তর */
+        div[x-show="showPreviewModal"] {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* ৪. টেবিল রো, নির্দিষ্ট গ্রিড ও সিগনেচার ব্লক পেজ ব্রেক এভয়েড করা */
+        table tr, 
+        div[x-show="showPreviewModal"] .grid, 
+        div[x-show="showPreviewModal"] .flex {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+        @page {
+            size: A4;
+        }
+    }
+}
