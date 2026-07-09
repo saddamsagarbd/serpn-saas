@@ -1,4 +1,5 @@
 @extends('layouts.tenant')
+@section('title', 'Dashboard')
 @section('content')
 <div class="space-y-8">
     

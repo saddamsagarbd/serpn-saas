@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TenantController;
 use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Route;
@@ -19,15 +21,10 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::middleware(['auth', 'verified'])->group(function () {
             
             // Super Admin Dashboard
-            Route::get('/dashboard', function () {
-                $tenants = Tenant::all(); // with('domains') সাময়িকভাবে বাদ দেওয়া হলো রিলেশন এরর এড়াতে
-                return view('dashboard', compact('tenants'));
-            })->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             // Super Admin Profile
-            Route::get('/profile', function () {
-                return 'Profile Page Mockup';
-            })->name('profile');
+            Route::get('/profile', [SettingsController::class, 'index'])->name('profile');
 
             // Plan List
             Route::get('/plans', [PlanController::class, 'index'])->name('plans');

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Livewire\Actions\Logout;
+
 use App\Livewire\Tenant\Dashboard as TenantDashboard;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +25,7 @@ use App\Http\Controllers\Tenant\{
     SmsController,
     ReportController,
     WarehouseController,
+    CategoryController
 };
 
 /*
@@ -42,32 +43,35 @@ use App\Http\Controllers\Tenant\{
 Route::domain('{tenant}.serpn-saas.test')
     ->middleware([
         'web',
+        'auth',
         InitializeTenancyByDomain::class,
         PreventAccessFromCentralDomains::class,
     ])->group(function () {
 
         Volt::route('/login', 'pages.auth.login')->name('tenant.login');
 
-        Route::post('/logout', function (Request $request, Logout $logout) {
-            $logout();
-            return redirect()->route('tenant.login');
-        })->name('tenant.logout');
+        Route::post('/logout', [TenantDashboard::class, 'logout'])->name('tenant.logout');
 
-        Route::get('/', function() {
-            return redirect()->route('tenant.login');
-        });
+        Route::redirect('/', '/login');
 
-        Route::middleware(['tenant.auth'])->group(function () {
-            Route::get('/dashboard', TenantDashboard::class)->name('tenant.dashboard');
+        Route::middleware(['tenant.auth'])->name('tenant.')->group(function () {
+            Route::get('/dashboard', TenantDashboard::class)->name('dashboard');
 
             Route::get('profile', [ProfileController::class, 'index'])->name('profile');
             Route::get('settings', [SettingController::class, 'index'])->name('settings');
 
             // ---- Inventory ----
             Route::prefix('inventory')->name('inventory.')->middleware('feature:inventory')->group(function () {
+                // Category Master
+                Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+                Route::post('categories/store', [CategoryController::class, 'store'])->name('categories.store');
+                Route::put('categories/update/{id}', [CategoryController::class, 'update'])->name('categories.update');
+                Route::post('categories/delete/{id}', [CategoryController::class, 'delete'])->name('categories.destroy');
+
+                // Item Master
                 Route::resource('items', InventoryController::class)->parameters(['items' => 'item']);
                 Route::get('/item-entry', [InventoryController::class, 'itemEntryForm'])->name('product.form');
-                Route::get('categories', [InventoryController::class, 'categories'])->name('categories');
+                
                 Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
                 Route::get('units', [InventoryController::class, 'units'])->name('units');
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
@@ -99,7 +103,6 @@ Route::domain('{tenant}.serpn-saas.test')
 
             // ---- Accounts ----
             Route::prefix('accounts')->name('accounts.')->middleware('feature:accounts')->group(function () {
-                Route::get('dashboard', [AccountController::class, 'dashboard'])->name('dashboard');
                 Route::get('income', [AccountController::class, 'income'])->name('income');
                 Route::get('expense', [AccountController::class, 'expense'])->name('expense');
                 Route::get('transactions', [AccountController::class, 'transactions'])->name('transactions');

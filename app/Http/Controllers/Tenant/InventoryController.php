@@ -13,9 +13,7 @@ class InventoryController extends Controller
     public function itemEntryForm(){
         return view('tenant.inventory.item.entry');
     }
-    public function categories() {
-        return view('tenant.inventory.category.index');
-    }
+    
     public function units() {
         return view('tenant.inventory.unit.index');
     }

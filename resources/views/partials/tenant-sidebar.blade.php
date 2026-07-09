@@ -57,7 +57,7 @@
                                                     type="button"
                                                     class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                                                 <span class="flex items-center gap-3">
-                                                    <i data-lucide="{{ $item['sub']['icon'] ?? '' }}" class="w-4 h-4 text-slate-400"></i>
+                                                    <i data-lucide="{{ !empty($item['sub']['icon']) ? $item['sub']['icon'] : 'circle' }}" class="w-4 h-4 text-slate-400"></i>
                                                     <span>{{ $item['sub']['label'] }}</span>
                                                 </span>
                                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform" :class="subOpen ? 'rotate-180' : ''"></i>
@@ -77,7 +77,7 @@
                                         <a href="{{ route($item['route']) }}"
                                         class="block px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($item['route']) ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
                                             <span class="flex items-center gap-3">
-                                                <i data-lucide="{{ $item['icon'] ?? '' }}" class="w-4 h-4 text-slate-400"></i>
+                                                <i data-lucide="{{ $item['icon'] ?? 'circle' }}" class="w-4 h-4 text-slate-400"></i>
                                                 <span>{{ $item['label'] }}</span>
                                             </span>
                                         </a>
