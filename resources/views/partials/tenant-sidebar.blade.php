@@ -63,10 +63,10 @@
                                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform" :class="subOpen ? 'rotate-180' : ''"></i>
                                             </button>
                                             
-                                            <div x-show="subOpen" x-collapse class="ml-5 border-l-2 border-slate-100 pl-5 space-y-1">
+                                            <div x-show="subOpen" x-collapse class="border-l-2 border-slate-100 pl-4 space-y-1">
                                                 @foreach($item['sub']['items'] as $subItem)
                                                     <a href="{{ route($subItem['route']) }}"
-                                                    class="block px-8 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
+                                                    class="block px-3 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
                                                         {{ $subItem['label'] }}
                                                     </a>
                                                 @endforeach

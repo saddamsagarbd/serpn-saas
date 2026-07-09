@@ -1,4 +1,5 @@
 @extends('layouts.tenant')
+@section('title','Purchase Order')
 @section('content')
 <div class="space-y-6" x-data="{ 
     currentTab: 'purchase-order', 

@@ -1,4 +1,5 @@
 @extends('layouts.tenant')
+@section('title','Goods Receivable Notes (GRN)')
 @section('content')
 <div class="space-y-6" x-data="{ 
     currentTab: 'purchase-order', 
@@ -111,9 +112,9 @@
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item Code</th>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item Description</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase bg-blue-50 text-blue-700">Ordered</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase bg-orange-50 text-orange-700">Prev Received</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase bg-green-50 text-green-700 w-32">Current Receive</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-blue-50 text-blue-700">Ordered</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-orange-50 text-orange-700">Prev Received</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-green-50 text-green-700 w-32">Current Receive</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase w-36">Remarks / QA Status</th>
                                     </tr>
                                 </thead>

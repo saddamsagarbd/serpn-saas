@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->group('universal', []);
-        $middleware->alias(['feature' => App\Http\Middleware\EnsureFeatureEnabled::class]);
+        $middleware->alias([
+            'feature' => App\Http\Middleware\EnsureFeatureEnabled::class,
+            'tenant.auth' => \App\Http\Middleware\RedirectIfTenantNotAuthenticated::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

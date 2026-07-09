@@ -1,4 +1,5 @@
 @extends('layouts.tenant')
+@section('title','Supplier Master')
 @section('content')
 <div class="space-y-6" x-data="{ currentTab: 'purchase-order', openModal: false }">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
