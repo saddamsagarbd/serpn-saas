@@ -8,7 +8,7 @@
                 <h2 class="text-2xl font-bold text-gray-800">Create Purchase Order</h2>
             </div>
 
-            <form action="{{ route('purchase.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
+            <form action="{{ route('tenant.purchase.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
                 @csrf
 
                 @if ($errors->any())

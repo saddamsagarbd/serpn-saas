@@ -25,7 +25,8 @@ use App\Http\Controllers\Tenant\{
     SmsController,
     ReportController,
     WarehouseController,
-    CategoryController
+    CategoryController,
+    UnitController
 };
 
 /*
@@ -43,7 +44,6 @@ use App\Http\Controllers\Tenant\{
 Route::domain('{tenant}.serpn-saas.test')
     ->middleware([
         'web',
-        'auth',
         InitializeTenancyByDomain::class,
         PreventAccessFromCentralDomains::class,
     ])->group(function () {
@@ -68,12 +68,16 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::put('categories/update/{id}', [CategoryController::class, 'update'])->name('categories.update');
                 Route::post('categories/delete/{id}', [CategoryController::class, 'delete'])->name('categories.destroy');
 
+                // UOM
+                Route::get('units', [UnitController::class, 'index'])->name('units');                
+                Route::post('units/store', [UnitController::class, 'store'])->name('units.store');
+                Route::put('units/update/{id}', [UnitController::class, 'update'])->name('units.update');
+                Route::post('units/delete/{id}', [UnitController::class, 'delete'])->name('units.destroy');
                 // Item Master
                 Route::resource('items', InventoryController::class)->parameters(['items' => 'item']);
                 Route::get('/item-entry', [InventoryController::class, 'itemEntryForm'])->name('product.form');
                 
                 Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
-                Route::get('units', [InventoryController::class, 'units'])->name('units');
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
                 Route::get('/stock-entry', [InventoryController::class, 'stockEntry'])->name('stock.entry');
                 Route::get('barcode', [InventoryController::class, 'barcode'])->name('barcode');

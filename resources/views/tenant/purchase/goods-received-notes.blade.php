@@ -59,7 +59,7 @@
 
             <!-- 📄 ERP STANDARD GRN GENERATION DETAILS -->
             <div x-show="showDetails" x-transition class="space-y-6 border-t border-gray-200 pt-6">
-                <form action="{{ route('purchase.grn.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
+                <form action="{{ route('tenant.purchase.grn.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
                     @csrf
 
                     @if ($errors->any())

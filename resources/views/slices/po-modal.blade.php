@@ -12,7 +12,7 @@
             <button type="button" @click="openModal = false" class="text-indigo-200 hover:text-white text-2xl transition-colors">&times;</button>
         </div>
 
-        <form action="{{ route('purchase.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
+        <form action="{{ route('tenant.purchase.store') }}" method="POST" class="p-6 space-y-5 text-xs overflow-y-auto">
             @csrf
 
             @if ($errors->any())

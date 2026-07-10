@@ -6,7 +6,7 @@
         <div x-show="currentTab === 'items'" x-transition class="space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Item Master</h2>
-                <a href="{{ route('inventory.product.form') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('tenant.inventory.product.form') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
                     + Add Item
                 </a>
             </div>

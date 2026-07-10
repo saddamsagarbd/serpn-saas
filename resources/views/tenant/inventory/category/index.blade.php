@@ -6,8 +6,6 @@
     isEdit: false,
     formAction: '{{ route('tenant.inventory.categories.store') }}',
     categoryData: { id: '', name: '', parent_id: '', description: '' },
-    
-    // 🛠️ সেফটি সেটিংস (ডাটাটেবিলের জন্য এগুলো ম্যান্ডেটরি)
     categories: [],
     loading: false,
     searchQuery: '',
