@@ -59,7 +59,7 @@ class AccountController extends Controller
             'name' => $validated['name'],
             'code' => $validated['code'],
             'type' => $validated['type'],
-            'parent_id' => $validated['parent_id'] ?: null,
+            'parent_id' => $validated['parent_id'] ?? null,
             'opening_balance' => $validated['opening_balance'] ?? 0.00,
         ]);
 
@@ -183,9 +183,39 @@ class AccountController extends Controller
      * Bank Accounts Directory and Bank Ledgers
      * Route: accounts.bank-accounts
      */
-    public function bankAccounts()
+    public function bankAccounts(Request $request)
     {
-        return view('tenant.account.bank-accounts');
+        // চার্ট অফ অ্যাকাউন্টস থেকে সব ব্যাংক অ্যাকাউন্ট খুঁজে বের করা
+        $bankAccounts = ChartOfAccount::with('ledgerEntries')
+            ->where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%bank%')
+                ->orWhere('name', 'like', '%A/C%')
+                ->orWhere('code', 'like', '1020%'); // ব্যাংক সিরিজের কোড
+            })->get();
+
+        $selectedAccountId = $request->input('account_id', $bankAccounts->first()?->id);
+        $entries = [];
+        $openingBalance = 0;
+        $selectedAccount = null;
+
+        if ($selectedAccountId) {
+            $selectedAccount = ChartOfAccount::find($selectedAccountId);
+            $openingBalance = $selectedAccount->opening_balance;
+
+            $fromDate = $request->input('from_date', date('Y-m-01'));
+            $toDate = $request->input('to_date', date('Y-m-d'));
+
+            $entries = LedgerEntry::where('chart_of_account_id', $selectedAccountId)
+                ->with('voucher')
+                ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
+                ->whereBetween('vouchers.date', [$fromDate, $toDate])
+                ->orderBy('vouchers.date', 'asc')
+                ->select('ledger_entries.*')
+                ->get();
+        }
+
+        return view('tenant.account.bank-accounts', compact('bankAccounts', 'entries', 'openingBalance', 'selectedAccountId', 'selectedAccount'));
     }
 
     /**
@@ -228,38 +258,102 @@ class AccountController extends Controller
      */
     public function trialBalance()
     {
-        return view('tenant.account.trial-balance');
+        // সমস্ত একটিভ অ্যাকাউন্ট এবং তাদের টোটাল ডেবিট ও ক্রেডিট সামারি বের করা
+        $accounts = ChartOfAccount::where('status', 'active')->get();
+        
+        $trialBalanceData = [];
+        $totalDebitSum = 0;
+        $totalCreditSum = 0;
+
+        foreach ($accounts as $account) {
+            // ডেডিকেটেড লেজার এন্ট্রি থেকে ডেবিট ও ক্রেডিট যোগফল নেওয়া
+            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('debit');
+            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('credit');
+            
+            $opening = $account->opening_balance;
+            $finalDebit = 0;
+            $finalCredit = 0;
+
+            // অ্যাকাউন্টিং রুল অনুযায়ী ক্লোজিং ব্যালেন্স ডেবিট না ক্রেডিটে বসবে তা নির্ধারণ
+            if (in_array($account->type, ['asset', 'expense'])) {
+                $balance = $opening + ($debitTotal - $creditTotal);
+                if ($balance >= 0) { $finalDebit = $balance; } else { $finalCredit = abs($balance); }
+            } else {
+                $balance = $opening + ($creditTotal - $debitTotal);
+                if ($balance >= 0) { $finalCredit = $balance; } else { $finalDebit = abs($balance); }
+            }
+
+            if ($finalDebit > 0 || $finalCredit > 0) {
+                $trialBalanceData[] = [
+                    'code' => $account->code,
+                    'name' => $account->name,
+                    'type' => $account->type,
+                    'debit' => $finalDebit,
+                    'credit' => $finalCredit,
+                ];
+                $totalDebitSum += $finalDebit;
+                $totalCreditSum += $finalCredit;
+            }
+        }
+        return view('tenant.account.trial-balance', compact('trialBalanceData', 'totalDebitSum', 'totalCreditSum'));
     }
 
     /**
      * Operating Income & Expense Statement (Profit & Loss)
      * Route: accounts.profit-loss
      */
-    public function profitLoss()
+    public function profitLoss(Request $request)
     {
-        // নোট: রিয়েল-টাইমে এখানে ট্রানজেকশন/লেজার টেবিল থেকে ডেটা সামারি হবে।
-        // আপাতত স্ট্রাকচারাল রিপোর্টের জন্য অ্যাকাউন্টভিত্তিক হেড লোড করা হচ্ছে।
-        
-        $incomeAccounts = ChartOfAccount::where('type', 'income')
-            ->where('status', 'active')
-            ->get();
+        $fromDate = $request->input('from_date', date('Y-m-01'));
+        $toDate = $request->input('to_date', date('Y-m-d'));
 
-        $expenseAccounts = ChartOfAccount::where('type', 'expense')
-            ->where('status', 'active')
-            ->get();
+        // ১. অপারেটিং ইনকাম এন্ট্রি ক্যালকুলেশন
+        $incomeAccounts = ChartOfAccount::where('type', 'income')->get();
+        $incomeData = [];
+        $totalIncome = 0;
 
-        // ডামি বা ওপেনিং ব্যালেন্স দিয়ে হিসাব করার বেসিক ক্যালকুলেশন (পরবর্তীতে জার্নাল এন্ট্রির সাথে ডাইনামিক হবে)
-        $totalIncome = $incomeAccounts->sum('opening_balance');
-        $totalExpense = $expenseAccounts->sum('opening_balance');
+        foreach ($incomeAccounts as $account) {
+            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+                ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
+                ->whereBetween('vouchers.date', [$fromDate, $toDate])
+                ->sum('credit');
+            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+                ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
+                ->whereBetween('vouchers.date', [$fromDate, $toDate])
+                ->sum('debit');
+                
+            $netIncome = $creditTotal - $debitTotal; // ইনকাম বাড়ে ক্রেডিটে
+            if($netIncome > 0) {
+                $incomeData[] = ['name' => $account->name, 'code' => $account->code, 'amount' => $netIncome];
+                $totalIncome += $netIncome;
+            }
+        }
+
+        // ২. অপারেটিং এক্সপেন্স এন্ট্রি ক্যালকুলেশন
+        $expenseAccounts = ChartOfAccount::where('type', 'expense')->get();
+        $expenseData = [];
+        $totalExpense = 0;
+
+        foreach ($expenseAccounts as $account) {
+            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+                ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
+                ->whereBetween('vouchers.date', [$fromDate, $toDate])
+                ->sum('debit');
+            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+                ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
+                ->whereBetween('vouchers.date', [$fromDate, $toDate])
+                ->sum('credit');
+
+            $netExpense = $debitTotal - $creditTotal; // খরচ বাড়ে ডেবিটে
+            if($netExpense > 0) {
+                $expenseData[] = ['name' => $account->name, 'code' => $account->code, 'amount' => $netExpense];
+                $totalExpense += $netExpense;
+            }
+        }
+
         $netProfitOrLoss = $totalIncome - $totalExpense;
         
-        return view('tenant.account.profit-loss', compact(
-            'incomeAccounts', 
-            'expenseAccounts', 
-            'totalIncome', 
-            'totalExpense', 
-            'netProfitOrLoss'
-        ));
+        return view('tenant.account.profit-loss', compact('incomeData', 'expenseData', 'totalIncome', 'totalExpense', 'netProfitOrLoss', 'fromDate', 'toDate'));
     }
 
     /**

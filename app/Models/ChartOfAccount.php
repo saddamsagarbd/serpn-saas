@@ -27,4 +27,9 @@ class ChartOfAccount extends Model
     {
         return $this->belongsTo(ChartOfAccount::class, 'parent_id');
     }
+
+    public function ledgerEntries()
+    {
+        return $this->hasMany(LedgerEntry::class, 'chart_of_account_id');
+    }
 }

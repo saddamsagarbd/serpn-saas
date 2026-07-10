@@ -17,7 +17,7 @@
                 <input type="date" name="to_date" value="{{ request('to_date', date('Y-m-d')) }}" class="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-mono text-slate-600">
             </div>
             <div class="flex items-center gap-2 w-full md:w-auto shrink-0">
-                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 shadow-xs group py-2.5">
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center justify-center gap-2 shadow-xs group">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.604 10.604Z" />
                     </svg>
