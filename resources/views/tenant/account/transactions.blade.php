@@ -23,39 +23,62 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                    <th class="p-4 pl-6">Txn Code</th>
-                    <th class="p-4">Execution Date</th>
-                    <th class="p-4">Target Ledger Group</th>
-                    <th class="p-4">Reference Narration Memo</th>
-                    <th class="p-4 text-right">Debit Side</th>
-                    <th class="p-4 text-right">Credit Side</th>
+                    <th class="p-3">Date / Voucher No</th>
+                    <th class="p-3">Narration / Particulars</th>
+                    <th class="p-3">Account Head Breakdown</th>
+                    <th class="p-3 text-right">Debit (৳)</th>
+                    <th class="p-3 text-right">Credit (৳)</th>
                 </tr>
             </thead>
             <tbody class="text-xs divide-y divide-slate-100 text-slate-700">
-                <tr class="hover:bg-slate-50/40 transition">
-                    <td class="p-4 font-bold font-mono text-indigo-600">TXN-009821</td>
-                    <td class="p-4 font-mono text-slate-500">09-07-2026</td>
-                    <td class="p-4">
-                        <p class="font-bold text-slate-800">Petty Cash Operational Counter</p>
-                        <span class="text-[9px] font-mono bg-slate-100 px-1 py-0.5 text-slate-500 rounded font-bold">1010-001</span>
-                    </td>
-                    <td class="p-4 text-slate-600 font-medium">POS Order Ticket Counter Invoice #2026-A Cash Collection</td>
-                    <td class="p-4 text-right font-bold font-mono text-slate-900">12,500 ৳</td>
-                    <td class="p-4 text-right font-bold font-mono text-slate-300">0.00 ৳</td>
-                </tr>
-                <tr class="hover:bg-slate-50/40 transition">
-                    <td class="p-4 font-bold font-mono text-indigo-600">TXN-009822</td>
-                    <td class="p-4 font-mono text-slate-500">09-07-2026</td>
-                    <td class="p-4">
-                        <p class="font-bold text-slate-800">Retail ERP POS Sales Income</p>
-                        <span class="text-[9px] font-mono bg-indigo-50 px-1 py-0.5 text-indigo-500 rounded font-bold">4010-001</span>
-                    </td>
-                    <td class="p-4 text-slate-400 italic">Double-entry balancing leg for Counter Invoice #2026-A</td>
-                    <td class="p-4 text-right font-bold font-mono text-slate-300">0.00 ৳</td>
-                    <td class="p-4 text-right font-bold font-mono text-emerald-600">12,500 ৳</td>
-                </tr>
+                @forelse($vouchers as $voucher)
+                    <tr class="hover:bg-slate-50/40 transition">
+                        {{-- ভাউচার নো ও তারিখ --}}
+                        <td class="p-3 valign-top">
+                            <p class="font-bold text-slate-900 font-mono">{{ $voucher->voucher_no }}</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">{{ date('d M, Y', strtotime($voucher->date)) }}</p>
+                            <span class="inline-block mt-1 px-2 py-0.5 text-[9px] font-bold uppercase rounded-md {{ $voucher->type === 'income' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }}">
+                                {{ $voucher->type }}
+                            </span>
+                        </td>
+                        
+                        {{-- ন্যারেশন --}}
+                        <td class="p-3 font-medium text-slate-600 max-w-xs">
+                            {{ $voucher->narration ?? 'N/A' }}
+                        </td>
+
+                        {{-- ডাবল এন্ট্রি চাইল্ড ব্রেকডাউন (ম্যাজিক পার্ট) --}}
+                        <td colspan="3" class="p-0">
+                            <table class="w-full border-collapse">
+                                <tbody class="divide-y divide-slate-50">
+                                    @foreach($voucher->entries as $entry)
+                                        <tr>
+                                            <td class="p-3 font-bold {{ $entry->debit > 0 ? 'text-slate-800' : 'text-slate-500 pl-6' }}">
+                                                {{ $entry->debit > 0 ? '' : '— ' }} {{ $entry->account->name }} 
+                                                <span class="text-[10px] font-mono text-slate-400 font-normal">({{ $entry->account->code }})</span>
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-bold w-32 text-slate-900">
+                                                {{ $entry->debit > 0 ? number_format($entry->debit, 2) : '-' }}
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-bold w-32 text-slate-900">
+                                                {{ $entry->credit > 0 ? number_format($entry->credit, 2) : '-' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-slate-400">No transactions posted yet.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
+    </div>
+    <div class="pt-2">
+        {{ $vouchers->links() }}
     </div>
 </div>
 @endsection

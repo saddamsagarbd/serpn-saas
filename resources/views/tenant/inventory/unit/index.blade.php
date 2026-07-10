@@ -69,12 +69,8 @@
         const token = document.querySelector('input[name=\'_token\']')?.value;
         let formData = { ...this.unitData };
 
-        if (this.isEdit) {
-            formData._method = 'PUT';
-        }
-
         fetch(this.formAction, {
-            method: 'POST',
+            method: this.isEdit ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',

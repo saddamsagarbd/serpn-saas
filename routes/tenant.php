@@ -26,7 +26,9 @@ use App\Http\Controllers\Tenant\{
     ReportController,
     WarehouseController,
     CategoryController,
-    UnitController
+    COAController,
+    UnitController,
+    VoucherController
 };
 
 /*
@@ -107,13 +109,18 @@ Route::domain('{tenant}.serpn-saas.test')
 
             // ---- Accounts ----
             Route::prefix('accounts')->name('accounts.')->middleware('feature:accounts')->group(function () {
+                Route::get('chart-of-accounts', [AccountController::class, 'index'])->name('coa.index');
+                Route::post('chart-of-accounts/store', [AccountController::class, 'storeCoa'])->name('coa.store');
+                Route::put('chart-of-accounts/update/{id}', [AccountController::class, 'updateCoa'])->name('coa.update');
+                
                 Route::get('income', [AccountController::class, 'income'])->name('income');
                 Route::get('expense', [AccountController::class, 'expense'])->name('expense');
+                Route::post('vouchers/store', [VoucherController::class, 'store'])->name('vouchers.store');
+                
                 Route::get('transactions', [AccountController::class, 'transactions'])->name('transactions');
-                Route::get('chart-of-accounts', [AccountController::class, 'chartOfAccounts'])->name('chart-of-accounts');
+                Route::get('ledger', [AccountController::class, 'ledger'])->name('ledger');
                 Route::get('cash-book', [AccountController::class, 'cashBook'])->name('cash-book');
                 Route::get('bank-accounts', [AccountController::class, 'bankAccounts'])->name('bank-accounts');
-                Route::get('ledger', [AccountController::class, 'ledger'])->name('ledger');
                 Route::get('journal-entry', [AccountController::class, 'journalEntry'])->name('journal-entry');
                 Route::get('trial-balance', [AccountController::class, 'trialBalance'])->name('trial-balance');
                 Route::get('profit-loss', [AccountController::class, 'profitLoss'])->name('profit-loss');
