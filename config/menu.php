@@ -49,7 +49,7 @@ return [
                         [
                             'label' => 'Color Context',            
                             'route' => 'tenant.inventory.color',
-                            'enabled' => false,
+                            'enabled' => true,
                         ],
                         [
                             'label' => 'Warehouse',        

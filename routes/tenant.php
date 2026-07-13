@@ -21,6 +21,7 @@ use App\Http\Controllers\Tenant\{
     ReportController,
     WarehouseController,
     CategoryController,
+    ColorContextController,
     StyleController,
     UnitController,
     VoucherController,
@@ -85,6 +86,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::put('fabrics/update/{id}', [FebricController::class, 'update'])->name('fabrics.update');
 
                 // Color Context
+                Route::get('color-contexts', [ColorContextController::class, 'index'])->name('color');
+                Route::post('color-contexts/store', [ColorContextController::class, 'colorStore'])->name('color.store');
+                Route::put('color-contexts/update/{id}', [ColorContextController::class, 'update'])->name('color.update');
                 
                 // Brands
 
