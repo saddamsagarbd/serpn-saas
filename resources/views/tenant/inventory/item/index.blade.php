@@ -1,72 +1,127 @@
 @extends('layouts.tenant')
 @section('title','Item Master')
 @section('content')
-<div class="space-y-6" x-data="{ currentTab: 'items', openModal: false }">
-    @if(session('success'))
-        <div class="p-4 mb-4 text-xs font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200">
-            {{ session('success') }}
-        </div>
-    @endif
+
+<div class="space-y-6" 
+    x-data="{
+        items: [],
+        search: '',
+        page: 1,
+        perPage: 10,
+        lastPage: 1,
+        total: 0,
+        loading: false,
+        async fetchItems() {
+            this.loading = true;
+            try {
+                let url = `{{ route('tenant.inventory.items.index') }}?page=${this.page}&per_page=${this.perPage}&search=${encodeURIComponent(this.search)}`;
+                let response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                let data = await response.json();
+                
+                // সার্ভার রেসপন্স ম্যাপ করা
+                this.items = data.data;
+                this.lastPage = data.last_page;
+                this.total = data.total;
+            } catch (error) {
+                console.error('Error fetching items:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        nextPage() { if (this.page < this.lastPage) { this.page++; this.fetchItems(); } },
+        prevPage() { if (this.page > 1) { this.page--; this.fetchItems(); } }
+    }"
+    x-init="fetchItems()">
 
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-        <div x-show="currentTab === 'items'" x-transition class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">Item Master Registry</h2>
-                <a href="{{ route('tenant.inventory.item.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
-                    + Add Item Master
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Item Master Matrix</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Alpine.js Real-time Server-side Engine</p>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <input type="text" 
+                    x-model.debounce.500ms="search" 
+                    @input="page = 1; fetchItems()"
+                    placeholder="Search SKU or Name..." 
+                    class="border border-slate-200 rounded-xl text-xs px-3 py-2 focus:outline-none focus:border-indigo-500 w-full sm:w-64 font-semibold">
+                <a href="{{ route('tenant.inventory.item.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-indigo-700 shadow-sm text-xs whitespace-nowrap transition">
+                    + Add Item
                 </a>
             </div>
+        </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Yajra DataTables Server-Side Active</span>
-                    <input type="text" placeholder="Search item registry..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
-                </div>
-                
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
-                            <th class="p-4">SKU Code</th>
-                            <th class="p-4">Style No / Specification</th>
-                            <th class="p-4">Item Name</th>
-                            <th class="p-4">Category</th>
-                            <th class="p-4">UOM</th>
-                            <th class="p-4 text-right">Live Stock</th>
-                            <th class="p-4 text-center">Action</th>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden relative min-h-[200px]">
+            
+            <div x-show="loading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-10" x-cloak>
+                <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest animate-pulse">🔄 Streaming Next Page Batch...</span>
+            </div>
+
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
+                        <th class="p-4">SKU / Code</th>
+                        <th class="p-4">Item Name</th>
+                        <th class="p-4">Category</th>
+                        <th class="p-4">UOM</th>
+                        <th class="p-4 text-right">Purchase Price</th>
+                        <th class="p-4 text-right">Sale Price</th>
+                        <th class="p-4 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
+                    <template x-for="item in items" :key="item.id">
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="p-4 font-mono font-bold text-slate-600" x-text="item.sku"></td>
+                            <td class="p-4 font-semibold text-slate-800" x-text="item.name"></td>
+                            <td class="p-4 text-slate-500" x-text="item.category ? item.category.name : 'N/A'"></td>
+                            <td class="p-4 text-slate-500" x-text="item.unit ? item.unit.short_name : 'N/A'"></td>
+                            <td class="p-4 text-right font-mono" x-text="parseFloat(item.purchase_price).toFixed(2)"></td>
+                            <td class="p-4 text-right font-mono" x-text="parseFloat(item.sale_price).toFixed(2)"></td>
+                            <td class="p-4 text-center">
+                                <a :href="`{{ route('tenant.inventory.items.index') }}/${item.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
+                                    Edit
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
-                        @forelse($items as $item)
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="p-4 font-bold text-indigo-600 font-mono text-xs">{{ $item->sku }}</td>
-                                <td class="p-4 font-mono text-xs text-gray-700">
-                                    <span class="font-bold text-slate-900">{{ $item->style_no ?? 'N/A' }}</span>
-                                    @if($item->fabric_code)
-                                        <span class="block text-[10px] text-gray-400 font-sans">Code: {{ $item->fabric_code }}</span>
-                                    @endif
-                                </td>
-                                <td class="p-4 font-semibold text-gray-900 text-xs">{{ $item->name }}</td>
-                                <td class="p-4 text-xs font-medium text-gray-500">{{ $item->category->name }}</td>
-                                <td class="p-4 text-xs font-mono text-gray-500">{{ $item->unit->short_name }}</td>
-                                <td class="p-4 text-right font-mono font-bold text-xs {{ $item->stock_qty > 0 ? 'text-slate-900' : 'text-rose-500' }}">
-                                    {{ number_format($item->stock_qty) }}
-                                </td>
-                                <td class="p-4 text-center space-x-1">
-                                    <button class="bg-gray-100 text-gray-600 text-[11px] px-2.5 py-1 rounded hover:bg-indigo-50 hover:text-indigo-600 font-semibold transition">Edit</button>
-                                    <button class="bg-gray-100 text-red-600 text-[11px] px-2.5 py-1 rounded hover:bg-red-50 font-semibold transition">Delete</button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="p-6 text-center text-xs text-gray-400 font-medium">
-                                    No raw material items or products registered in global database master catalog.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                    </template>
+                    
+                    <tr x-show="items.length === 0 && !loading" x-cloak>
+                        <td colspan="7" class="p-8 text-center text-slate-400 font-medium">No records found matching criteria.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 text-xs font-semibold text-slate-500">
+            <div>
+                Showing <span class="text-slate-800" x-text="items.length"></span> of <span class="text-slate-800" x-text="total"></span> records
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button @click="prevPage()" 
+                        :disabled="page === 1" 
+                        :class="page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
+                        class="px-3 py-1.5 border border-slate-200 rounded-lg transition">
+                    ◀ Prev
+                </button>
+                
+                <div class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                    Page <span x-text="page"></span> of <span x-text="lastPage"></span>
+                </div>
+
+                <button @click="nextPage()" 
+                        :disabled="page === lastPage" 
+                        :class="page === lastPage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
+                        class="px-3 py-1.5 border border-slate-200 rounded-lg transition">
+                    Next ▶
+                </button>
             </div>
         </div>
+
     </div>
 </div>
+
 @endsection

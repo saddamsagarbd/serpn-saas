@@ -14,4 +14,5 @@ class Item extends Model
     public function unit(): BelongsTo { return $this->belongsTo(Unit::class); }
     public function style(): BelongsTo { return $this->belongsTo(Style::class); }
     public function batches(): HasMany { return $this->hasMany(ProductionBatch::class); }
+    public function brand(): BelongsTo { return $this->belongsTo(Brand::class); }
 }

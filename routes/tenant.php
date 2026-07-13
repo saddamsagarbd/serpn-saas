@@ -73,7 +73,6 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::put('units/update/{id}', [UnitController::class, 'update'])->name('units.update');
                 Route::post('units/delete/{id}', [UnitController::class, 'delete'])->name('units.destroy');
 
-
                 // Style
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');
                 Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
@@ -97,9 +96,13 @@ Route::domain('{tenant}.serpn-saas.test')
 
 
                 // Item Master
-                Route::resource('items', InventoryController::class)->parameters(['items' => 'item']);
+                Route::post('/items/import', [InventoryController::class, 'importCsv'])->name('items.import');
+                Route::get('/items/download-sample', [InventoryController::class, 'downloadSampleCsv'])->name('items.download-sample');
+                Route::resource('items', InventoryController::class)->parameters(['items' => 'item'])->except(['edit', 'update', 'show']);
                 Route::get('/items/create', [InventoryController::class, 'itemCreate'])->name('item.create');
-                Route::get('/items/store', [InventoryController::class, 'itemStore'])->name('item.store');
+                Route::post('/items/store', [InventoryController::class, 'itemStore'])->name('item.store');
+                Route::get('/items/{id}/edit', [InventoryController::class, 'itemedit'])->name('item.edit');
+                Route::put('/items/{id}', [InventoryController::class, 'itemupdate'])->name('item.update');
                 
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
                 Route::post('/batch/store', [InventoryController::class, 'storeBatchProduction'])->name('batch.store');
