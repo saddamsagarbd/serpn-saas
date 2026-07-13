@@ -147,13 +147,13 @@
                     <!-- Form Footer Actions -->
                     <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div class="text-xs text-gray-500">
-                            <span class="font-bold text-red-500">* Note:</span> Submitting this GRN will automatically increase stock levels in the selected warehouse.
+                            <span class="font-bold text-red-500">* Note:</span> Submitting this GRN will automatically increase stock levels in the selected warehouse and sync Accounts Payable ledger.
                         </div>
                         <div class="flex space-x-2 gap-2">
                             <button type="button" @click="showDetails = false; selectedPO = ''" class="px-4 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 Cancel
                             </button>
-                            <button type="button" class="px-4 py-2 border border-transparent rounded-lg text-xs text-white bg-emerald-600 hover:bg-emerald-700 font-semibold">
+                            <button type="submit" class="px-4 py-2 border border-transparent rounded-lg text-xs text-white bg-emerald-600 hover:bg-emerald-700 font-semibold shadow-xs">
                                 Verify & Post GRN Stock
                             </button>
                         </div>

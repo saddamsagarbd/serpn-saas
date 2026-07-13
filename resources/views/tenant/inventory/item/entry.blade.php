@@ -8,68 +8,80 @@
                 <h3 class="text-lg font-bold text-gray-800">Create New Master Item</h3>
                 <p class="text-xs text-gray-500 mt-1">Register a new product or component into the global inventory database.</p>
             </div>
-            <form action="#" method="POST" class="space-y-6">
+            
+            <form action="{{ route('tenant.inventory.item.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-2 space-y-1.5">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Item Name *</label>
-                        <input type="text" placeholder="e.g., Execution Ergonomic Mesh Chair" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-medium">
+                        <input type="text" name="name" required placeholder="e.g., Premium Denim Fabric / Mens Formal Shirt" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">SKU / Item Code *</label>
-                        <input type="text" placeholder="e.g., ITM-HW-04918" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono text-slate-800 font-bold">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category</label>
-                        <select class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-700 font-semibold">
-                            <option>Select Category</option>
-                            <option>Office Furniture</option>
-                            <option>Hardware & Electronics</option>
-                            <option>Raw Materials</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Barcode (UPC/EAN)</label>
-                        <input type="text" placeholder="Scan or enter barcode" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Unit of Measure (UOM)</label>
-                        <select class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-700 font-semibold">
-                            <option>Pcs (Pieces)</option>
-                            <option>Box</option>
-                            <option>Kg (Kilogram)</option>
-                            <option>Mtr (Meter)</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Default Cost Price (৳)</label>
-                        <input type="number" step="0.01" placeholder="0.00" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold font-mono text-right">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Default Selling Price (৳)</label>
-                        <input type="number" step="0.01" placeholder="0.00" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold font-mono text-right">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Reorder Alert Level</label>
-                        <input type="number" placeholder="e.g., 10" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-mono">
+                        <input type="text" name="sku" required placeholder="e.g., ITM-301" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-mono font-bold">
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Item Description / Specifications</label>
-                    <textarea rows="3" placeholder="Enter product specifications or batch notes..." class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Style No (Optional)</label>
+                        <input type="text" name="style_no" placeholder="e.g., NOVOJKT-02 / AUSSRT04" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-mono">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Fabric Code / Brand</label>
+                        <input type="text" name="fabric_code" placeholder="e.g., 20x16 Twill / Spartan Shield" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Color Context</label>
+                        <input type="text" name="color" placeholder="e.g., Olive / Multi Color" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Brand Name</label>
+                        <input type="text" name="brand" placeholder="e.g., Multi Brand" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category *</label>
+                        <select name="category_id" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
+                            <option value="">-- Select Category --</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Unit of Measure (UOM) *</label>
+                        <select name="unit_id" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
+                            <option value="">-- Select Unit --</option>
+                            @foreach($units as $unit)
+                                <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->short_name }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Base Purchase Price *</label>
+                        <input type="number" step="0.01" name="purchase_price" required placeholder="0.00" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-mono">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Target Retail Sale Price *</label>
+                        <input type="number" step="0.01" name="sale_price" required placeholder="0.00" class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-mono">
+                    </div>
                 </div>
 
                 <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition">Save Master Item</button>
+                    <a href="{{ route('tenant.inventory.items.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
+                        Save Master Item
+                    </button>
                 </div>
             </form>
         </div>

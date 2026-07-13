@@ -10,8 +10,7 @@ return [
 
     // Feature-wise dropdown menus — one dropdown per module in saas.php,
     // only rendered if the tenant/plan has that feature enabled.
-    'menus' => [  
-    
+    'menus' => [    
         'inventory' => [
             'label' => 'Inventory',
             'icon'  => 'package',
@@ -21,9 +20,12 @@ return [
                     'icon'  => 'cog', 
                     'items' => [
                         ['label' => 'Categories',       'route' => 'tenant.inventory.categories.index'],
-                        // ['label' => 'Brands',         'route' => 'tenant.inventory.brands'],
+                        ['label' => 'Brands',         'route' => 'tenant.inventory.brands'],
                         ['label' => 'Units',            'route' => 'tenant.inventory.units'],
-                        ['label' => 'Warehouse',        'route' => 'tenant.inventory.warehouses.index'], // 💡 রুটটি ঠিক করে দেওয়া হয়েছে
+                        ['label' => 'Styles',            'route' => 'tenant.inventory.styles'],
+                        // ['label' => 'Fabric Spec',            'route' => 'tenant.inventory.fabric'],
+                        // ['label' => 'Color Context',            'route' => 'tenant.inventory.color'],
+                        ['label' => 'Warehouse',        'route' => 'tenant.inventory.warehouses.index'],
                     ],
                 ]],
                 ['label' => 'Items', 'icon'  => 'package', 'route' => 'tenant.inventory.items.index'],

@@ -27,6 +27,7 @@ use App\Http\Controllers\Tenant\{
     WarehouseController,
     CategoryController,
     COAController,
+    StyleController,
     UnitController,
     VoucherController
 };
@@ -75,12 +76,29 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('units/store', [UnitController::class, 'store'])->name('units.store');
                 Route::put('units/update/{id}', [UnitController::class, 'update'])->name('units.update');
                 Route::post('units/delete/{id}', [UnitController::class, 'delete'])->name('units.destroy');
+
+
+                // Style
+                Route::get('styles', [StyleController::class, 'index'])->name('styles');
+                Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
+                Route::put('styles/update/{id}', [StyleController::class, 'updateStyle'])->name('styles.update');
+                Route::post('styles/delete/{id}', [StyleController::class, 'delete'])->name('styles.destroy');
+
+                // Febric Spec
+
+                // Color Context
+                
+                // Brands
+
+
                 // Item Master
                 Route::resource('items', InventoryController::class)->parameters(['items' => 'item']);
-                Route::get('/item-entry', [InventoryController::class, 'itemEntryForm'])->name('product.form');
+                Route::get('/items/create', [InventoryController::class, 'itemCreate'])->name('item.create');
+                Route::get('/items/store', [InventoryController::class, 'itemStore'])->name('item.store');
                 
                 Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
+                Route::post('/batch/store', [InventoryController::class, 'storeBatchProduction'])->name('batch.store');
                 Route::get('/stock-entry', [InventoryController::class, 'stockEntry'])->name('stock.entry');
                 Route::get('barcode', [InventoryController::class, 'barcode'])->name('barcode');
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
