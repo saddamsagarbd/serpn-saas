@@ -91,6 +91,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::put('color-contexts/update/{id}', [ColorContextController::class, 'update'])->name('color.update');
                 
                 // Brands
+                Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
+                Route::post('brands/store', [InventoryController::class, 'brandStore'])->name('brands.store');
+                Route::put('brands/update/{id}', [InventoryController::class, 'updateBrand'])->name('brands.update');
 
 
                 // Item Master
@@ -98,7 +101,6 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('/items/create', [InventoryController::class, 'itemCreate'])->name('item.create');
                 Route::get('/items/store', [InventoryController::class, 'itemStore'])->name('item.store');
                 
-                Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
                 Route::post('/batch/store', [InventoryController::class, 'storeBatchProduction'])->name('batch.store');
                 Route::get('/stock-entry', [InventoryController::class, 'stockEntry'])->name('stock.entry');

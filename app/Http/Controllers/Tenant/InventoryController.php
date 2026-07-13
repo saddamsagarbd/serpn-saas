@@ -3,15 +3,70 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\ProductionBatch;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class InventoryController extends Controller
 {
+    public function brands(Request $request){
+        if ($request->ajax()) {
+            $data = Brand::all();
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->editColumn('name', function($row){
+                    return $row->name ? $row->name : 'N/A';
+                })
+                ->editColumn('code', function($row){
+                    return $row->code ? $row->code : 'N/A';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('tenant.inventory.brand.index');
+    }
+
+    public function brandStore(Request $request){
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        
+        Brand::create($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Brand created successfully!'
+            ]);
+        }
+    }
+
+    public function updateBrand(Request $request, $tenant, String $id){
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $cContext = Brand::findOrFail($id);
+        
+        $cContext->update([
+            'name' => trim($request->name),
+            'color_code'   => $request->color_code ?? null,
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Brand updated successfully!'
+            ]);
+        }
+    }
+
     public function index(){
         $items = Item::with(['category', 'unit'])->latest()->get();
         return view('tenant.inventory.item.index', compact('items'));
@@ -42,13 +97,13 @@ class InventoryController extends Controller
         return redirect()->route('tenant.inventory.item.index')->with('success', 'Master Product/Component successfully added to Catalog Registry.');
     }
 
-
     public function stock() {
 
         $stocks = Item::with(['category', 'unit'])->orderBy('stock_qty', 'desc')->get();
 
         return view('tenant.inventory.stock.index', compact('stocks'));
     }
+
     public function stockEntry() {
         $items = Item::orderBy('name', 'asc')->get();
         $batches = ProductionBatch::with('item')->latest()->get();
