@@ -14,28 +14,76 @@ return [
         'inventory' => [
             'label' => 'Inventory',
             'icon'  => 'package',
+            'enabled' => true,
             'items' => [
                 ['sub' => [
                     'label' => 'Setup',
                     'icon'  => 'cog', 
+                    'enabled' => true,
                     'items' => [
-                        ['label' => 'Categories',       'route' => 'tenant.inventory.categories.index'],
-                        ['label' => 'Brands',         'route' => 'tenant.inventory.brands'],
-                        ['label' => 'Units',            'route' => 'tenant.inventory.units'],
-                        ['label' => 'Styles',            'route' => 'tenant.inventory.styles'],
-                        // ['label' => 'Fabric Spec',            'route' => 'tenant.inventory.fabric'],
-                        // ['label' => 'Color Context',            'route' => 'tenant.inventory.color'],
-                        ['label' => 'Warehouse',        'route' => 'tenant.inventory.warehouses.index'],
+                        [
+                            'label' => 'Categories',       
+                            'route' => 'tenant.inventory.categories.index',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Brands',         
+                            'route' => 'tenant.inventory.brands',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Units',            
+                            'route' => 'tenant.inventory.units',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Styles',            
+                            'route' => 'tenant.inventory.styles',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Fabric Spec',            
+                            'route' => 'tenant.inventory.fabrics',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Color Context',            
+                            'route' => 'tenant.inventory.color',
+                            'enabled' => false,
+                        ],
+                        [
+                            'label' => 'Warehouse',        
+                            'route' => 'tenant.inventory.warehouses.index',
+                            'enabled' => true,
+                        ],
                     ],
                 ]],
-                ['label' => 'Items', 'icon'  => 'package', 'route' => 'tenant.inventory.items.index'],
+                [
+                    'label' => 'Items', 
+                    'icon'  => 'package', 
+                    'route' => 'tenant.inventory.items.index',
+                    'enabled' => true,
+                ],
                 ['sub' => [
                     'label' => 'Stock',
-                    'icon'  => 'layers', 
+                    'icon'  => 'layers',
+                    'enabled' => true,
                     'items' => [
-                        ['label' => 'Stock Ledger',       'route' => 'tenant.inventory.stock'],
-                        ['label' => 'Stock Adjustment',            'route' => 'tenant.inventory.stock.entry'],
-                        ['label' => 'Barcode',        'route' => 'tenant.inventory.barcode'],
+                        [
+                            'label' => 'Stock Ledger',       
+                            'route' => 'tenant.inventory.stock',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Stock Adjustment',            
+                            'route' => 'tenant.inventory.stock.entry',
+                            'enabled' => true,
+                        ],
+                        [
+                            'label' => 'Barcode',        
+                            'route' => 'tenant.inventory.barcode',
+                            'enabled' => true,
+                        ],
                     ],
                 ]],
             ],
@@ -44,10 +92,23 @@ return [
         'purchase' => [
             'label' => 'Purchase',
             'icon'  => 'shopping-bag',
+            'enabled' => true,
             'items' => [
-                ['label' => 'Purchase Order',         'route' => 'tenant.purchase.purchase'],
-                ['label' => 'GRN/MRR',          'route' => 'tenant.purchase.grn'],
-                ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers'],
+                [
+                    'label' => 'Purchase Order',         
+                    'route' => 'tenant.purchase.purchase',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'GRN/MRR',          
+                    'route' => 'tenant.purchase.grn',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Suppliers',        
+                    'route' => 'tenant.purchase.suppliers',
+                    'enabled' => true,
+                ],
                 // ['label' => 'Purchase Return',  'route' => 'purchase.purchase-return'],
             ],
         ],
@@ -55,11 +116,28 @@ return [
         'sales' => [
             'label' => 'Sales',
             'icon'  => 'shopping-cart',
+            'enabled' => true,
             'items' => [
-                ['label' => 'POS',            'route' => 'tenant.sales.pos'],
-                ['label' => 'Sales',          'route' => 'tenant.sales.sales'],
-                ['label' => 'Customers',      'route' => 'tenant.sales.customers'],
-                ['label' => 'Sales Return',   'route' => 'tenant.sales.sales-return'],
+                [
+                    'label' => 'POS',            
+                    'route' => 'tenant.sales.pos',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Sales',          
+                    'route' => 'tenant.sales.sales',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Customers',      
+                    'route' => 'tenant.sales.customers',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Sales Return',   
+                    'route' => 'tenant.sales.sales-return',
+                    'enabled' => true,
+                ],
                 // ['label' => 'Quotation',      'route' => 'tenant.sales.quotation'],
             ],
         ],
@@ -72,19 +150,64 @@ return [
         'accounts' => [
             'label' => 'Accounts',
             'icon'  => 'calculator',
+            'enabled' => true,
             'items' => [
                 // ['label' => 'Dashboard',          'route' => 'tenant.accounts.dashboard'],
-                ['label' => 'Chart of Accounts',  'route' => 'tenant.accounts.coa.index'],
-                ['label' => 'Income',             'route' => 'tenant.accounts.income'],
-                ['label' => 'Expense',            'route' => 'tenant.accounts.expense'],
-                ['label' => 'Transactions',       'route' => 'tenant.accounts.transactions'],
-                ['label' => 'Ledger',             'route' => 'tenant.accounts.ledger'],
-                ['label' => 'Cash Book',          'route' => 'tenant.accounts.cash-book'],
-                ['label' => 'Bank Accounts',      'route' => 'tenant.accounts.bank-accounts'],
-                ['label' => 'Journal Entry',      'route' => 'tenant.accounts.journal-entry'],
-                ['label' => 'Trial Balance',      'route' => 'tenant.accounts.trial-balance'],
-                ['label' => 'Profit & Loss',      'route' => 'tenant.accounts.profit-loss'],
-                ['label' => 'Balance Sheet',      'route' => 'tenant.accounts.balance-sheet'],
+                [
+                    'label' => 'Chart of Accounts',  
+                    'route' => 'tenant.accounts.coa.index',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Income',             
+                    'route' => 'tenant.accounts.income',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Expense',            
+                    'route' => 'tenant.accounts.expense',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Transactions',       
+                    'route' => 'tenant.accounts.transactions',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Ledger',             
+                    'route' => 'tenant.accounts.ledger',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Cash Book',          
+                    'route' => 'tenant.accounts.cash-book',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Bank Accounts',      
+                    'route' => 'tenant.accounts.bank-accounts',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Journal Entry',      
+                    'route' => 'tenant.accounts.journal-entry',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Trial Balance',      
+                    'route' => 'tenant.accounts.trial-balance',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Profit & Loss',      
+                    'route' => 'tenant.accounts.profit-loss',
+                    'enabled' => true,
+                ],
+                [
+                    'label' => 'Balance Sheet',      
+                    'route' => 'tenant.accounts.balance-sheet',
+                    'enabled' => true,
+                ],
             ],
         ],
 

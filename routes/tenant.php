@@ -2,17 +2,12 @@
 
 declare(strict_types=1);
 
-
 use App\Livewire\Tenant\Dashboard as TenantDashboard;
-use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Event;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\Tenant\{
-    DashboardController,
     ProfileController,
     SettingController,
     InventoryController,
@@ -26,10 +21,10 @@ use App\Http\Controllers\Tenant\{
     ReportController,
     WarehouseController,
     CategoryController,
-    COAController,
     StyleController,
     UnitController,
-    VoucherController
+    VoucherController,
+    FebricController
 };
 
 /*
@@ -81,10 +76,13 @@ Route::domain('{tenant}.serpn-saas.test')
                 // Style
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');
                 Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
-                Route::put('styles/update/{id}', [StyleController::class, 'updateStyle'])->name('styles.update');
+                Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
                 Route::post('styles/delete/{id}', [StyleController::class, 'delete'])->name('styles.destroy');
 
                 // Febric Spec
+                Route::get('fabrics', [FebricController::class, 'index'])->name('fabrics');
+                Route::post('fabrics/store', [FebricController::class, 'styleStore'])->name('fabrics.store');
+                Route::put('fabrics/update/{id}', [FebricController::class, 'update'])->name('fabrics.update');
 
                 // Color Context
                 

@@ -49,8 +49,14 @@
                             <!-- Level 1 Wrapper -->
                             <div x-show="open" x-collapse class="pl-4 mt-1 space-y-1">
                                 @foreach($menu['items'] as $item)
+                                    @if(isset($item['enabled']) && $item['enabled'] === false)
+                                        @continue
+                                    @endif
                                     
                                     @if(isset($item['sub'])) 
+                                        @if(isset($item['sub']['enabled']) && $item['sub']['enabled'] === false)
+                                            @continue
+                                        @endif
                                         <!-- 🛠️ Level 2: Nested Sub-Group (e.g., Item Master) -->
                                         <div x-data="{ subOpen: {{ request()->is($key.'/categories*') || request()->is($key.'/units*') || request()->is($key.'/products*') ? 'true' : 'false' }} }" class="space-y-1">
                                             <button @click="subOpen = !subOpen" 
@@ -65,6 +71,9 @@
                                             
                                             <div x-show="subOpen" x-collapse class="border-l-2 border-slate-100 pl-4 space-y-1">
                                                 @foreach($item['sub']['items'] as $subItem)
+                                                    @if(isset($subItem['enabled']) && $subItem['enabled'] === false)
+                                                        @continue
+                                                    @endif
                                                     <a href="{{ route($subItem['route']) }}"
                                                     class="block px-3 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
                                                         {{ $subItem['label'] }}
