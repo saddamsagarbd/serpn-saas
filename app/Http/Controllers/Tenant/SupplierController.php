@@ -86,7 +86,13 @@ class SupplierController extends Controller
     }
 
     public function edit($tenant, string $id){
-        dd($id);
+
+        $supplier = Supplier::findOrFail($id);
+
+        return view('tenant.supplier.supplier-form', [
+            'paymentTerms'  => self::PAYMENT_TERMS,
+            'supplier' => $supplier,
+        ]);
 
     }
     

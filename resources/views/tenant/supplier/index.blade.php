@@ -70,7 +70,7 @@
                                 <td class="p-4 text-slate-500" x-text="supplier.email ?? 'N/A'"></td>
                                 <td class="p-4 font-mono" x-text="supplier.address ?? 'N/A'"></td>
                                 <td class="p-4 text-center">
-                                    <a :href="`{{ route('tenant.purchase.suppliers') }}/${item.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
+                                    <a :href="`{{ route('tenant.purchase.suppliers') }}/${supplier.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
                                         Edit
                                     </a>
                                 </td>

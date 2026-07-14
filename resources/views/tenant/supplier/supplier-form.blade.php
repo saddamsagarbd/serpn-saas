@@ -9,7 +9,7 @@
                 <p class="text-xs text-gray-500 mt-1">Register a new vendor to manage purchase orders and GRN.</p>
             </div>
 
-            <form action="{{ route('tenant.purchase.suppliers.store') }}" method="POST" class="space-y-6">
+            <form action="{{ isset($supplier) ? route('tenant.purchase.suppliers.update') : route('tenant.purchase.suppliers.store') }}" method="POST" class="space-y-6">
                 @csrf
 
                 <div>
