@@ -91,18 +91,30 @@ class SupplierController extends Controller
 
         return view('tenant.supplier.supplier-form', [
             'paymentTerms'  => self::PAYMENT_TERMS,
+            'suggestedCode' => Supplier::generateCode(),
             'supplier' => $supplier,
         ]);
 
     }
     
-    public function update($tenant, Request $request, string $id)
+    public function update($tenant, Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $data = $request->validate([
+            'name'                 => ['required', 'string', 'max:150'],
+            'tax_id'               => ['nullable', 'string', 'max:100'],
+            'address'              => ['nullable', 'string', 'max:1000'],
+            'contact_person'       => ['required', 'string', 'max:150'],
+            'email'                => ['required', 'email', 'max:150'],
+            'phone'                => ['required', 'string', 'max:50'],
+            'payment_terms_days'   => ['nullable', 'integer', 'in:' . implode(',', array_keys(self::PAYMENT_TERMS))],
+            'bank_name'            => ['nullable', 'string', 'max:150'],
+            'bank_account_number'  => ['nullable', 'string', 'max:100'],
+            'is_active'            => ['boolean'],
         ]);
-
-        return redirect()->route('tenant.purchase.suppliers')
-            ->with('success', 'Supplier information updated perfectly.');
+ 
+        $supplier = Supplier::findOrFail($id);
+        $supplier->update($data);
+ 
+        return redirect()->route('tenant.purchase.suppliers')->with('success', 'Supplier updated successfully.');
     }
 }
