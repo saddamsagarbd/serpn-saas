@@ -24,8 +24,10 @@ return new class extends Migration
             
             // Balance Control
             $table->decimal('opening_balance', 15, 2)->default(0.00);
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->boolean('is_bank_account')->default(false);
+            $table->boolean('is_control_account')->default(false);
             $table->boolean('is_system_defined')->default(false); // সিস্টেমের ডিফল্ট হেডগুলো যাতে ইউজার ডিলিট না করতে পারে
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
 
             // Foreign Key Configuration

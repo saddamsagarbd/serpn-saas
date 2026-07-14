@@ -164,10 +164,4 @@ class PurchaseController extends Controller
         });
 
     }
-    public function suppliers(){
-        return view('tenant.supplier.index');
-    }
-    public function suppliersForm(){
-        return view('tenant.supplier.supplier-form');
-    }
 }

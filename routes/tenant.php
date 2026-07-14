@@ -25,7 +25,8 @@ use App\Http\Controllers\Tenant\{
     StyleController,
     UnitController,
     VoucherController,
-    FebricController
+    FebricController,
+    SupplierController
 };
 
 /*
@@ -94,7 +95,6 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('brands/store', [InventoryController::class, 'brandStore'])->name('brands.store');
                 Route::put('brands/update/{id}', [InventoryController::class, 'updateBrand'])->name('brands.update');
 
-
                 // Item Master
                 Route::post('/items/import', [InventoryController::class, 'importCsv'])->name('items.import');
                 Route::get('/items/download-sample', [InventoryController::class, 'downloadSampleCsv'])->name('items.download-sample');
@@ -111,6 +111,24 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
             });
 
+            // ---- Purchase ----
+            Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
+                Route::get('/', [PurchaseController::class, 'index'])->name('purchase');
+                Route::get('/purchase-form', [PurchaseController::class, 'purchaseForm'])->name('form');
+                Route::post('/po-create', [PurchaseController::class, 'poCreate'])->name('store');
+
+                Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
+                Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
+
+                Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers');
+                Route::get('/suppliers-form', [SupplierController::class, 'create'])->name('suppliers.form');
+                Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+                Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+                Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
+
+                Route::get('/purchase-return', [PurchaseController::class, 'purchaseReturn'])->name('purchase-return');
+            });
+
             // ---- Sales ----
             Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
                 Route::get('pos', [SalesController::class, 'pos'])->name('pos');
@@ -118,18 +136,6 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('customers', [SalesController::class, 'customers'])->name('customers');
                 Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
                 Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
-            });
-
-            // ---- Purchase ----
-            Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
-                Route::get('/', [PurchaseController::class, 'index'])->name('purchase');
-                Route::get('/purchase-form', [PurchaseController::class, 'purchaseForm'])->name('form');
-                Route::post('/po-create', [PurchaseController::class, 'poCreate'])->name('store');
-                Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
-                Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
-                Route::get('/suppliers', [PurchaseController::class, 'suppliers'])->name('suppliers');
-                Route::get('/suppliers-form', [PurchaseController::class, 'suppliersForm'])->name('suppliers.form');
-                Route::get('/purchase-return', [PurchaseController::class, 'purchaseReturn'])->name('purchase-return');
             });
 
             // ---- Accounts ----
