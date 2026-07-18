@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', 'Style Master')
+@section('title', 'Febric Spec')
 @section('content')
 
 <div class="space-y-6" x-data="{ 

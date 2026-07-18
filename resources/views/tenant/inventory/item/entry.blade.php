@@ -43,7 +43,7 @@
                         <select name="style_id" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Style --</option>
                             @foreach($styles as $style)
-                                <option {{ ($item->style_id == $style->id ? "selected" : "" ) }} value="{{ $style->id }}">{{ $style->name }}</option>
+                                <option value="{{ $style->id }}">{{ $style->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -53,7 +53,7 @@
                         <select name="fabric_code" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Febric Spec --</option>
                             @foreach($fabSpec as $spec)
-                                <option {{ ($item->fabric_spec_id == $spec->id ? "selected" : "" ) }} value="{{ $spec->id }}">{{ $spec->name }}</option>
+                                <option value="{{ $spec->id }}">{{ $spec->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -63,7 +63,7 @@
                         <select name="color" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Color Context --</option>
                             @foreach($colorContexts as $colorContext)
-                                <option {{ ($item->color_context_id == $colorContext->id ? "selected" : "" ) }} value="{{ $colorContext->id }}">{{ $colorContext->name }} - [{{ $colorContext->color_code }}]</option>
+                                <option value="{{ $colorContext->id }}">{{ $colorContext->name }} - [{{ $colorContext->color_code }}]</option>
                             @endforeach
                         </select>
                     </div>
@@ -73,7 +73,7 @@
                         <select name="brand" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Brand --</option>
                             @foreach($brands as $brand)
-                                <option {{ ($item->brand_id == $brand->id ? "selected" : "" ) }} value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -85,7 +85,7 @@
                         <select name="category_id" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Category --</option>
                             @foreach($categories as $category)
-                                <option {{ ($item->category_id == $category->id ? "selected" : "" ) }} value="{{ $category->id }}">{{ $category->name }}</option>
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -95,7 +95,7 @@
                         <select name="unit_id" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Unit --</option>
                             @foreach($units as $unit)
-                                <option {{ ($item->unit_id == $unit->id ? "selected" : "" ) }} value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->short_name }})</option>
+                                <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->short_name }})</option>
                             @endforeach
                         </select>
                     </div>
