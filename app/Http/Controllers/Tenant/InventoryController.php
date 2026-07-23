@@ -384,6 +384,10 @@ class InventoryController extends Controller
         return view('tenant.inventory.stock.index', compact('stocks'));
     }
 
+    public function storeStock(Request $request) {
+        dd($request->all());
+    }
+
     public function stockEntry() {
         $items = Item::orderBy('name', 'asc')->get();
         $batches = ProductionBatch::with('item')->latest()->get();

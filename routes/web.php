@@ -37,6 +37,8 @@ foreach (config('tenancy.central_domains') as $domain) {
 
             // New Tenant Add (POST Request)
             Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+            Route::put('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+            Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
 
             Route::post('/logout', function (Request $request, Logout $logout) {
                 $logout();

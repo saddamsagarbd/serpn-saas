@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ColorContext;
 use App\Models\Style;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
@@ -26,6 +28,11 @@ class StyleController extends Controller
                 ->make(true);
         }
         return view('tenant.inventory.style.index');
+    }
+    public function createStyle(){
+        $colors = ColorContext::all();
+        $units = Unit::all();
+        return view('tenant.inventory.style.create', compact('colors', 'units'));
     }
 
     public function styleStore(Request $request){
