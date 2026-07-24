@@ -381,7 +381,9 @@ class InventoryController extends Controller
 
         $stocks = Item::with(['category', 'unit'])->orderBy('stock_qty', 'desc')->get();
 
-        return view('tenant.inventory.stock.index', compact('stocks'));
+        $items = Item::with(['category', 'unit', 'brand', 'style'])->get();
+
+        return view('tenant.inventory.stock.index', compact('stocks', 'items'));
     }
 
     public function stockEntry() {

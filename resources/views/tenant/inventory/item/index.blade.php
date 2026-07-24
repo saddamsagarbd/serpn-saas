@@ -38,8 +38,8 @@
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Item Master Matrix</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Alpine.js Real-time Server-side Engine</p>
+                <h2 class="text-2xl font-bold text-gray-800">Item Master</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Real-time Server-side Engine</p>
             </div>
             <div class="flex items-center gap-3 w-full sm:w-auto">
                 <input type="text" 
@@ -47,6 +47,15 @@
                     @input="page = 1; fetchItems()"
                     placeholder="Search SKU or Name..." 
                     class="border border-slate-200 rounded-xl text-xs px-3 py-2 focus:outline-none focus:border-indigo-500 w-full sm:w-64 font-semibold">
+                <form action="{{ route('tenant.inventory.items.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2 border-l pl-4 border-gray-200">
+                    @csrf
+                    <input type="file" name="file" required class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"/>
+                    
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        Import Bulk Items
+                    </button>
+                </form>
                 <a href="{{ route('tenant.inventory.item.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-indigo-700 shadow-sm text-xs whitespace-nowrap transition">
                     + Add Item
                 </a>

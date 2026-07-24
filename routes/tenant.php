@@ -38,6 +38,10 @@ use App\Http\Controllers\Tenant\{
 | These routes are loaded by the TenantRouteServiceProvider.
 |
 | Feel free to customize them however you want. Good luck!
+
+    dashboard > 
+
+    style - description - order qty - order fob per pcs - order rcv date - order delivery - remarks
 |
 */
 

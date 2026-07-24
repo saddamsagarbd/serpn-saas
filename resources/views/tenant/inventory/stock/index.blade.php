@@ -29,7 +29,7 @@
                         <option value="">-- Choose Finished Good/Fabric --</option>
                         @foreach($items as $item)
                             <option value="{{ $item->id }}">
-                                {{ $item->name }} [SKU: {{ $item->sku }}] - Style: {{ $item->style_no ?? 'N/A' }}
+                                [SKU: {{ $item->sku }}]-{{ $item->name }}-[Style: {{ $item->style->name ?? 'N/A' }}]
                             </option>
                         @endforeach
                     </select>

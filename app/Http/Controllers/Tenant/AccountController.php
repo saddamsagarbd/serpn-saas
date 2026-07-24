@@ -270,7 +270,7 @@ class AccountController extends Controller
             $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('debit');
             $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('credit');
             
-            $opening = $account->opening_balance;
+            $opening = $account->opening_balance ?? 0;
             $finalDebit = 0;
             $finalCredit = 0;
 
