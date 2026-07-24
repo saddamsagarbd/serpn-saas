@@ -3,6 +3,13 @@
         <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
         <span class="text-lg font-extrabold text-slate-800 tracking-tight">SERPN <span class="text-blue-600 font-semibold text-sm">SAAS</span></span>
     </div>
+
+    @php
+        // Get the current active tenant's business type (e.g. 'merchandising', 'real_estate')
+        $currentBusinessType = auth()->user()->tenant->business_type 
+        ?? tenant('business_type') 
+        ?? 'general_retail';
+    @endphp
     
     <div class="flex-1 overflow-y-auto p-4 space-y-6">
         <div>
@@ -32,7 +39,13 @@
 
                 {{-- Feature-wise dropdown menus --}}
                 @foreach(config('menu.menus') as $key => $menu)
-                    @if(hasFeature($key))
+                    @php
+                        // 1. Gate Level 1 Main Menu Group
+                        $menuTypes = $menu['business_types'] ?? ['*'];
+                        $isMenuAllowed = in_array('*', $menuTypes) || in_array($currentBusinessType, $menuTypes);
+                        $isMenuEnabled = !isset($menu['enabled']) || $menu['enabled'] !== false;
+                    @endphp
+                    @if(hasFeature($key) && $isMenuAllowed && $isMenuEnabled)
                         <div x-data="{ open: {{ request()->is($key.'/*') || request()->is($key) ? 'true' : 'false' }} }" class="select-none">
                             
                             <!-- 📂 Level 1: Main Menu Button (e.g., Inventory) -->
@@ -49,7 +62,12 @@
                             <!-- Level 1 Wrapper -->
                             <div x-show="open" x-collapse class="pl-4 mt-1 space-y-1">
                                 @foreach($menu['items'] as $item)
-                                    @if(isset($item['enabled']) && $item['enabled'] === false)
+                                    @php
+                                        // 2. Gate Level 2 Standard Items / Sub-Groups
+                                        $itemTypes = $item['business_types'] ?? ($item['sub']['business_types'] ?? ['*']);
+                                        $isItemAllowed = in_array('*', $itemTypes) || in_array($currentBusinessType, $itemTypes);
+                                    @endphp
+                                    @if((isset($item['enabled']) && $item['enabled'] === false) || !$isItemAllowed)
                                         @continue
                                     @endif
                                     
@@ -71,7 +89,12 @@
                                             
                                             <div x-show="subOpen" x-collapse class="border-l-2 border-slate-100 pl-4 space-y-1">
                                                 @foreach($item['sub']['items'] as $subItem)
-                                                    @if(isset($subItem['enabled']) && $subItem['enabled'] === false)
+                                                    @php
+                                                        // 3. Gate Level 3 Deeply Nested Leaf Items (e.g. Styles, Raw Materials)
+                                                        $subItemTypes = $subItem['business_types'] ?? ['*'];
+                                                        $isSubItemAllowed = in_array('*', $subItemTypes) || in_array($currentBusinessType, $subItemTypes);
+                                                    @endphp
+                                                    @if((isset($subItem['enabled']) && $subItem['enabled'] === false) || !$isSubItemAllowed)
                                                         @continue
                                                     @endif
                                                     <a href="{{ route($subItem['route']) }}"

@@ -6,13 +6,13 @@
  * =============================================================================
  * Layer model:
  *   1. CORE        -> business_types: ['*']            always available
- *   2. VERTICAL    -> business_types: ['garment'] etc.  shown only to that type
+ *   2. VERTICAL    -> business_types: ['merchandising'] etc.  shown only to that type
  *   3. PLAN/FEATURE-> 'enabled' + tied to saas.php plan gating (unchanged from
  *                     your existing pattern — independent of business_type)
  *
  * A tenant's `business_type` column drives what MenuResolver returns.
  * Supported business_types used below:
- *   'garment'        - buying houses, garment factories, exporters
+ *   'merchandising'        - buying houses, garment factories, exporters
  *   'real_estate'     - developers, brokers, property management
  *   'manufacturing'   - general production houses (non-garment)
  *   'general_retail'  - generic trading/retail (no vertical extras)
@@ -27,7 +27,7 @@ return [
     // Always-visible links, no dropdown, no business_type gating
     // -------------------------------------------------------------------
     'default_features' => [
-        ['label' => 'Dashboard', 'icon' => 'home',     'route' => 'tenant.dashboard'],
+        // ['label' => 'Dashboard', 'icon' => 'home',     'route' => 'tenant.dashboard'],
         ['label' => 'Profile',   'icon' => 'user',     'route' => 'tenant.profile'],
         ['label' => 'Settings',  'icon' => 'settings', 'route' => 'tenant.settings'],
     ],
@@ -55,14 +55,14 @@ return [
                         ['label' => 'Warehouse',       'route' => 'tenant.inventory.warehouses.index',  'enabled' => true, 'business_types' => ['*']],
 
                         // Garment-only setup items
-                        ['label' => 'Styles',          'route' => 'tenant.inventory.styles',            'enabled' => true, 'business_types' => ['garment']],
-                        ['label' => 'Size Charts',      'route' => 'tenant.inventory.size-charts',       'enabled' => true, 'business_types' => ['garment']],
-                        ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics',           'enabled' => true, 'business_types' => ['garment']],
-                        ['label' => 'Color Context',    'route' => 'tenant.inventory.color',             'enabled' => true, 'business_types' => ['garment']],
+                        ['label' => 'Styles',          'route' => 'tenant.inventory.styles',            'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Size Charts',      'route' => 'tenant.inventory.units',       'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics',           'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Color Context',    'route' => 'tenant.inventory.color',             'enabled' => true, 'business_types' => ['merchandising']],
 
                         // Manufacturing-only setup items
                         ['label' => 'Raw Materials',    'route' => 'tenant.inventory.raw-materials',     'enabled' => true, 'business_types' => ['manufacturing']],
-                        ['label' => 'Bill of Materials (BOM)', 'route' => 'tenant.inventory.bom',        'enabled' => true, 'business_types' => ['manufacturing', 'garment']],
+                        ['label' => 'Bill of Materials (BOM)', 'route' => 'tenant.inventory.bom',        'enabled' => true, 'business_types' => ['manufacturing', 'merchandising']],
                     ],
                 ]],
                 [
@@ -70,18 +70,18 @@ return [
                     'icon' => 'package',
                     'route' => 'tenant.inventory.items.index',
                     'enabled' => true,
-                    'business_types' => ['garment', 'manufacturing', 'general_retail'],
+                    'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
                 ],
                 ['sub' => [
                     'label' => 'Stock',
                     'icon' => 'layers',
                     'enabled' => true,
-                    'business_types' => ['garment', 'manufacturing', 'general_retail'],
+                    'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
                     'items' => [
                         ['label' => 'Stock Ledger',      'route' => 'tenant.inventory.stock',       'enabled' => true, 'business_types' => ['*']],
                         ['label' => 'Stock Adjustment',  'route' => 'tenant.inventory.stock.entry', 'enabled' => true, 'business_types' => ['*']],
                         ['label' => 'Stock Transfer',    'route' => 'tenant.inventory.stock.transfer', 'enabled' => true, 'business_types' => ['*']],
-                        ['label' => 'Barcode',           'route' => 'tenant.inventory.barcode',     'enabled' => true, 'business_types' => ['garment', 'general_retail']],
+                        ['label' => 'Barcode',           'route' => 'tenant.inventory.barcode',     'enabled' => true, 'business_types' => ['merchandising', 'general_retail']],
                     ],
                 ]],
             ],
@@ -94,7 +94,7 @@ return [
             'label' => 'Merchandising',
             'icon' => 'scissors',
             'enabled' => true,
-            'business_types' => ['garment'],
+            'business_types' => ['merchandising'],
             'items' => [
                 ['label' => 'Buyers',                'route' => 'tenant.merch.buyers',            'enabled' => true],
                 ['label' => 'Styles & Seasons',      'route' => 'tenant.merch.styles',            'enabled' => true],
@@ -115,11 +115,11 @@ return [
             'label' => 'Production',
             'icon' => 'activity',
             'enabled' => true,
-            'business_types' => ['garment', 'manufacturing'],
+            'business_types' => ['merchandising', 'manufacturing'],
             'items' => [
                 ['label' => 'Work Orders',           'route' => 'tenant.production.work-orders',  'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Cutting',                'route' => 'tenant.production.cutting',      'enabled' => true, 'business_types' => ['garment']],
-                ['label' => 'Sewing / Line Output',   'route' => 'tenant.production.sewing',       'enabled' => true, 'business_types' => ['garment']],
+                ['label' => 'Cutting',                'route' => 'tenant.production.cutting',      'enabled' => true, 'business_types' => ['merchandising']],
+                ['label' => 'Sewing / Line Output',   'route' => 'tenant.production.sewing',       'enabled' => true, 'business_types' => ['merchandising']],
                 ['label' => 'Assembly / Line Output', 'route' => 'tenant.production.assembly',     'enabled' => true, 'business_types' => ['manufacturing']],
                 ['label' => 'Finishing & Packing',    'route' => 'tenant.production.finishing',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'QC / Inspection',        'route' => 'tenant.production.qc',           'enabled' => true, 'business_types' => ['*']],
@@ -156,13 +156,13 @@ return [
             'label' => 'Purchase',
             'icon' => 'shopping-bag',
             'enabled' => true,
-            'business_types' => ['garment', 'manufacturing', 'general_retail'],
+            'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
                 ['label' => 'Purchase Order',   'route' => 'tenant.purchase.purchase',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['garment']],
+                ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['merchandising']],
             ],
         ],
 
@@ -173,11 +173,11 @@ return [
             'label' => 'Sales',
             'icon' => 'shopping-cart',
             'enabled' => true,
-            'business_types' => ['garment', 'manufacturing', 'general_retail'],
+            'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
                 ['label' => 'POS',            'route' => 'tenant.sales.pos',            'enabled' => true, 'business_types' => ['general_retail']],
                 ['label' => 'Sales Orders',   'route' => 'tenant.sales.sales',          'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Export Invoice', 'route' => 'tenant.sales.export-invoice', 'enabled' => true, 'business_types' => ['garment']],
+                ['label' => 'Export Invoice', 'route' => 'tenant.sales.export-invoice', 'enabled' => true, 'business_types' => ['merchandising']],
                 ['label' => 'Customers',      'route' => 'tenant.sales.customers',      'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Sales Return',   'route' => 'tenant.sales.sales-return',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Quotation',      'route' => 'tenant.sales.quotation',      'enabled' => true, 'business_types' => ['*']],
@@ -213,18 +213,18 @@ return [
         'hrm' => [
             'label' => 'HRM',
             'icon' => 'users',
-            'enabled' => true,
+            'enabled' => false,
             'business_types' => ['*'],
             'items' => [
-                ['label' => 'Employees',    'route' => 'tenant.hrm.employees',    'enabled' => true],
-                ['label' => 'Departments',  'route' => 'tenant.hrm.departments',  'enabled' => true],
-                ['label' => 'Designation',  'route' => 'tenant.hrm.designation',  'enabled' => true],
-                ['label' => 'Attendance',   'route' => 'tenant.hrm.attendance',   'enabled' => true],
-                ['label' => 'Leave',        'route' => 'tenant.hrm.leave',        'enabled' => true],
-                ['label' => 'Payroll',      'route' => 'tenant.hrm.payroll',      'enabled' => true],
+                ['label' => 'Employees',    'route' => 'tenant.hrm.employees',    'enabled' => false],
+                ['label' => 'Departments',  'route' => 'tenant.hrm.departments',  'enabled' => false],
+                ['label' => 'Designation',  'route' => 'tenant.hrm.designation',  'enabled' => false],
+                ['label' => 'Attendance',   'route' => 'tenant.hrm.attendance',   'enabled' => false],
+                ['label' => 'Leave',        'route' => 'tenant.hrm.leave',        'enabled' => false],
+                ['label' => 'Payroll',      'route' => 'tenant.hrm.payroll',      'enabled' => false],
 
                 // Garment-specific: piece-rate/line-based wage tracking
-                ['label' => 'Line Wage / Piece Rate', 'route' => 'tenant.hrm.piece-rate', 'enabled' => true, 'business_types' => ['garment']],
+                ['label' => 'Line Wage / Piece Rate', 'route' => 'tenant.hrm.piece-rate', 'enabled' => false, 'business_types' => ['merchandising']],
             ],
         ],
 
@@ -234,14 +234,14 @@ return [
         'crm' => [
             'label' => 'CRM',
             'icon' => 'contact',
-            'enabled' => true,
+            'enabled' => false,
             'business_types' => ['*'],
             'items' => [
-                ['label' => 'Leads',      'route' => 'tenant.crm.leads',      'enabled' => true],
-                ['label' => 'Follow Up',  'route' => 'tenant.crm.follow-up',  'enabled' => true],
+                ['label' => 'Leads',      'route' => 'tenant.crm.leads',      'enabled' => false],
+                ['label' => 'Follow Up',  'route' => 'tenant.crm.follow-up',  'enabled' => false],
 
                 // Real estate specific: site-visit + inquiry pipeline
-                ['label' => 'Site Visits', 'route' => 'tenant.crm.site-visits', 'enabled' => true, 'business_types' => ['real_estate']],
+                ['label' => 'Site Visits', 'route' => 'tenant.crm.site-visits', 'enabled' => false, 'business_types' => ['real_estate']],
             ],
         ],
 
@@ -256,14 +256,14 @@ return [
             'items' => [
                 ['label' => 'Sales Report',      'route' => 'tenant.reports.sales-report',     'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Report',   'route' => 'tenant.reports.purchase-report',  'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Stock Report',      'route' => 'tenant.reports.stock-report',     'enabled' => true, 'business_types' => ['garment', 'manufacturing', 'general_retail']],
+                ['label' => 'Stock Report',      'route' => 'tenant.reports.stock-report',     'enabled' => true, 'business_types' => ['merchandising', 'manufacturing', 'general_retail']],
                 ['label' => 'Income Report',     'route' => 'tenant.reports.income-report',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Expense Report',    'route' => 'tenant.reports.expense-report',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Customer Report',   'route' => 'tenant.reports.customer-report',  'enabled' => true, 'business_types' => ['*']],
 
                 // Garment-specific
-                ['label' => 'Style Profitability', 'route' => 'tenant.reports.style-profitability', 'enabled' => true, 'business_types' => ['garment']],
-                ['label' => 'Export Statement',    'route' => 'tenant.reports.export-statement',     'enabled' => true, 'business_types' => ['garment']],
+                ['label' => 'Style Profitability', 'route' => 'tenant.reports.style-profitability', 'enabled' => true, 'business_types' => ['merchandising']],
+                ['label' => 'Export Statement',    'route' => 'tenant.reports.export-statement',     'enabled' => true, 'business_types' => ['merchandising']],
 
                 // Real estate specific
                 ['label' => 'Rent Collection Report', 'route' => 'tenant.reports.rent-collection', 'enabled' => true, 'business_types' => ['real_estate']],

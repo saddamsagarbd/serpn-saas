@@ -39,6 +39,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'owner_name',
             'owner_email',
             'owner_phone',
+            'business_type'
         ];
     }
 

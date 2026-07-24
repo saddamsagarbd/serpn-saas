@@ -130,6 +130,8 @@
                 this.isEdit = true;
                 this.formErrors = [];
                 this.formAction = window.tenantRoutes.updateBase.replace(':id', tenant.id);
+
+                console.log(tenant);
     
                 this.tenantData = {
                     id: tenant.id,
@@ -139,7 +141,7 @@
                     owner_name: tenant.owner_name,
                     owner_email: tenant.owner_email,
                     owner_phone: tenant.owner_phone,
-                    plan: tenant.plan,
+                    plan: tenant.plan_id,
                     trial_months: tenant.trial_months ?? '1',
                     status: tenant.status,
                 };

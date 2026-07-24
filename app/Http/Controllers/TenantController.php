@@ -38,7 +38,8 @@ class TenantController extends Controller
                         'owner_name'    => $tenant->owner_name,
                         'owner_email'   => $tenant->owner_email,
                         'owner_phone'   => $tenant->owner_phone,
-                        'plan'          => $tenant->plan->title."-"."(". $tenant->plan->price ."/".$tenant->plan->billing_period .")",
+                        'plan_id'       => $tenant->plan_id, // Pass raw ID for form bindings
+                        'plan'          => optional($tenant->plan)->title . " - (" . optional($tenant->plan)->price . "/" . optional($tenant->plan)->billing_period . ")",
                         'status'        => $tenant->status,
                     ];
                 }),
@@ -56,6 +57,7 @@ class TenantController extends Controller
             'owner_name'   => 'required|string|max:255',
             'owner_email'  => 'required|email|unique:tenants,owner_email',
             'owner_phone'  => 'required|string|max:20',
+            'business_type' => 'required|in:' . implode(',', self::BUSINESS_TYPES),
             'plan'      => 'required|exists:plans,id',
         ]);
 
@@ -81,6 +83,7 @@ class TenantController extends Controller
                 'owner_name'   => trim($request->owner_name),
                 'owner_email'  => strtolower(trim($request->owner_email)),
                 'owner_phone'  => trim($request->owner_phone),
+                'business_type'  => $request->business_type,
             ];
 
             // 🚀 ৩. প্যাকেজের অফিশিয়াল ইভেন্ট মেকানিজম (ফ্রেশ ও অটোমেটিক)
@@ -139,19 +142,23 @@ class TenantController extends Controller
             'status'        => 'nullable|in:active,suspended',
         ]);
 
+        
+
         try {
             // Deliberately NOT touching 'id' / domain slug on update — the
             // subdomain is fixed at creation time. Renaming the company here
             // does not rename the tenant's live domain.
-            $tenant->update([
+            $updateParam = [
                 'company_name'  => trim($request->company_name),
                 'owner_name'    => trim($request->owner_name),
                 'owner_email'   => strtolower(trim($request->owner_email)),
                 'owner_phone'   => trim($request->owner_phone),
                 'plan_id'       => $request->plan,
                 'business_type' => $request->business_type,
-                'status'        => $request->status ?? $tenant->status,
-            ]);
+                'status'        => $request->status ?? "active",
+            ];
+
+            $tenant->update($updateParam);
 
             // Keep the subscription record's plan_id in sync if it changed.
             tenancy()->central(function () use ($tenant, $request) {

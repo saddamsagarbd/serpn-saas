@@ -12,11 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tenants', function (Blueprint $table) {
-            if(!Schema::hasColumn('tenants', 'business_type')){
-                $table->string('business_type', [ 'merchandising', 'real_estate', 'production'])->nullable()->after('company_name');
+            if (!Schema::hasColumn('tenants', 'business_type')) {
+            // Change string to enum here
+                $table->string('business_type', 50)
+                    ->nullable()
+                    ->after('company_name');
             }
-            if(!Schema::hasColumn('tenants', 'status')){
-                $table->enum('status', ['active', 'suspended'])->default('active')->after('owner_email');
+            
+            if (!Schema::hasColumn('tenants', 'status')) {
+                $table->enum('status', ['active', 'suspended'])
+                    ->default('active')
+                    ->after('owner_email');
             }
         });
     }

@@ -95,6 +95,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('color-contexts/store', [ColorContextController::class, 'colorStore'])->name('color.store');
                 Route::put('color-contexts/update/{id}', [ColorContextController::class, 'update'])->name('color.update');
                 
+                // Manufacturing-only setup items
+                Route::get('raw-materials', [ColorContextController::class, 'index'])->name('raw-materials');
+                Route::get('bom', [ColorContextController::class, 'index'])->name('bom');
                 // Brands
                 Route::get('brands', [InventoryController::class, 'brands'])->name('brands');
                 Route::post('brands/store', [InventoryController::class, 'brandStore'])->name('brands.store');
@@ -114,6 +117,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('/batch/store', [InventoryController::class, 'storeBatchProduction'])->name('batch.store');
                 Route::get('/stock-entry', [InventoryController::class, 'stockEntry'])->name('stock.entry');
                 Route::get('barcode', [InventoryController::class, 'barcode'])->name('barcode');
+                Route::get('/stock/transfer', [WarehouseController::class, 'stockTransferT'])->name('stock.transfer');
+                
+                // Warehouse setup
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
             });
 
@@ -132,13 +138,15 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
-                Route::get('/purchase-return', [PurchaseController::class, 'purchaseReturn'])->name('purchase-return');
+                Route::get('/purchase-return', [PurchaseController::class, 'purchaseReturn'])->name('return');
+                Route::get('/fabric-booking', [PurchaseController::class, 'fabricBooking'])->name('fabric-booking');
             });
 
             // ---- Sales ----
             Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
                 Route::get('pos', [SalesController::class, 'pos'])->name('pos');
                 Route::get('sales', [SalesController::class, 'index'])->name('sales');
+                Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
                 Route::get('customers', [SalesController::class, 'customers'])->name('customers');
                 Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
                 Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
@@ -172,6 +180,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('attendance', [HrmController::class, 'attendance'])->name('attendance');
                 Route::get('leave', [HrmController::class, 'leave'])->name('leave');
                 Route::get('payroll', [HrmController::class, 'payroll'])->name('payroll');
+                Route::get('piece-rate', [HrmController::class, 'pieceRate'])->name('piece-rate');
             });
     
             // ---- CRM ----
@@ -179,6 +188,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('customers', [CrmController::class, 'customers'])->name('customers');
                 Route::get('leads', [CrmController::class, 'leads'])->name('leads');
                 Route::get('follow-up', [CrmController::class, 'followUp'])->name('follow-up');
+                Route::get('site-visits', [CrmController::class, 'siteVisits'])->name('site-visits');
             });
 
             // ---- Website ----
@@ -202,6 +212,10 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('income-report', [ReportController::class, 'incomeReport'])->name('income-report');
                 Route::get('expense-report', [ReportController::class, 'expenseReport'])->name('expense-report');
                 Route::get('customer-report', [ReportController::class, 'customerReport'])->name('customer-report');
+                Route::get('style-profitability', [ReportController::class, 'styleProfitabilityReport'])->name('style-profitability');
+                Route::get('export-statement', [ReportController::class, 'exportStatement'])->name('export-statement');
+                Route::get('rent-collection', [ReportController::class, 'rentCollection'])->name('rent-collection');
+                Route::get('occupancy', [ReportController::class, 'occupancyReport'])->name('occupancy');
             });
         });
     });
