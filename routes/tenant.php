@@ -80,6 +80,7 @@ Route::domain('{tenant}.serpn-saas.test')
 
                 // Style
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');
+                Route::get('styles/create', [StyleController::class, 'createStyle'])->name('styles.create');
                 Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
                 Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
                 Route::post('styles/delete/{id}', [StyleController::class, 'delete'])->name('styles.destroy');
@@ -109,6 +110,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::put('/items/{id}', [InventoryController::class, 'itemupdate'])->name('item.update');
                 
                 Route::get('stock', [InventoryController::class, 'stock'])->name('stock');
+                Route::post('stock/store', [StyleController::class, 'storeStock'])->name('stock.style-with-items-save');
                 Route::post('/batch/store', [InventoryController::class, 'storeBatchProduction'])->name('batch.store');
                 Route::get('/stock-entry', [InventoryController::class, 'stockEntry'])->name('stock.entry');
                 Route::get('barcode', [InventoryController::class, 'barcode'])->name('barcode');

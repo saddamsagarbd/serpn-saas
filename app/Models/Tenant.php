@@ -47,6 +47,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->belongsTo(Plan::class);
     }
 
+    public function domains()
+    {
+        return $this->hasMany(Domain::class);
+    }
+
     /**
      * Check whether this tenant's plan has a given feature/module enabled.
      * Delegates to Plan::hasFeature() since features live on the plan,

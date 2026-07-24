@@ -86,9 +86,9 @@
         <div class="space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Style Master</h2>
-                <button @click="initCreate()" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('tenant.inventory.styles.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
                     + Add Style
-                </button>
+                </a>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
