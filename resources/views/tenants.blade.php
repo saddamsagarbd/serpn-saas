@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-6" x-data="tenantsApp()" x-init="init()">
+<div class="space-y-6" x-data="tenantsApp()">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <!-- TENANTS TAB CONTENT -->
         <div x-transition class="space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Tenant / Vendor Accounts</h2>
-                <button @click="openModal = true" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
+                <button @click="initCreate()" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
                     + Add New Tenant
                 </button>
             </div>
@@ -24,7 +24,7 @@
                             <th class="p-4">Company</th>
                             <th class="p-4">Subdomain</th>
                             <th class="p-4">Business Type</th>
-                            <th class="p-4">Plan</th>
+                            <th class="p-4">Plan Subscribed</th>
                             <th class="p-4">Status</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
@@ -106,16 +106,12 @@
                 status: 'active',    // active | suspended
             },
     
-            businessTypes: [
-                { value: 'garment',        label: 'Garment / Buying House' },
-                { value: 'real_estate',    label: 'Real Estate' },
-                { value: 'manufacturing',  label: 'General Manufacturing' },
-                { value: 'general_retail', label: 'General Retail / Trading' },
-            ],
+            businessTypes: @js($businessTypes),
     
             init() {
                 this.fetchTenants();
                 this.fetchPlans();
+                
             },
     
             initCreate() {

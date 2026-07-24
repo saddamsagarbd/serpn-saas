@@ -9,8 +9,19 @@ use Illuminate\Support\Facades\Log;
 
 class PlanController extends Controller
 {
-    public function index() {
-        $plans = Plan::all(); // with('domains') সাময়িকভাবে বাদ দেওয়া হলো রিলেশন এরর এড়াতে
+    public function index(Request $request) {
+        $plans = Plan::all();
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $plans->map(function ($plan) {
+                    return [
+                        'id'            => $plan->id,
+                        'plan_code'     => $plan->code,
+                        'plan_title'    => $plan->title,
+                    ];
+                }),
+            ]);
+        }
         return view('plans', compact('plans'));
 
     }

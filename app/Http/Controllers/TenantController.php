@@ -15,11 +15,17 @@ class TenantController extends Controller
      * Business types recognized by the menu resolver (menu.php).
      * Kept as a single source of truth for validation here.
      */
-    private const BUSINESS_TYPES = ['garment', 'real_estate', 'manufacturing', 'general_retail'];
+    private const BUSINESS_TYPES = ['merchandising', 'real_estate', 'general_retail'];
 
     public function index(Request $request){
         $plans = Plan::where('is_active', true)->get();
-        $tenants = Tenant::with('domains')->latest()->get();
+        $tenants = Tenant::with(['domains', 'plan'])->latest()->get();
+        $businessTypes = collect(TenantController::BUSINESS_TYPES)->map(function ($type) {
+            return [
+                'value' => $type,
+                'label' => str($type)->replace('_', ' ')->title()->toString(), // E.g., 'Real Estate'
+            ];
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -32,14 +38,14 @@ class TenantController extends Controller
                         'owner_name'    => $tenant->owner_name,
                         'owner_email'   => $tenant->owner_email,
                         'owner_phone'   => $tenant->owner_phone,
-                        'plan'          => $tenant->plan_id,
+                        'plan'          => $tenant->plan->title."-"."(". $tenant->plan->price ."/".$tenant->plan->billing_period .")",
                         'status'        => $tenant->status,
                     ];
                 }),
             ]);
         }
 
-        return view('tenants', compact('tenants', 'plans'));
+        return view('tenants', compact('tenants', 'plans', 'businessTypes'));
 
     }
 
@@ -50,7 +56,7 @@ class TenantController extends Controller
             'owner_name'   => 'required|string|max:255',
             'owner_email'  => 'required|email|unique:tenants,owner_email',
             'owner_phone'  => 'required|string|max:20',
-            'plan_id'      => 'required|exists:plans,id',
+            'plan'      => 'required|exists:plans,id',
         ]);
 
         try {
@@ -70,7 +76,7 @@ class TenantController extends Controller
             // ২. Tenant তৈরি করা (এটি ডাটাবেজ তৈরি ও মাইগ্রেশন অটোমেটিক কমপ্লিট করবে)
             $tenantParams = [
                 'id'           => $domainPrefix, 
-                'plan_id'      => $request->plan_id,
+                'plan_id'      => $request->plan,
                 'company_name' => trim($request->company_name),
                 'owner_name'   => trim($request->owner_name),
                 'owner_email'  => strtolower(trim($request->owner_email)),
@@ -97,7 +103,7 @@ class TenantController extends Controller
             
                 DB::table("tenant_subscriptions")->insert([
                     'tenant_id'     => $tenant->id,
-                    'plan_id'       => $tenant->plan_id,
+                    'plan_id'       => $tenant->plan,
                     'trial_ends_at' => $now->copy()->addMonths(1),
                     'starts_at'     => $now->copy()->addMonths(1),
                     'ends_at'       => $now->copy()->addMonths(13),
@@ -128,7 +134,7 @@ class TenantController extends Controller
             // unique check ignores this tenant's own current email
             'owner_email'   => 'required|email|unique:tenants,owner_email,' . $tenant->id . ',id',
             'owner_phone'   => 'required|string|max:20',
-            'plan_id'       => 'required|exists:plans,id',
+            'plan'       => 'required|exists:plans,id',
             'business_type' => 'required|in:' . implode(',', self::BUSINESS_TYPES),
             'status'        => 'nullable|in:active,suspended',
         ]);
@@ -142,7 +148,7 @@ class TenantController extends Controller
                 'owner_name'    => trim($request->owner_name),
                 'owner_email'   => strtolower(trim($request->owner_email)),
                 'owner_phone'   => trim($request->owner_phone),
-                'plan_id'       => $request->plan_id,
+                'plan_id'       => $request->plan,
                 'business_type' => $request->business_type,
                 'status'        => $request->status ?? $tenant->status,
             ]);
