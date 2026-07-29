@@ -55,10 +55,12 @@ return [
                         ['label' => 'Warehouse',       'route' => 'tenant.inventory.warehouses.index',  'enabled' => true, 'business_types' => ['*']],
 
                         // Garment-only setup items
-                        ['label' => 'Styles',          'route' => 'tenant.inventory.styles',            'enabled' => true, 'business_types' => ['merchandising']],
-                        ['label' => 'Size Charts',      'route' => 'tenant.inventory.units',       'enabled' => true, 'business_types' => ['merchandising']],
-                        ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics',           'enabled' => true, 'business_types' => ['merchandising']],
-                        ['label' => 'Color Context',    'route' => 'tenant.inventory.color',             'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Buyers',           'route' => 'tenant.inventory.buyers',  'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Seasons',          'route' => 'tenant.inventory.seasons', 'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Styles',           'route' => 'tenant.inventory.styles',  'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Size Charts',      'route' => 'tenant.inventory.sizes',   'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics', 'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Color Context',    'route' => 'tenant.inventory.color',   'enabled' => true, 'business_types' => ['merchandising']],
 
                         // Manufacturing-only setup items
                         ['label' => 'Raw Materials',    'route' => 'tenant.inventory.raw-materials',     'enabled' => true, 'business_types' => ['manufacturing']],
@@ -96,10 +98,10 @@ return [
             'enabled' => true,
             'business_types' => ['merchandising'],
             'items' => [
-                ['label' => 'Buyers',                'route' => 'tenant.merch.buyers',            'enabled' => true],
-                ['label' => 'Styles & Seasons',      'route' => 'tenant.merch.styles',            'enabled' => true],
+                // 'Buyers' এবং 'Styles & Seasons' এখান থেকে সেটআপে (Master Data) চলে গেছে
                 ['label' => 'Costing Sheet',         'route' => 'tenant.merch.costing',           'enabled' => true],
                 ['label' => 'Costing Approval',      'route' => 'tenant.merch.costing.approval',  'enabled' => true],
+                ['label' => 'Order & Matrix Entry',  'route' => 'tenant.merch.orders',            'enabled' => true],
                 ['label' => 'MPR (Material Req.)',   'route' => 'tenant.merch.mpr',               'enabled' => true],
                 ['label' => 'Booking / Sourcing',    'route' => 'tenant.merch.booking',           'enabled' => true],
                 ['label' => 'TNA (Time & Action)',   'route' => 'tenant.merch.tna',               'enabled' => true],

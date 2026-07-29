@@ -134,15 +134,14 @@ class TenantController extends Controller
         $request->validate([
             'company_name'  => 'required|string|max:255',
             'owner_name'    => 'required|string|max:255',
-            // unique check ignores this tenant's own current email
             'owner_email'   => 'required|email|unique:tenants,owner_email,' . $tenant->id . ',id',
             'owner_phone'   => 'required|string|max:20',
-            'plan'       => 'required|exists:plans,id',
+            'plan'          => 'required|exists:plans,id',
             'business_type' => 'required|in:' . implode(',', self::BUSINESS_TYPES),
             'status'        => 'nullable|in:active,suspended',
         ]);
 
-        
+        DB::beginTransaction();
 
         try {
             // Deliberately NOT touching 'id' / domain slug on update — the
@@ -153,7 +152,7 @@ class TenantController extends Controller
                 'owner_name'    => trim($request->owner_name),
                 'owner_email'   => strtolower(trim($request->owner_email)),
                 'owner_phone'   => trim($request->owner_phone),
-                'plan_id'       => $request->plan,
+                'plan_id'       => (int) $request->plan,
                 'business_type' => $request->business_type,
                 'status'        => $request->status ?? "active",
             ];
@@ -165,10 +164,12 @@ class TenantController extends Controller
                 DB::table('tenant_subscriptions')
                     ->where('tenant_id', $tenant->id)
                     ->update([
-                        'plan_id'    => $request->plan_id,
+                        'plan_id'    => (int) $request->plan,
                         'updated_at' => Carbon::now(),
                     ]);
             });
+
+            DB::commit();
 
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Tenant updated successfully.']);
@@ -177,6 +178,7 @@ class TenantController extends Controller
             return redirect()->back()->with('success', 'Tenant updated successfully.');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Tenant Update Fatal Error: ' . $e->getMessage());
 
             return response()->json(['message' => 'Tenant update failed: ' . $e->getMessage()], 500);

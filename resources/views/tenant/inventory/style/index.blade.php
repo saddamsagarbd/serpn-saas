@@ -1,47 +1,17 @@
 @extends('layouts.tenant')
-@section('title', 'Style Master')
+@section('title', 'Style Master List')
 @section('content')
 
 <div class="space-y-6" x-data="{ 
-    openModal: false, 
-    isEdit: false,
-    formAction: '{{ route('tenant.inventory.styles.store') }}',
-    
-    // ইউনিট ডেটা মডেল
-    styleData: { 
-        id: '', 
-        name: '', 
-        code: '', 
-    },
-    
     styles: [],
     loading: false,
     searchQuery: '',
 
-    initCreate() {
-        this.isEdit = false;
-        this.formAction = '{{ route('tenant.inventory.styles.store') }}';
-        this.styleData = { id: '', name: '', code: '',};
-        this.openModal = true;
-    },
-
-    editStyle(data) {
-        this.isEdit = true;
-        let baseUrl = '{{ route("tenant.inventory.styles.update", ":id") }}';
-        this.formAction = baseUrl.replace(':id', data.id);
-        
-        this.styleData = { 
-            id: data.id, 
-            name: data.name,
-        };
-        this.openModal = true;
-    },
-
     fetchStyles() {
         this.loading = true;
-        let url = '{{ route('tenant.inventory.styles') }}';
+        let url = '{{ route('tenant.inventory.styles') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
-            url += '?search[value]=' + encodeURIComponent(this.searchQuery);
+            url += '?search=' + encodeURIComponent(this.searchQuery);
         }
 
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -54,81 +24,64 @@
             console.error('Error:', err);
             this.loading = false;
         });
-    },
-
-    saveStyle() {
-        const token = document.querySelector('input[name=\'_token\']')?.value;
-        let formData = { ...this.styleData };
-
-        fetch(this.formAction, {
-            method: this.isEdit ? 'PUT' : 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': token
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Validation Error');
-            return response.json();
-        })
-        .then(data => {
-            this.openModal = false;
-            this.fetchStyles();
-            if (typeof toastr !== 'undefined') toastr.success(data.message || 'Success');
-        })
-        .catch(err => alert('Failed to save unit. Please check inputs.'));
     }
 }" x-init="fetchStyles()">
 
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <div class="space-y-6">
             <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">Style Master</h2>
-                <a href="{{ route('tenant.inventory.styles.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
-                    + Add Style
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Style Master Data Feed</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
+                </div>
+                <a href="{{ route('tenant.inventory.styles.create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                    + Add New Style
                 </a>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500 uppercase">ERP Standard Measurement Feed</span>
-                    <input type="text" x-model="searchQuery" @input.debounce.500ms="fetchStyles()" placeholder="Search styles..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Registered Garment Profiles</span>
+                    <input type="text" x-model="searchQuery" @input.debounce.500ms="fetchStyles()" placeholder="Search style code or name..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
                 </div>
                 
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
-                            <th class="p-4">Name</th>
+                        <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-[11px] font-bold uppercase tracking-wider">
                             <th class="p-4">Style Code</th>
+                            <th class="p-4">Style Name</th>
+                            <th class="p-4">Buyer</th>
+                            <th class="p-4">Season</th>
+                            <th class="p-4 text-right">Target Price</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
+                    <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
                         <template x-if="loading">
-                            <tr><td colspan="5" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Loading Styles...</td></tr>
+                            <tr><td colspan="6" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching global style profiles...</td></tr>
                         </template>
 
                         <template x-if="!loading && styles.length === 0">
-                            <tr><td colspan="5" class="p-4 text-center text-gray-400">No styles found.</td></tr>
+                            <tr><td colspan="6" class="p-4 text-center text-gray-400">No matching style master profiles found.</td></tr>
                         </template>
 
                         <template x-if="!loading && styles.length > 0">
                             <template x-for="(style, index) in styles" :key="style.id || index">
-                                <template x-if="style && style.id">
-                                    <tr class="hover:bg-gray-50 transition">
-                                        <td class="p-4 font-bold text-indigo-600 font-mono" x-text="style.name"></td>
-                                        <td class="p-4 font-semibold text-gray-900" x-text="style.code"></td>
-                                        <td class="p-4 text-center space-x-1">
-                                            <button @click="editStyle(style)" class="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded hover:bg-indigo-50 hover:text-indigo-600 font-semibold transition">Edit</button>
-                                            <button @click="if(confirm('Are you sure?')) document.getElementById('del-style-' + style.id).submit()" class="bg-gray-100 text-red-600 text-xs px-3 py-1.5 rounded hover:bg-red-50 font-semibold transition">Delete</button>
-                                            <form :id="'del-style-' + style.id" :action="'/inventory/styles/delete/' + style.id" method="POST" class="hidden">
-                                                @csrf
-                                            </form>
-                                        </td>
-                                    </tr>
-                                </template>
+                                <tr class="hover:bg-gray-50/80 transition">
+                                    <td class="p-4 font-bold text-indigo-600 font-mono" x-text="style.style_code"></td>
+                                    <td class="p-4 font-medium text-gray-900" x-text="style.style_name"></td>
+                                    <td class="p-4 text-gray-500" x-text="style.buyer ? style.buyer.name : 'N/A'"></td>
+                                    <td class="p-4 text-gray-500" x-text="style.season ? style.season.name : 'N/A'"></td>
+                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="'$' + parseFloat(style.target_price).toFixed(4)"></td>
+                                    <td class="p-4 text-center space-x-1">
+                                        <a :href="'/inventory/styles/edit/' + style.id" class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 font-semibold transition">Edit</a>
+                                        <button @click="if(confirm('Are you sure you want to completely delete this style master?')) document.getElementById('del-style-' + style.id).submit()" class="bg-gray-50 border border-slate-200 text-red-600 px-2.5 py-1 rounded-lg hover:bg-red-50 font-semibold transition">Delete</button>
+                                        <form :id="'del-style-' + style.id" :action="'/inventory/styles/delete/' + style.id" method="POST" class="hidden">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    </td>
+                                </tr>
                             </template>
                         </template>
                     </tbody>
@@ -136,7 +89,5 @@
             </div>
         </div>
     </div>
-
-    @include('slices.style-modal')
 </div>
 @endsection

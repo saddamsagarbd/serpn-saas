@@ -14,6 +14,7 @@ use App\Http\Controllers\Tenant\{
     SalesController,
     PurchaseController,
     AccountController,
+    BuyerController,
     HrmController,
     CrmController,
     WebsiteController,
@@ -26,6 +27,7 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
+    SeasonController,
     SupplierController
 };
 
@@ -77,6 +79,21 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('units/store', [UnitController::class, 'store'])->name('units.store');
                 Route::put('units/update/{id}', [UnitController::class, 'update'])->name('units.update');
                 Route::post('units/delete/{id}', [UnitController::class, 'delete'])->name('units.destroy');
+
+                // Sizes
+                Route::get('sizes', [UnitController::class, 'index'])->name('sizes');                
+                Route::post('sizes/store', [UnitController::class, 'store'])->name('sizes.store');
+                Route::put('sizes/update/{id}', [UnitController::class, 'update'])->name('sizes.update');
+                Route::post('sizes/delete/{id}', [UnitController::class, 'delete'])->name('sizes.destroy');
+
+                // Buyers Routes
+                Route::get('/buyers', [BuyerController::class, 'index'])->name('buyers');
+                Route::post('/buyers/store', [BuyerController::class, 'store'])->name('buyers.store');
+                Route::put('/buyers/{id}/update', [BuyerController::class, 'update'])->name('buyers.update');
+
+                // Seasons Routes
+                Route::get('/seasons', [SeasonController::class, 'index'])->name('seasons');
+                Route::post('/seasons/store', [SeasonController::class, 'store'])->name('seasons.store');
 
                 // Style
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');
