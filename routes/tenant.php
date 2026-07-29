@@ -28,6 +28,7 @@ use App\Http\Controllers\Tenant\{
     VoucherController,
     FebricController,
     SeasonController,
+    SizeChartController,
     SupplierController
 };
 
@@ -81,10 +82,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('units/delete/{id}', [UnitController::class, 'delete'])->name('units.destroy');
 
                 // Sizes
-                Route::get('sizes', [UnitController::class, 'index'])->name('sizes');                
-                Route::post('sizes/store', [UnitController::class, 'store'])->name('sizes.store');
-                Route::put('sizes/update/{id}', [UnitController::class, 'update'])->name('sizes.update');
-                Route::post('sizes/delete/{id}', [UnitController::class, 'delete'])->name('sizes.destroy');
+                Route::get('sizes', [SizeChartController::class, 'index'])->name('sizes');                
+                Route::post('sizes/store', [SizeChartController::class, 'store'])->name('sizes.store');
+                Route::put('sizes/update/{id}', [SizeChartController::class, 'update'])->name('sizes.update');
 
                 // Buyers Routes
                 Route::get('/buyers', [BuyerController::class, 'index'])->name('buyers');
