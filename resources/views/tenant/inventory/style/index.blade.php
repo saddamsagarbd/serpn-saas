@@ -68,11 +68,11 @@
                         <template x-if="!loading && styles.length > 0">
                             <template x-for="(style, index) in styles" :key="style.id || index">
                                 <tr class="hover:bg-gray-50/80 transition">
-                                    <td class="p-4 font-bold text-indigo-600 font-mono" x-text="style.style_code"></td>
+                                    <td class="p-4 font-bold text-indigo-600 font-mono" x-text="style.style_number"></td>
                                     <td class="p-4 font-medium text-gray-900" x-text="style.style_name"></td>
                                     <td class="p-4 text-gray-500" x-text="style.buyer ? style.buyer.name : 'N/A'"></td>
                                     <td class="p-4 text-gray-500" x-text="style.season ? style.season.name : 'N/A'"></td>
-                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="'$' + parseFloat(style.target_price).toFixed(4)"></td>
+                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="'$' + parseFloat(style.costing.target_fob).toFixed(4)"></td>
                                     <td class="p-4 text-center space-x-1">
                                         <a :href="'/inventory/styles/edit/' + style.id" class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 font-semibold transition">Edit</a>
                                         <button @click="if(confirm('Are you sure you want to completely delete this style master?')) document.getElementById('del-style-' + style.id).submit()" class="bg-gray-50 border border-slate-200 text-red-600 px-2.5 py-1 rounded-lg hover:bg-red-50 font-semibold transition">Delete</button>

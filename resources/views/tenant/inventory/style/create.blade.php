@@ -43,7 +43,7 @@
                 </select>
             </div>
             <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Target Price ($)</label>
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Target Price (<span x-text="currencySymbol"></span>)</label>
                 <input type="number" step="0.0001" x-model.number="targetPrice" placeholder="0.0000" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 font-bold font-mono focus:outline-none focus:border-indigo-500">
             </div>
         </div>
@@ -60,8 +60,9 @@
                             <th class="p-3 w-1.5/12">Color Context</th>
                             <th class="p-3 w-1.5/12">Size Chart</th>
                             <th class="p-3 w-1.5/12 text-right">Consumption</th>
-                            <th class="p-3 w-1.5/12 text-right">Unit Price ($)</th>
-                            <th class="p-3 w-1.5/12 text-right">Total Cost ($)</th>
+                            <!-- <th class="p-3 w-1.5/12 text-right">Unit</th> -->
+                            <th class="p-3 w-1.5/12 text-right">Unit Price (<span x-text="currencySymbol"></span>)</th>
+                            <th class="p-3 w-1.5/12 text-right">Total Cost (<span x-text="currencySymbol"></span>)</th>
                             <th class="p-3 w-0.5/12 text-center">Action</th>
                         </tr>
                     </thead>
@@ -96,6 +97,14 @@
                                 <td class="p-2.5">
                                     <input type="number" step="0.01" min="0" placeholder="0.00" x-model.number="item.qty" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                 </td>
+                                <!-- <td class="p-2.5">
+                                    <select x-model="item.size_id" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <option value="">Select Size Chart</option>
+                                        @foreach($units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td> -->
                                 <td class="p-2.5">
                                     <input type="number" step="0.0001" min="0" placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                 </td>
@@ -110,7 +119,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700 text-xs">
-                            <td colspan="4" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Material Est:</td>
+                            <td colspan="4" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Material Est (<span x-text="currencySymbol"></span>)</td>
                             <td class="p-3 text-right font-mono text-indigo-600" x-text="grandQty.toFixed(2)"></td>
                             <td></td>
                             <td class="p-3 text-right font-mono text-emerald-600" x-text="grandTotal"></td>
@@ -125,7 +134,7 @@
         </div>
 
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.inventory.styles.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.inventory.styles') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
                 <span x-text="isSaving ? 'Saving Master...' : 'Save Style Master'"></span>
             </button>
@@ -143,10 +152,16 @@ function styleCreationApp() {
         buyerId: '',
         seasonId: '',
         targetPrice: '',
+        currency: 'USD', // <-- Add this default state
+        currencySymbol: '$', // <-- Add this helper state
         isSaving: false,
         items: [
             { item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' }
         ],
+        updateCurrency(val) {
+            this.currency = val;
+            this.currencySymbol = (val === 'TAKA' || val === 'BDT') ? '৳' : '$';
+        },
 
         addItem() {
             this.items.push({ item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' });
@@ -188,10 +203,11 @@ function styleCreationApp() {
             })
             .then(response => response.json())
             .then(data => {
+                console.log(data);
                 this.isSaving = false;
                 if (data.success) {
-                    alert(data.message || "Style master data loaded perfectly.");
-                    window.location.href = "{{ route('tenant.inventory.styles.index') }}";
+                    toastr.success(data.message || "Style master data loaded perfectly.")
+                    window.location.href = "{{ route('tenant.inventory.styles') }}";
                 } else {
                     alert("Execution Error: " + data.message);
                 }

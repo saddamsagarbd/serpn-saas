@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('styles', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id')->index();
-            $table->string('style_code')->unique(); // e.g., H57-TS-001
-            $table->string('style_name'); // e.g., MENS TEE / Ladies Denim Jacket
+            $table->string('tenant_id')->index(); // Multi-tenant scoping
             $table->foreignId('buyer_id')->constrained('buyers')->onDelete('cascade');
             $table->foreignId('season_id')->constrained('seasons')->onDelete('cascade');
-            $table->decimal('target_price', 10, 4)->default(0.0000);
-            $table->string('image')->nullable(); // Garment Sketch Photo
+            $table->string('style_number')->index();          // e.g., H57-TS-001
+            $table->string('product_name');                  // e.g., Ladies Denim Jacket
+            $table->decimal('target_price', 12, 4)->default(0.0000);
+            $table->string('product_image')->nullable();                  // e.g., Ladies Denim Jacket
+            $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
         });
     }
