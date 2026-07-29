@@ -94,6 +94,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 // Seasons Routes
                 Route::get('/seasons', [SeasonController::class, 'index'])->name('seasons');
                 Route::post('/seasons/store', [SeasonController::class, 'store'])->name('seasons.store');
+                Route::put('/seasons/{id}/update', [SeasonController::class, 'update'])->name('seasons.update');
 
                 // Style
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');

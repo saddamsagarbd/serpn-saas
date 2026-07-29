@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Season extends Model
 {
+    protected $guarded = [];
     public function style(): HasMany {
         return $this->hasMany(Style::class);
     }
