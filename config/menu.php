@@ -90,37 +90,6 @@ return [
         ],
 
         // =====================================================================
-        // CORE — INVENTORY  (shared skeleton; vertical-only leaves tagged)
-        // =====================================================================
-        'order' => [
-            'label' => 'Order Management',
-            'icon' => 'package',
-            'enabled' => true,
-            'business_types' => ['*'],
-            'items' => [
-                [
-                    'label' => 'Buyer Orders',
-                    'icon' => 'package',
-                    'route' => 'tenant.order.index',
-                    'enabled' => true,
-                    'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
-                ],
-                // ['sub' => [
-                //     'label' => 'Stock',
-                //     'icon' => 'layers',
-                //     'enabled' => true,
-                //     'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
-                //     'items' => [
-                //         ['label' => 'Stock Ledger',      'route' => 'tenant.inventory.stock',       'enabled' => true, 'business_types' => ['*']],
-                //         ['label' => 'Stock Adjustment',  'route' => 'tenant.inventory.stock.entry', 'enabled' => true, 'business_types' => ['*']],
-                //         ['label' => 'Stock Transfer',    'route' => 'tenant.inventory.stock.transfer', 'enabled' => true, 'business_types' => ['*']],
-                //         ['label' => 'Barcode',           'route' => 'tenant.inventory.barcode',     'enabled' => true, 'business_types' => ['merchandising', 'general_retail']],
-                //     ],
-                // ]],
-            ],
-        ],
-
-        // =====================================================================
         // GARMENT VERTICAL — Merchandising
         // =====================================================================
         'merchandising' => [
@@ -191,7 +160,8 @@ return [
             'enabled' => true,
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
-                ['label' => 'Purchase Order',   'route' => 'tenant.purchase.purchase',    'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Buyer Order',   'route' => 'tenant.purchase.buyer.index',    'enabled' => true, 'business_types' => ['*']],
+                // ['label' => 'Purchase Order',   'route' => 'tenant.purchase.index',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],

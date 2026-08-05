@@ -144,17 +144,13 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
             });
 
-            // ---- Order Management ----
-            Route::prefix('order')->name('orders.')->middleware('feature:order')->group(function () {
-                Route::get('/', [OrderController::class, 'index'])->name('index');
-                
-            });
-
             // ---- Purchase ----
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
-                Route::get('/', [PurchaseController::class, 'index'])->name('purchase');
-                Route::get('/purchase-form', [PurchaseController::class, 'purchaseForm'])->name('form');
-                Route::post('/po-create', [PurchaseController::class, 'poCreate'])->name('store');
+                Route::get('/sales-order', [PurchaseController::class, 'index'])->name('buyer.index');
+                Route::get('/sales-order-create', [PurchaseController::class, 'salesOrder'])->name('buyer.sales-order-create');
+                Route::post('/sales-order-post', [PurchaseController::class, 'salesOrderCreate'])->name('buyer.sales-order-store');
+                Route::get('/sales-order-details/{id}', [PurchaseController::class, 'salesOrderDetails'])->name('buyer.sales-order-details');
+                Route::get('/sales-order-edit/{id}', [PurchaseController::class, 'salesOrderEdit'])->name('buyer.sales-order-edit');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
