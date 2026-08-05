@@ -2,18 +2,41 @@
 @section('title', 'Create Style Master')
 @section('content')
 
-<div x-data="styleCreationApp()" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+<div x-data="styleCreationApp({{ json_encode([
+    'isEdit' => isset($style),
+    'id' => isset($style) ? $style->id : null,
+    'style_code' => isset($style) ? $style->style_number : '',
+    'style_name' => isset($style) ? $style->product_name : '',
+    'buyer_id' => isset($style) ? $style->buyer_id : '',
+    'season_id' => isset($style) ? $style->season_id : '',
+    'target_price' => isset($style) && $style->costing ? $style->costing->target_fob : '',
+    'currency' => isset($style) && $style->costing ? $style->costing->currency : 'USD',
+    'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
+        ? $style->costing->bomItems->map(function($item) {
+            return [
+                'item_name' => $item->item_description,
+                'item_type' => strtolower($item->category) === 'fabric' ? 'fabric' : 'trim',
+                'color_id' => $item->color_id ?? '',
+                'size_id' => $item->size_id ?? '',
+                'qty' => $item->consumption,
+                'cost' => $item->unit_price
+            ];
+          }) 
+        : [['item_name' => '', 'item_type' => 'fabric', 'color_id' => '', 'size_id' => '', 'qty' => '', 'cost' => '']]
+]) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
     
-    <!-- টপবার -->
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/40">
         <div>
-            <h4 class="text-base font-bold text-slate-900">New Style Creation Wizard</h4>
-            <p class="text-xs text-slate-400 mt-0.5">Define your core style master parameters and constituent components.</p>
+            <h4 class="text-base font-bold text-slate-900" x-text="isEdit ? 'Modify Style Master Specification' : 'New Style Creation Wizard'"></h4>
+            <p class="text-xs text-slate-400 mt-0.5" x-text="isEdit ? 'Edit core parameters and update raw material BOM requirements.' : 'Define your core style master parameters and constituent components.'"></p>
         </div>
     </div>
 
     <form @submit.prevent="submitForm" class="p-6 space-y-5">
         @csrf
+        <template x-if="isEdit">
+            <input type="hidden" name="_method" value="PUT">
+        </template>
         <!-- ইনফরমেশন মেটা ব্লক (Header Info) -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-5 p-4 bg-slate-50/60 rounded-xl border border-slate-200/60">
             <div class="space-y-1.5">
@@ -145,19 +168,19 @@
 
 @push('scripts')
 <script>
-function styleCreationApp() {
+function styleCreationApp(initialData) {
     return {
-        styleCode: '',
-        styleName: '',
-        buyerId: '',
-        seasonId: '',
-        targetPrice: '',
-        currency: 'USD', // <-- Add this default state
-        currencySymbol: '$', // <-- Add this helper state
+        isEdit: initialData.isEdit,
+        styleId: initialData.id,
+        styleCode: initialData.style_code,
+        styleName: initialData.style_name,
+        buyerId: initialData.buyer_id,
+        seasonId: initialData.season_id,
+        targetPrice: initialData.target_price,
+        currency: initialData.currency,
+        currencySymbol: (initialData.currency === 'TAKA' || initialData.currency === 'BDT') ? '৳' : '$',
         isSaving: false,
-        items: [
-            { item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' }
-        ],
+        items: initialData.items,
         updateCurrency(val) {
             this.currency = val;
             this.currencySymbol = (val === 'TAKA' || val === 'BDT') ? '৳' : '$';
@@ -186,27 +209,60 @@ function styleCreationApp() {
 
             this.isSaving = true;
 
-            fetch("{{ route('tenant.inventory.styles.store') }}", {
+            let url = '';
+
+            if(this.isEdit){
+                url = "{{ route('tenant.inventory.styles.edit', ['id' => '__id']) }}";
+                url = url.replace('__id', this.styleId);
+            } else {
+                url = "{{ route('tenant.inventory.styles.store') }}";
+            }
+
+            let payload = {
+                style_code: this.styleCode,
+                style_name: this.styleName,
+                buyer_id: this.buyerId,
+                season_id: this.seasonId,
+                target_price: this.targetPrice,
+                items: this.items
+            };
+
+            if (this.isEdit) {
+                payload._method = 'PUT'; // Laravel simulated PUT hook
+            }
+
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    style_code: this.styleCode,
-                    style_name: this.styleName,
-                    buyer_id: this.buyerId,
-                    season_id: this.seasonId,
-                    target_price: this.targetPrice,
-                    items: this.items
-                })
+                body: JSON.stringify(payload)
             })
-            .then(response => response.json())
+            .then(async response => {
+                const data = await response.json();
+                
+                // Handle validation failures (HTTP 422) or server crashes (HTTP 500)
+                if (!response.ok) {
+                    if (response.status === 422) {
+                        // Laravel validation messages live inside data.errors
+                        let errorMessages = Object.values(data.errors).flat().join("\n");
+                        alert("Validation Failed:\n" + errorMessages);
+                    } else {
+                        alert("Server Error: " + (data.message || "Something went wrong."));
+                    }
+                    return null; // Stop execution chain
+                }
+                
+                return data;
+            })
             .then(data => {
-                console.log(data);
+                if (!data) return; // Exit if an error was already handled above
+
                 this.isSaving = false;
                 if (data.success) {
-                    toastr.success(data.message || "Style master data loaded perfectly.")
+                    if (typeof toastr !== 'undefined') toastr.success(data.message || "Style master data loaded perfectly.")
                     window.location.href = "{{ route('tenant.inventory.styles') }}";
                 } else {
                     alert("Execution Error: " + data.message);
@@ -214,8 +270,9 @@ function styleCreationApp() {
             })
             .catch(error => {
                 this.isSaving = false;
-                alert("Transport layer connection error occurred.");
-            });
+                console.error(error);
+                alert("A genuine network or transport layer error occurred.");
+            })
         }
     }
 }

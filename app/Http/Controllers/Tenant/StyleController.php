@@ -9,6 +9,7 @@ use App\Models\Season;
 use App\Models\SizeChart;
 use App\Models\Style;
 use App\Models\Unit;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -54,7 +55,6 @@ class StyleController extends Controller
             'style_code'   => [
                 'required',
                 'string',
-                // Corrects global uniqueness issue by isolating rule evaluation to the current tenant
                 Rule::unique('styles', 'style_number')
                     ->where('tenant_id', tenant('id'))
             ],
@@ -71,6 +71,7 @@ class StyleController extends Controller
             'items.*.color_id'  => 'nullable|exists:color_contexts,id',
             'items.*.size_id'   => 'nullable|exists:size_charts,id',
         ]);
+        
         DB::beginTransaction();
 
         try {
@@ -117,6 +118,7 @@ class StyleController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            dd($e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong.'.$e->getMessage()
@@ -125,24 +127,99 @@ class StyleController extends Controller
 
     }
 
+    public function edit($tenant, String $id)
+    {
+        $style = Style::with(['costing.bomItems'])->where('tenant_id', tenant('id'))->findOrFail($id);
+        $colors = ColorContext::all();
+        $units = Unit::all();
+        $buyers = Buyer::all();
+        $seasons = Season::all();
+        $sizes = SizeChart::all();
+
+        return view('tenant.inventory.style.create', compact('style', 'colors', 'units', 'buyers', 'seasons','sizes'));
+    }
+
+    // --- 2. Process Style & BOM Update ---
     public function update(Request $request, $tenant, String $id)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+        $style = Style::where('tenant_id', tenant('id'))->findOrFail($id);
+
+        $request->validate([
+            'style_code'   => 'required|string|unique:styles,style_number,'.$style->id.',id,tenant_id,'.tenant('id'),
+            'style_name'   => 'required|string|max:255',
+            'buyer_id'     => 'required|exists:buyers,id',
+            'season_id'    => 'required|exists:seasons,id',
+            'target_price' => 'nullable|numeric|min:0',
+            'items'        => 'required|array|min:1',
         ]);
 
-        $unit = Style::findOrFail($id);
-        
-        $unit->update([
-            'name' => $validated['name']
-        ]);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Style updated successfully!'
+        DB::beginTransaction();
+        try {
+            // Update Style Header
+            $style->update([
+                'buyer_id'     => $request->buyer_id,
+                'season_id'    => $request->season_id,
+                'style_number' => trim($request->style_code),
+                'product_name' => trim($request->style_name),
+                'updated_by' => auth()->id()
             ]);
+
+            // Update Target Costing Info
+            $costing = $style->costing;
+            $costing->update([
+                'target_fob' => $request->target_price ?? 0.00,
+            ]);
+
+            // Wipe old BOM items and recreate (cleanest way to update dynamic grids)
+            $costing->bomItems()->delete();
+            foreach ($request->items as $item) {
+                $costing->bomItems()->create([
+                    'tenant_id'   => tenant('id'),
+                    'category' => $item['item_type'],
+                    'item_description' => $item['item_name'],
+                    'consumption' => $item['qty'] ?? 0,
+                    'color_id' => $item['color_id'],
+                    'size_id' => $item['size_id'],
+                    'item_unit' => $item['item_type'] === 'fabric' ? 'Kg' : 'Pcs',
+                    'unit_price' => $item['cost'] ?? 0,
+                    'total_cost' => ($item['qty'] ?? 0) * ($item['cost'] ?? 0)
+                ]);
+            }
+
+            // Tally totals up again
+            $costing->updateCalculatedTotalRmCost();
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Style updated flawlessly!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function show($tenant, String $id)
+    {
+        $style = Style::with(['buyer', 'season', 'costing.bomItems'])
+            ->where('tenant_id', tenant('id'))
+            ->findOrFail($id);
+
+        return view('tenant.inventory.style.show', compact('style'));
+    }
+
+    public function exportPdf(String $tenant, String $id)
+    {
+        $style = Style::with(['buyer', 'season', 'costing.bomItems.color', 'costing.bomItems.size'])
+            ->where('tenant_id', tenant('id'))
+            ->findOrFail($id);
+
+        // Render the view to raw HTML then feed it to DomPDF engine
+        $pdf = Pdf::loadView('tenant.exports.style_costing_pdf', compact('style'))
+                ->setPaper('a4', 'portrait');
+
+        $pdfFileName = 'BOM_' . str_replace(' ', '_', $style->style_number) . '.pdf';
+        
+        // Use stream() to preview in-browser, download() to force save file
+        return $pdf->stream($pdfFileName);
     }
 
     public function delete($tenant, String $id)

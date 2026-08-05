@@ -27,6 +27,7 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
+    OrderController,
     SeasonController,
     SizeChartController,
     SupplierController
@@ -100,8 +101,10 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('styles', [StyleController::class, 'index'])->name('styles');
                 Route::get('styles/create', [StyleController::class, 'createStyle'])->name('styles.create');
                 Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
+                Route::get('styles/{id}/edit', [StyleController::class, 'edit'])->name('styles.edit');
                 Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
-                Route::post('styles/delete/{id}', [StyleController::class, 'delete'])->name('styles.destroy');
+                Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
+                Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
 
                 // Febric Spec
                 Route::get('fabrics', [FebricController::class, 'index'])->name('fabrics');
@@ -139,6 +142,12 @@ Route::domain('{tenant}.serpn-saas.test')
                 
                 // Warehouse setup
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+            });
+
+            // ---- Order Management ----
+            Route::prefix('order')->name('orders.')->middleware('feature:order')->group(function () {
+                Route::get('/', [OrderController::class, 'index'])->name('index');
+                
             });
 
             // ---- Purchase ----

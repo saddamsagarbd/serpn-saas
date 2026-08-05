@@ -110,11 +110,13 @@ function buyerApp() {
             this.isEdit = true;
             let baseUrl = '{{ route("tenant.inventory.buyers.update", ["id" => ":id"]) }}';
             this.formAction = baseUrl.replace(':id', data.id);
+
+            console.log(data);
             
             this.formData = { 
                 id: data.id, 
                 name: data.name ?? '',
-                country: data.country ?? '',
+                country: data.country_id ?? '',
                 contact_person: data.contact_person ?? '',
                 email: data.email ?? '',
             };

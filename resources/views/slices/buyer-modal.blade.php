@@ -44,7 +44,7 @@
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" @click="openModal = false" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 rounded-xl">Cancel</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700">Save Profile</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700">Save Buyer</button>
                 </div>
             </form>
         </div>

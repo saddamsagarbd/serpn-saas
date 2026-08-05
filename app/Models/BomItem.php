@@ -16,4 +16,14 @@ class BomItem extends Model
     {
         return $this->belongsTo(StyleCosting::class, 'style_costing_id');
     }
+
+    public function color(): BelongsTo
+    {
+        return $this->belongsTo(ColorContext::class, 'color_id');
+    }
+
+    public function size(): BelongsTo
+    {
+        return $this->belongsTo(SizeChart::class, 'size_id');
+    }
 }

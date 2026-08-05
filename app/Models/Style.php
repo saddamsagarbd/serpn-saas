@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Style extends Model
@@ -18,6 +19,21 @@ class Style extends Model
     public function costing(): HasOne
     {
         return $this->hasOne(StyleCosting::class, 'style_id');
+    }
+
+    /**
+     * Get all BOM items associated with the style through StyleCosting.
+     */
+    public function bomItems(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            BomItem::class,      // Target Model
+            StyleCosting::class, // Intermediate Model
+            'style_id',          // Foreign key on StyleCosting table...
+            'style_costing_id',  // Foreign key on BomItem table...
+            'id',                // Local key on Style table...
+            'id'                 // Local key on StyleCosting table...
+        );
     }
 
     // একটি স্টাইলের আন্ডারে অনেকগুলো আইটেম/ম্যাটেরিয়াল থাকতে পারে

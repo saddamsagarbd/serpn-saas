@@ -57,6 +57,7 @@ class BuyerController extends Controller
                 $countryList = $countryList->toArray();
             }
         }
+
         return view('tenant.buyers.index', compact('countryList'));
     }
 

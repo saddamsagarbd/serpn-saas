@@ -57,10 +57,10 @@ return [
                         // Garment-only setup items
                         ['label' => 'Buyers',           'route' => 'tenant.inventory.buyers',  'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Seasons',          'route' => 'tenant.inventory.seasons', 'enabled' => true, 'business_types' => ['merchandising']],
-                        ['label' => 'Styles',           'route' => 'tenant.inventory.styles',  'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Size Charts',      'route' => 'tenant.inventory.sizes',   'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics', 'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Color Context',    'route' => 'tenant.inventory.color',   'enabled' => true, 'business_types' => ['merchandising']],
+                        ['label' => 'Styles',           'route' => 'tenant.inventory.styles',  'enabled' => true, 'business_types' => ['merchandising']],
 
                         // Manufacturing-only setup items
                         ['label' => 'Raw Materials',    'route' => 'tenant.inventory.raw-materials',     'enabled' => true, 'business_types' => ['manufacturing']],
@@ -86,6 +86,37 @@ return [
                         ['label' => 'Barcode',           'route' => 'tenant.inventory.barcode',     'enabled' => true, 'business_types' => ['merchandising', 'general_retail']],
                     ],
                 ]],
+            ],
+        ],
+
+        // =====================================================================
+        // CORE — INVENTORY  (shared skeleton; vertical-only leaves tagged)
+        // =====================================================================
+        'order' => [
+            'label' => 'Order Management',
+            'icon' => 'package',
+            'enabled' => true,
+            'business_types' => ['*'],
+            'items' => [
+                [
+                    'label' => 'Buyer Orders',
+                    'icon' => 'package',
+                    'route' => 'tenant.order.index',
+                    'enabled' => true,
+                    'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
+                ],
+                // ['sub' => [
+                //     'label' => 'Stock',
+                //     'icon' => 'layers',
+                //     'enabled' => true,
+                //     'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
+                //     'items' => [
+                //         ['label' => 'Stock Ledger',      'route' => 'tenant.inventory.stock',       'enabled' => true, 'business_types' => ['*']],
+                //         ['label' => 'Stock Adjustment',  'route' => 'tenant.inventory.stock.entry', 'enabled' => true, 'business_types' => ['*']],
+                //         ['label' => 'Stock Transfer',    'route' => 'tenant.inventory.stock.transfer', 'enabled' => true, 'business_types' => ['*']],
+                //         ['label' => 'Barcode',           'route' => 'tenant.inventory.barcode',     'enabled' => true, 'business_types' => ['merchandising', 'general_retail']],
+                //     ],
+                // ]],
             ],
         ],
 
