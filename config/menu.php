@@ -160,7 +160,7 @@ return [
             'enabled' => true,
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
-                ['label' => 'Buyer Order',   'route' => 'tenant.purchase.buyer.index',    'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Sales Order',   'route' => 'tenant.purchase.buyer.index',    'enabled' => true, 'business_types' => ['*']],
                 // ['label' => 'Purchase Order',   'route' => 'tenant.purchase.index',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers',   'enabled' => true, 'business_types' => ['*']],

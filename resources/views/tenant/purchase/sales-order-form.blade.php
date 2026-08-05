@@ -1,21 +1,21 @@
 @extends('layouts.tenant')
-@section('title','Sales Order Entry')
+@section('title', isset($salesOrder) ? 'Edit Sales Order' : 'Sales Order Entry')
 
 @section('content')
-<div x-data="salesOrderApp({{ json_encode($styles) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+<div x-data="salesOrderApp({{ json_encode($styles) }}, {{ json_encode($salesOrder ?? null) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
     
-    <!-- টপবার -->
+    <!-- টপবার (ডাইনামিক টাইটেল) -->
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/40">
         <div>
-            <h4 class="text-base font-bold text-slate-900">New Sales Order Entry</h4>
-            <p class="text-xs text-slate-400 mt-0.5">Create a buyer sales order linked with style matrix, plants, and commercial channels.</p>
+            <h4 class="text-base font-bold text-slate-900" x-text="isEdit ? 'Edit Sales Order #' + buyerPoNumber : 'New Sales Order Entry'"></h4>
+            <p class="text-xs text-slate-400 mt-0.5" x-text="isEdit ? 'Update buyer sales order details and breakdown items.' : 'Create a buyer sales order linked with style matrix, plants, and commercial channels.'"></p>
         </div>
     </div>
 
     <form @submit.prevent="submitOrder" class="p-6 space-y-6">
         @csrf
 
-        <!-- ১. সেলস অর্ডার হেডার সেকশন (Enterprise Header Fields) -->
+        <!-- ১. সেলস অর্ডার হেডার সেকশন -->
         <div class="space-y-4">
             <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">1. Order Header Information</h5>
             
@@ -26,7 +26,7 @@
                     <select x-model="selectedStyleId" @change="onStyleChange" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-500" required>
                         <option value="">-- Choose Master Style --</option>
                         <template x-for="style in availableStyles" :key="style.id">
-                            <option :value="style.id" x-text="style.style_number + ' - ' + (style.product_name || style.name || '')"></option>
+                            <option :value="style.id" :selected="String(style.id) === String(selectedStyleId)" x-text="style.style_number + ' - ' + (style.product_name || style.name || '')"></option>
                         </template>
                     </select>
                 </div>
@@ -180,9 +180,9 @@
 
         <!-- ৩. সাবমিশন অ্যাকশন বার -->
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="#" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.purchase.buyer.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
-                <span x-text="isSaving ? 'Saving Sales Order...' : 'Confirm & Generate Sales Order'"></span>
+                <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update Sales Order' : 'Confirm & Generate Sales Order')"></span>
             </button>
         </div>
     </form>
@@ -191,40 +191,50 @@
 
 @push('scripts')
 <script>
-function salesOrderApp(stylesData) {
+function salesOrderApp(stylesData, editData) {
+    console.log(editData.items[0]?.style_id);
     return {
+        isEdit: !!editData,
+        orderId: editData ? editData.id : null,
         availableStyles: stylesData || [],
-        selectedStyleId: '',
-        buyerName: '',
-        buyerId: '',
+        
+        selectedStyleId: editData ? (editData.items[0]?.style_id || '') : '',
+        buyerName: editData && editData.buyer ? editData.buyer.name : '',
+        buyerId: editData ? editData.buyer_id : '',
         
         // Header Fields
-        salesOrg: 'House 57 Bangladesh',
-        distributionChannel: 'Export',
-        jobMode: 'FOB',
-        division: 'Merchant Team',
-        buyerPoNumber: '',
-        shipToParty: '',
-        poReceivedDate: new Date().toISOString().slice(0, 10),
-        requestedDeliveryDate: '',
-        advanceReceiveDate: '',
-        currency: 'USD',
+        salesOrg: editData ? editData.sales_org : 'House 57 Bangladesh',
+        distributionChannel: editData ? editData.distribution_channel : 'Export',
+        jobMode: editData ? editData.job_mode : 'FOB',
+        division: editData ? editData.division : 'Merchant Team',
+        buyerPoNumber: editData ? editData.buyer_po_number : '',
+        shipToParty: editData ? editData.ship_to_party : '',
+        poReceivedDate: editData ? editData.po_received_date : new Date().toISOString().slice(0, 10),
+        requestedDeliveryDate: editData ? editData.requested_delivery_date : '',
+        advanceReceiveDate: editData ? editData.advance_receive_date : '',
+        currency: editData ? editData.currency : 'USD',
         
         isSaving: false,
 
         // Items Breakdown Matrix
-        items: [
-            { 
+        items: (editData && editData.items && editData.items.length > 0) 
+            ? editData.items.map(item => ({
+                color: item.color || item.color_id || '',
+                size: item.size || item.size_id || '',
+                plant: item.plant || 'Main Factory Unit 1',
+                shipping_point: item.shipping_point || 'Chittagong Port',
+                unit_price: parseFloat(item.unit_price) || 0,
+                quantity: parseInt(item.quantity) || ''
+            }))
+            : [{ 
                 color: '', 
                 size: '', 
                 plant: 'Main Factory Unit 1', 
                 shipping_point: 'Chittagong Port', 
                 unit_price: 0, 
                 quantity: '' 
-            }
-        ],
+            }],
 
-        // Style Change handler
         onStyleChange() {
             const style = this.availableStyles.find(s => s.id == this.selectedStyleId);
             if (style) {
@@ -232,7 +242,6 @@ function salesOrderApp(stylesData) {
                 this.buyerId = style.buyer ? style.buyer.id : null;
                 const defaultPrice = style.costing ? parseFloat(style.costing.target_fob) : 0;
                 
-                // Set default unit price for initial item row
                 this.items.forEach(item => {
                     if(!item.unit_price) item.unit_price = defaultPrice;
                 });
@@ -274,7 +283,6 @@ function salesOrderApp(stylesData) {
 
             this.isSaving = true;
 
-            // Prepare items array with style_id injected
             const formattedItems = this.items.map(item => ({
                 style_id: this.selectedStyleId,
                 color: item.color,
@@ -285,8 +293,20 @@ function salesOrderApp(stylesData) {
                 quantity: item.quantity
             }));
 
-            fetch("{{ route('tenant.purchase.buyer.sales-order-store') }}", {
-                method: 'POST',
+            let targetUrl = "";
+            let httpMethod = "";
+
+            if(this.isEdit){
+                targetUrl = "{{ route('tenant.purchase.buyer.sales-orders-update', ['id' => '__id']) }}";
+                targetUrl = targetUrl.replace('__id', this.orderId);
+                httpMethod = "PUT";
+            }else{
+                targetUrl = "{{ route('tenant.purchase.buyer.sales-order-store') }}";
+                httpMethod = "POST";
+            }
+
+            fetch(targetUrl, {
+                method: httpMethod,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Content-Type': 'application/json',
@@ -311,7 +331,7 @@ function salesOrderApp(stylesData) {
             .then(data => {
                 this.isSaving = false;
                 if(data.success) {
-                    alert("Sales Order created successfully!");
+                    alert(this.isEdit ? "Sales Order updated successfully!" : "Sales Order created successfully!");
                     window.location.href = "{{ route('tenant.purchase.buyer.index') }}";
                 } else {
                     alert("Error: " + data.message);

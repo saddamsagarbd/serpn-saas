@@ -146,11 +146,13 @@ Route::domain('{tenant}.serpn-saas.test')
 
             // ---- Purchase ----
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
-                Route::get('/sales-order', [PurchaseController::class, 'index'])->name('buyer.index');
-                Route::get('/sales-order-create', [PurchaseController::class, 'salesOrder'])->name('buyer.sales-order-create');
-                Route::post('/sales-order-post', [PurchaseController::class, 'salesOrderCreate'])->name('buyer.sales-order-store');
-                Route::get('/sales-order-details/{id}', [PurchaseController::class, 'salesOrderDetails'])->name('buyer.sales-order-details');
-                Route::get('/sales-order-edit/{id}', [PurchaseController::class, 'salesOrderEdit'])->name('buyer.sales-order-edit');
+                Route::get('/sales-order', [SalesController::class, 'index'])->name('buyer.index');
+                Route::get('/sales-order-create', [SalesController::class, 'salesOrder'])->name('buyer.sales-order-create');
+                Route::post('/sales-order-post', [SalesController::class, 'salesOrderCreate'])->name('buyer.sales-order-store');
+                Route::get('/sales-order-details/{id}', [SalesController::class, 'salesOrderDetails'])->name('buyer.sales-order-details');
+                Route::get('/sales-order/{id}/export-pdf', [SalesController::class, 'exportPdf'])->name('sales-order-export-pdf');
+                Route::get('/sales-order-edit/{id}', [SalesController::class, 'salesOrderEdit'])->name('buyer.sales-order-edit');
+                Route::put('/sales-orders-update/{id}', [SalesController::class, 'update'])->name('buyer.sales-orders-update');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
