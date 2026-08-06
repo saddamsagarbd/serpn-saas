@@ -75,8 +75,6 @@
                         <th class="p-4">Item Name</th>
                         <th class="p-4">Category</th>
                         <th class="p-4">UOM</th>
-                        <th class="p-4 text-right">Purchase Price</th>
-                        <th class="p-4 text-right">Sale Price</th>
                         <th class="p-4 text-center">Action</th>
                     </tr>
                 </thead>
@@ -87,8 +85,6 @@
                             <td class="p-4 font-semibold text-slate-800" x-text="item.name"></td>
                             <td class="p-4 text-slate-500" x-text="item.category ? item.category.name : 'N/A'"></td>
                             <td class="p-4 text-slate-500" x-text="item.unit ? item.unit.short_name : 'N/A'"></td>
-                            <td class="p-4 text-right font-mono" x-text="parseFloat(item.purchase_price).toFixed(2)"></td>
-                            <td class="p-4 text-right font-mono" x-text="parseFloat(item.sale_price).toFixed(2)"></td>
                             <td class="p-4 text-center">
                                 <a :href="`{{ route('tenant.inventory.items.index') }}/${item.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
                                     Edit

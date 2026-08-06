@@ -7,7 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ColorContext;
 use App\Models\FabricSpec;
-use App\Models\Item;
+use App\Models\ItemMaster;
 use App\Models\ProductionBatch;
 use App\Models\Style;
 use App\Models\Unit;
@@ -76,7 +76,7 @@ class InventoryController extends Controller
             $perPage = $request->query('per_page', 10);
             $search = $request->query('search', '');
 
-            $query = Item::with(['category', 'unit', 'brand', 'style'])->latest();
+            $query = ItemMaster::with(['category', 'unit', 'brand', 'style'])->latest();
 
             // 🔍 গ্লোবাল সার্চ লজিক
             if (!empty($search)) {

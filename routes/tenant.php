@@ -171,14 +171,14 @@ Route::domain('{tenant}.serpn-saas.test')
             });
 
             // ---- Sales ----
-            // Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
-            //     Route::get('pos', [SalesController::class, 'pos'])->name('pos');
-            //     Route::get('sales', [SalesController::class, 'index'])->name('sales');
-            //     Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
-            //     Route::get('customers', [SalesController::class, 'customers'])->name('customers');
-            //     Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
-            //     Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
-            // });
+            Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
+                Route::get('pos', [SalesController::class, 'pos'])->name('pos');
+                Route::get('sales', [SalesController::class, 'index'])->name('sales');
+                Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
+                Route::get('customers', [SalesController::class, 'customers'])->name('customers');
+                Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
+                Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
+            });
 
             // ---- Accounts ----
             Route::prefix('accounts')->name('accounts.')->middleware('feature:accounts')->group(function () {
