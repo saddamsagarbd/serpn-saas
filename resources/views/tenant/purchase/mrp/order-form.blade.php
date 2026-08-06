@@ -180,7 +180,7 @@
 
         <!-- ৩. সাবমিশন অ্যাকশন বার -->
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.purchase.buyer.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.purchase.mrp.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
                 <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update Sales Order' : 'Confirm & Generate Sales Order')"></span>
             </button>
@@ -191,8 +191,7 @@
 
 @push('scripts')
 <script>
-function salesOrderApp(stylesData, editData) {
-    console.log(editData.items[0]?.style_id);
+function salesOrderApp(stylesData, editData = null) {
     return {
         isEdit: !!editData,
         orderId: editData ? editData.id : null,
@@ -297,11 +296,11 @@ function salesOrderApp(stylesData, editData) {
             let httpMethod = "";
 
             if(this.isEdit){
-                targetUrl = "{{ route('tenant.purchase.buyer.sales-orders-update', ['id' => '__id']) }}";
+                targetUrl = "{{ route('tenant.purchase.mrp.orders-update', ['id' => '__id']) }}";
                 targetUrl = targetUrl.replace('__id', this.orderId);
                 httpMethod = "PUT";
             }else{
-                targetUrl = "{{ route('tenant.purchase.buyer.sales-order-store') }}";
+                targetUrl = "{{ route('tenant.purchase.mrp.order-store') }}";
                 httpMethod = "POST";
             }
 
@@ -332,7 +331,7 @@ function salesOrderApp(stylesData, editData) {
                 this.isSaving = false;
                 if(data.success) {
                     alert(this.isEdit ? "Sales Order updated successfully!" : "Sales Order created successfully!");
-                    window.location.href = "{{ route('tenant.purchase.buyer.index') }}";
+                    window.location.href = "{{ route('tenant.purchase.mrp.index') }}";
                 } else {
                     alert("Error: " + data.message);
                 }

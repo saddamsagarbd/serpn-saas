@@ -27,6 +27,7 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
+    MRPController,
     OrderController,
     SeasonController,
     SizeChartController,
@@ -142,17 +143,19 @@ Route::domain('{tenant}.serpn-saas.test')
                 
                 // Warehouse setup
                 Route::get('warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+                Route::post('/warehouses/store', [WarehouseController::class, 'store'])->name('warehouses.store');
+                Route::put('/warehouses/{id}/update', [WarehouseController::class, 'update'])->name('warehouses.update');
             });
 
             // ---- Purchase ----
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
-                Route::get('/sales-order', [SalesController::class, 'index'])->name('buyer.index');
-                Route::get('/sales-order-create', [SalesController::class, 'salesOrder'])->name('buyer.sales-order-create');
-                Route::post('/sales-order-post', [SalesController::class, 'salesOrderCreate'])->name('buyer.sales-order-store');
-                Route::get('/sales-order-details/{id}', [SalesController::class, 'salesOrderDetails'])->name('buyer.sales-order-details');
-                Route::get('/sales-order/{id}/export-pdf', [SalesController::class, 'exportPdf'])->name('sales-order-export-pdf');
-                Route::get('/sales-order-edit/{id}', [SalesController::class, 'salesOrderEdit'])->name('buyer.sales-order-edit');
-                Route::put('/sales-orders-update/{id}', [SalesController::class, 'update'])->name('buyer.sales-orders-update');
+                Route::get('/mrp-order', [MRPController::class, 'index'])->name('mrp.index');
+                Route::get('/mrp-order-create', [MRPController::class, 'salesOrder'])->name('mrp.order-create');
+                Route::post('/mrp-order-post', [MRPController::class, 'salesOrderCreate'])->name('mrp.order-store');
+                Route::get('/mrp-order-details/{id}', [MRPController::class, 'salesOrderDetails'])->name('mrp.order-details');
+                Route::get('/mrp-order/{id}/export-pdf', [MRPController::class, 'exportPdf'])->name('mrp-order-export-pdf');
+                Route::get('/mrp-order-edit/{id}', [MRPController::class, 'salesOrderEdit'])->name('mrp.order-edit');
+                Route::put('/mrp-orders-update/{id}', [MRPController::class, 'update'])->name('mrp.orders-update');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
@@ -168,14 +171,14 @@ Route::domain('{tenant}.serpn-saas.test')
             });
 
             // ---- Sales ----
-            Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
-                Route::get('pos', [SalesController::class, 'pos'])->name('pos');
-                Route::get('sales', [SalesController::class, 'index'])->name('sales');
-                Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
-                Route::get('customers', [SalesController::class, 'customers'])->name('customers');
-                Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
-                Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
-            });
+            // Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
+            //     Route::get('pos', [SalesController::class, 'pos'])->name('pos');
+            //     Route::get('sales', [SalesController::class, 'index'])->name('sales');
+            //     Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
+            //     Route::get('customers', [SalesController::class, 'customers'])->name('customers');
+            //     Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');
+            //     Route::get('quotation', [SalesController::class, 'quotation'])->name('quotation');
+            // });
 
             // ---- Accounts ----
             Route::prefix('accounts')->name('accounts.')->middleware('feature:accounts')->group(function () {

@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', 'Sales Order List')
+@section('title', 'MRP Order List')
 @section('content')
 
 <div class="space-y-6" x-data="{ 
@@ -9,7 +9,7 @@
 
     fetchOrders() {
         this.loading = true;
-        let url = '{{ route('tenant.purchase.buyer.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
+        let url = '{{ route('tenant.purchase.mrp.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
             url += '?search=' + encodeURIComponent(this.searchQuery);
         }
@@ -31,11 +31,11 @@
         <div class="space-y-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">Sales Order List</h2>
+                    <h2 class="text-xl font-bold text-gray-800">MRP Order List</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
                 </div>
-                <a href="{{ route('tenant.purchase.buyer.sales-order-create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
-                    + Create Sales Order
+                <a href="{{ route('tenant.purchase.mrp.order-create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                    + Create MRP
                 </a>
             </div>
 
@@ -61,18 +61,18 @@
                     </thead>
                     <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
                         <template x-if="loading">
-                            <tr><td colspan="6" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching sales order...</td></tr>
+                            <tr><td colspan="9" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching mrp order...</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length === 0">
-                            <tr><td colspan="6" class="p-4 text-center text-gray-400">No matching sales order found.</td></tr>
+                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No matching mrp order found.</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length > 0">
                             <template x-for="(order, index) in orders" :key="order.id || index">
                                 <tr class="hover:bg-gray-50/80 transition">
                                     <td class="p-4 font-mono">
-                                        <a :href="'/purchase/sales-order-details/' + order.id" 
+                                        <a :href="'/purchase/mrp-order-details/' + order.id" 
                                         class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
                                         x-text="order.buyer_po">
                                         </a>
@@ -88,7 +88,7 @@
                                     
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
                                         <!-- Edit Button -->
-                                        <a :href="'/purchase/sales-order-edit/' + order.id" 
+                                        <a :href="'/purchase/mrp-order-edit/' + order.id" 
                                         class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs cursor-pointer">
                                             Edit
                                         </a>

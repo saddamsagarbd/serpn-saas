@@ -82,7 +82,7 @@ class StyleController extends Controller
                 'season_id' => $request->season_id,
                 'style_number' => $request->style_code,
                 'product_name' => $request->style_name,
-                'created_by' => auth()->id
+                'created_by' => auth()->id()
             ]);
 
             // 2. Save the initial BOM costing sheet instance
@@ -161,7 +161,7 @@ class StyleController extends Controller
                 'season_id'    => $request->season_id,
                 'style_number' => trim($request->style_code),
                 'product_name' => trim($request->style_name),
-                'updated_by' => auth()->id
+                'updated_by' => auth()->id()
             ]);
 
             // Update Target Costing Info

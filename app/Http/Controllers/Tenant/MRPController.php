@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class SalesController extends Controller
+class MRPController extends Controller
 {
     public function index(Request $request) {
         if($request->ajax()){
@@ -57,13 +57,13 @@ class SalesController extends Controller
                 ->make(true);
             
         }
-        return view('tenant.purchase.sales-order');
+        return view('tenant.purchase.mrp.index');
     }
     public function salesOrder() {        
         $styles = Style::with(['buyer', 'season', 'costing'])->where('tenant_id', tenant('id'))->get();
         $colors = ColorContext::get();
         $sizes = SizeChart::get();
-        return view('tenant.purchase.sales-order-form', compact('styles', 'colors', 'sizes'));
+        return view('tenant.purchase.mrp.order-form', compact('styles', 'colors', 'sizes'));
     }
     // Example Format: ORD-202608-0001 (Prefix-YearMonth-Sequential Number)
     public function generateOrderNumber()
@@ -130,7 +130,7 @@ class SalesController extends Controller
                 'requested_delivery_date' => $request->requested_delivery_date,
                 'currency'                => $request->currency ?? 'USD',
                 'status'                  => 'Draft',
-                'created_by'              => auth()->id,
+                'created_by'              => auth()->id(),
             ]);
 
             // ৩. Child Items প্রসেস করা
@@ -201,8 +201,15 @@ class SalesController extends Controller
         $colors = ColorContext::all();
         $sizes = SizeChart::all();
         
-        return view('tenant.purchase.sales-order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
-        
+        return view('tenant.purchase.mrp.order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
+    }
+
+    public function salesOrderDetails(Request $request, $tenant, String $id){
+
+        $salesOrder = SalesOrder::with(['items', 'buyer', 'items.costing.bomItems'])->where('tenant_id', tenant('id'))->findOrFail($id);
+        $bomItems = $salesOrder->items->flatMap->costing->flatMap->bomItems;
+
+        return view('tenant.purchase.mrp.report', compact('salesOrder', 'bomItems'));
     }
 
     public function update(Request $request, $tenant, String $id)
