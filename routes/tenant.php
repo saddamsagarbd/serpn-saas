@@ -69,6 +69,8 @@ Route::domain('{tenant}.serpn-saas.test')
             Route::get('profile', [ProfileController::class, 'index'])->name('profile');
             Route::get('settings', [SettingController::class, 'index'])->name('settings');
 
+            Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
+
             // ---- Inventory ----
             Route::prefix('inventory')->name('inventory.')->middleware('feature:inventory')->group(function () {
                 // Category Master

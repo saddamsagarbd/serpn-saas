@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ItemMaster;
 use App\Models\Tenant;
 
 if (! function_exists('hasFeature')) {
@@ -42,5 +43,21 @@ if (! function_exists('currentTenant')) {
     function currentTenant(): ?Tenant
     {
         return tenant();
+    }
+}
+if (! function_exists('getItemUnit')) {
+    /**
+     * Resolve the tenant for the current request.
+     *
+     * Uses stancl/tenancy's global tenant() helper, which returns the
+     * initialized Tenant instance once the tenancy middleware has run
+     * (e.g. InitializeTenancyByDomain / ByPath), or null outside of a
+     * tenant context (central domain, console, queued jobs without
+     * tenant context, etc.)
+     */
+    function getItemUnit(String $item_id)
+    {
+        $item = ItemMaster::findOrFail($item_id);
+        return $item->unit_id ?? null;
     }
 }

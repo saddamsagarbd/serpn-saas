@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('code')->unique();
+            $table->string('name'); // e.g. Main Fabric Store, Trims Warehouse
+            $table->string('code')->unique(); // e.g. WH-FAB-01
             $table->string('location')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

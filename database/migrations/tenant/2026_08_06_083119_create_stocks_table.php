@@ -13,11 +13,15 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->string('tenant_id')->index();
             $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
             $table->foreignId('item_variant_id')->constrained('item_variants')->onDelete('cascade');
-            $table->decimal('available_qty', 15, 4)->default(0);
-            $table->decimal('reserved_qty', 15, 4)->default(0);
+            
+            $table->decimal('available_qty', 15, 4)->default(0.0000);
+            $table->decimal('reserved_qty', 15, 4)->default(0.0000);
+            
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             // একই Warehouse এ একই Variant এর একাধিক Duplicate Row এড়াতে

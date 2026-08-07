@@ -13,12 +13,23 @@ return new class extends Migration
     {
         Schema::create('item_variants', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->string('tenant_id')->index();
             $table->foreignId('item_master_id')->constrained('item_masters')->onDelete('cascade');
-            $table->string('sku')->unique(); // e.g., RM-FAB-001-BLK-MEDIUM
-            $table->string('color')->nullable(); // Black, White, Multi Color
-            $table->string('size')->nullable(); // Medium, Large, ALL
-            $table->decimal('unit_price', 15, 4)->default(0);
+            
+            // Pattern: Style-Color-Size (e.g., H57-TS-001-BLK-L)
+            $table->string('sku')->unique();
+            
+            // Fixed Foreign Key constraints instead of plain string
+            $table->foreignId('color_id')->nullable()->constrained('color_contexts')->nullOnDelete();
+            $table->foreignId('size_id')->nullable()->constrained('size_charts')->nullOnDelete();
+            
+            // Price Breakdown for PO and SO
+            $table->decimal('purchase_price', 15, 4)->default(0.0000);
+            $table->decimal('sale_price', 15, 4)->default(0.0000);
+            $table->decimal('reorder_level', 15, 2)->default(10.00);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            
             $table->timestamps();
         });
     }

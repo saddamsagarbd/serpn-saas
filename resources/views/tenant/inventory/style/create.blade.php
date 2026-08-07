@@ -1,5 +1,25 @@
 @extends('layouts.tenant')
 @section('title', 'Create Style Master')
+
+@push('styles')
+<style>
+    /* Select2 Tailwind Override */
+    .select2-container--default .select2-selection--single {
+        border-color: #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        height: 34px !important;
+        padding-top: 2px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        font-size: 0.75rem !important;
+        color: #1e293b !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px !important;
+    }
+</style>
+@endpush
+
 @section('content')
 
 <div x-data="styleCreationApp({{ json_encode([
@@ -14,6 +34,7 @@
     'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
         ? $style->costing->bomItems->map(function($item) {
             return [
+                'item_id' => $item->item_id ?? '',
                 'item_name' => $item->item_description,
                 'item_type' => strtolower($item->category) === 'fabric' ? 'fabric' : 'trim',
                 'color_id' => $item->color_id ?? '',
@@ -22,7 +43,7 @@
                 'cost' => $item->unit_price
             ];
           }) 
-        : [['item_name' => '', 'item_type' => 'fabric', 'color_id' => '', 'size_id' => '', 'qty' => '', 'cost' => '']]
+        : [['item_id' => '', 'item_name' => '', 'item_type' => 'fabric', 'color_id' => '', 'size_id' => '', 'qty' => '', 'cost' => '']]
 ]) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
     
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/40">
@@ -37,7 +58,8 @@
         <template x-if="isEdit">
             <input type="hidden" name="_method" value="PUT">
         </template>
-        <!-- ইনফরমেশন মেটা ব্লক (Header Info) -->
+
+        <!-- Header Info -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-5 p-4 bg-slate-50/60 rounded-xl border border-slate-200/60">
             <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Style Code *</label>
@@ -71,20 +93,18 @@
             </div>
         </div>
 
-        <!-- বাল্ক উপাদান/উপাদান গ্রিড টেবিল (Fabric & Trims Grid) -->
+        <!-- BOM Components Grid -->
         <div class="space-y-3">
             <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Initial BOM Components / Item Lines</h5>
             <div class="border border-slate-200/80 rounded-xl overflow-hidden shadow-sm bg-white">
                 <table class="w-full text-left border-collapse table-fixed">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                            <th class="p-3 pl-4 w-3/12">Component Item</th>
-                            <th class="p-3 w-1.5/12">Item Type</th>
+                            <th class="p-3 pl-4 w-4/12">Component Item</th> 
                             <th class="p-3 w-1.5/12">Color Context</th>
                             <th class="p-3 w-1.5/12">Size Chart</th>
-                            <th class="p-3 w-1.5/12 text-right">Consumption</th>
-                            <!-- <th class="p-3 w-1.5/12 text-right">Unit</th> -->
-                            <th class="p-3 w-1.5/12 text-right">Unit Price (<span x-text="currencySymbol"></span>)</th>
+                            <th class="p-3 w-1/12 text-right">Consumption</th>
+                            <th class="p-3 w-1/12 text-right">Unit Price (<span x-text="currencySymbol"></span>)</th>
                             <th class="p-3 w-1.5/12 text-right">Total Cost (<span x-text="currencySymbol"></span>)</th>
                             <th class="p-3 w-0.5/12 text-center">Action</th>
                         </tr>
@@ -93,12 +113,10 @@
                         <template x-for="(item, index) in items" :key="index">
                             <tr>
                                 <td class="p-2.5 pl-4">
-                                    <input type="text" x-model="item.item_name" placeholder="Shell Fabric, Button..." class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
-                                </td>
-                                <td class="p-2.5">
-                                    <select x-model="item.item_type" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
-                                        <option value="fabric">Fabric</option>
-                                        <option value="trim">Trims / Accessories</option>
+                                    <select 
+                                        x-init="initSelect2($el, item)" 
+                                        class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <option value="">Search & Select Item Master...</option>
                                     </select>
                                 </td>
                                 <td class="p-2.5">
@@ -120,14 +138,6 @@
                                 <td class="p-2.5">
                                     <input type="number" step="0.01" min="0" placeholder="0.00" x-model.number="item.qty" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                 </td>
-                                <!-- <td class="p-2.5">
-                                    <select x-model="item.size_id" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
-                                        <option value="">Select Size Chart</option>
-                                        @foreach($units as $unit)
-                                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </td> -->
                                 <td class="p-2.5">
                                     <input type="number" step="0.0001" min="0" placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                 </td>
@@ -142,7 +152,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700 text-xs">
-                            <td colspan="4" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Material Est (<span x-text="currencySymbol"></span>)</td>
+                            <td colspan="3" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Material Est (<span x-text="currencySymbol"></span>)</td>
                             <td class="p-3 text-right font-mono text-indigo-600" x-text="grandQty.toFixed(2)"></td>
                             <td></td>
                             <td class="p-3 text-right font-mono text-emerald-600" x-text="grandTotal"></td>
@@ -181,14 +191,54 @@ function styleCreationApp(initialData) {
         currencySymbol: (initialData.currency === 'TAKA' || initialData.currency === 'BDT') ? '৳' : '$',
         isSaving: false,
         items: initialData.items,
-        updateCurrency(val) {
-            this.currency = val;
-            this.currencySymbol = (val === 'TAKA' || val === 'BDT') ? '৳' : '$';
+
+        initSelect2(el, item) {
+            this.$nextTick(() => {
+                const $el = $(el);
+
+                $el.select2({
+                    placeholder: "Search Component Item...",
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: "{{ route('tenant.api.item_masters.search') }}",
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return { q: params.term || '' };
+                        },
+                        processResults: function (data) {
+                            return { results: data.results };
+                        },
+                        cache: true
+                    },
+                });
+
+                if (item.item_id && item.item_name) {
+                    let option = new Option(item.item_name, item.item_id, true, true);
+                    $el.append(option).trigger('change');
+                }
+
+                $el.on('select2:select', (e) => {
+                    const selectedData = e.params.data;
+                    item.item_id = selectedData.id;
+                    item.item_name = selectedData.name || selectedData.text;
+                    if (selectedData.item_type) {
+                        item.item_type = selectedData.item_type;
+                    }
+                });
+
+                $el.on('select2:unselect', () => {
+                    item.item_id = '';
+                    item.item_name = '';
+                });
+            });
         },
 
         addItem() {
-            this.items.push({ item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' });
+            this.items.push({ item_id: '', item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' });
         },
+
         removeItem(index) {
             if (this.items.length > 1) this.items.splice(index, 1);
         },
@@ -196,6 +246,7 @@ function styleCreationApp(initialData) {
         get grandQty() {
             return this.items.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
         },
+
         get grandTotal() {
             const total = this.items.reduce((sum, item) => sum + ((parseFloat(item.qty) || 0) * (parseFloat(item.cost) || 0)), 0);
             return total.toFixed(4);
@@ -209,14 +260,9 @@ function styleCreationApp(initialData) {
 
             this.isSaving = true;
 
-            let url = '';
-
-            if(this.isEdit){
-                url = "{{ route('tenant.inventory.styles.edit', ['id' => '__id']) }}";
-                url = url.replace('__id', this.styleId);
-            } else {
-                url = "{{ route('tenant.inventory.styles.store') }}";
-            }
+            let url = this.isEdit 
+                ? "{{ route('tenant.inventory.styles.update', ['id' => '__id']) }}".replace('__id', this.styleId)
+                : "{{ route('tenant.inventory.styles.store') }}";
 
             let payload = {
                 style_code: this.styleCode,
@@ -228,7 +274,7 @@ function styleCreationApp(initialData) {
             };
 
             if (this.isEdit) {
-                payload._method = 'PUT'; // Laravel simulated PUT hook
+                payload._method = 'PUT';
             }
 
             fetch(url, {
@@ -242,27 +288,22 @@ function styleCreationApp(initialData) {
             })
             .then(async response => {
                 const data = await response.json();
-                
-                // Handle validation failures (HTTP 422) or server crashes (HTTP 500)
                 if (!response.ok) {
                     if (response.status === 422) {
-                        // Laravel validation messages live inside data.errors
                         let errorMessages = Object.values(data.errors).flat().join("\n");
                         alert("Validation Failed:\n" + errorMessages);
                     } else {
                         alert("Server Error: " + (data.message || "Something went wrong."));
                     }
-                    return null; // Stop execution chain
+                    return null;
                 }
-                
                 return data;
             })
             .then(data => {
-                if (!data) return; // Exit if an error was already handled above
-
+                if (!data) return;
                 this.isSaving = false;
                 if (data.success) {
-                    if (typeof toastr !== 'undefined') toastr.success(data.message || "Style master data loaded perfectly.")
+                    if (typeof toastr !== 'undefined') toastr.success(data.message || "Saved successfully.");
                     window.location.href = "{{ route('tenant.inventory.styles') }}";
                 } else {
                     alert("Execution Error: " + data.message);
@@ -272,9 +313,9 @@ function styleCreationApp(initialData) {
                 this.isSaving = false;
                 console.error(error);
                 alert("A genuine network or transport layer error occurred.");
-            })
+            });
         }
-    }
+    };
 }
 </script>
 @endpush

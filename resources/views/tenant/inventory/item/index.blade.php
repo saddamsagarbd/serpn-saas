@@ -47,15 +47,6 @@
                     @input="page = 1; fetchItems()"
                     placeholder="Search SKU or Name..." 
                     class="border border-slate-200 rounded-xl text-xs px-3 py-2 focus:outline-none focus:border-indigo-500 w-full sm:w-64 font-semibold">
-                <form action="{{ route('tenant.inventory.items.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2 border-l pl-4 border-gray-200">
-                    @csrf
-                    <input type="file" name="file" required class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"/>
-                    
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        Import Bulk Items
-                    </button>
-                </form>
                 <a href="{{ route('tenant.inventory.item.create') }}" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-indigo-700 shadow-sm text-xs whitespace-nowrap transition">
                     + Add Item
                 </a>
@@ -71,19 +62,19 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
-                        <th class="p-4">SKU / Code</th>
+                        <th class="p-4">Code</th>
                         <th class="p-4">Item Name</th>
-                        <th class="p-4">Category</th>
-                        <th class="p-4">UOM</th>
+                        <th class="p-4">Item Type</th>
+                        <th class="p-4">Unit</th>
                         <th class="p-4 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
                     <template x-for="item in items" :key="item.id">
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="p-4 font-mono font-bold text-slate-600" x-text="item.sku"></td>
+                            <td class="p-4 font-mono font-bold text-slate-600" x-text="item.code"></td>
                             <td class="p-4 font-semibold text-slate-800" x-text="item.name"></td>
-                            <td class="p-4 text-slate-500" x-text="item.category ? item.category.name : 'N/A'"></td>
+                            <td class="p-4 text-slate-500" x-text="item.item_type ?? 'N/A'"></td>
                             <td class="p-4 text-slate-500" x-text="item.unit ? item.unit.short_name : 'N/A'"></td>
                             <td class="p-4 text-center">
                                 <a :href="`{{ route('tenant.inventory.items.index') }}/${item.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">

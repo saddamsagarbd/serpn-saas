@@ -13,3 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ৩. লাইভওয়্যার বুটস্ট্র্যাপ রান করুন
 Livewire.start();
+
+import $ from 'jquery';
+window.$ = window.jQuery = $;
+
+$.isArray = Array.isArray;
+
+import select2 from 'select2';
+select2();
+
+import 'select2/dist/css/select2.min.css';

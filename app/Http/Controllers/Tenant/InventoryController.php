@@ -8,9 +8,11 @@ use App\Models\Category;
 use App\Models\ColorContext;
 use App\Models\FabricSpec;
 use App\Models\ItemMaster;
+use App\Models\ItemVarient;
 use App\Models\ProductionBatch;
 use App\Models\Style;
 use App\Models\Unit;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -82,10 +84,7 @@ class InventoryController extends Controller
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('sku', 'LIKE', "%{$search}%")
-                    ->orWhereHas('category', function($catQ) use ($search) {
-                        $catQ->where('name', 'LIKE', "%{$search}%");
-                    });
+                    ->orWhere('code', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -98,115 +97,117 @@ class InventoryController extends Controller
     }
     public function itemCreate(){
         // ১. আপনার এক্সিসটিং মেটা-ডাটা কোয়েরি সমূহ
-        $styles        = Style::where('status', 'active')->get();
-        $fabSpec       = FabricSpec::all();
-        $colorContexts = ColorContext::all();
-        $brands        = Brand::where('status', 'active')->get();
-        $categories    = Category::all();
         $units         = Unit::all();
 
-        // ⚡ ২. ফ্রন্টএন্ড প্রিভিউয়ের জন্য পরবর্তী ইউনিক SKU জেনারেশন লজিক
         $currentYear = date('Y');
-        $latestItem  = Item::where('sku', 'LIKE', "ITM-{$currentYear}-%")->latest('id')->first();
+        $latestItem  = ItemVarient::where('sku', 'LIKE', "ITM-{$currentYear}-%")->latest('id')->first();
         $nextSequence = $latestItem ? ((int) substr($latestItem->sku, -4)) + 1 : 1;
         
         // যেমন: ITM-2026-0005
         $nextSkuPreview = 'ITM-' . $currentYear . '-' . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-        return view('tenant.inventory.item.entry', compact('categories', 'units', 'styles', 'fabSpec', 'colorContexts', 'brands', 'nextSkuPreview'));
+        return view('tenant.inventory.item.entry', compact('units', 'nextSkuPreview'));
     }
 
     // ৩. ডাটাবেজে আইটেম মাস্টার সেভ করা
     public function itemStore(Request $request) {
 
-        // ভ্যালিডেশন (sku ফিল্ড রিকোয়ার্ড রাখার দরকার নেই কারণ আমরা নিজেরা জেনারেট করব)
         $request->validate([            
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'unit_id' => 'required|exists:units,id',
-            'purchase_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-            'style_no' => 'nullable|string',
-            'fabric_code' => 'nullable|string',
-            'color' => 'nullable|string',
-            'brand' => 'nullable|string',
+            'item_name' => 'required|string|max:255',
+            'item_type' => 'required|string',
         ]);
 
-        // 🛡️ ডাবল প্রটেকশন: ব্যাকএন্ডে রিয়েল-টাইম ইউনিক SKU জেনারেশন
-        $currentYear = date('Y');
-        $latestItem  = Item::where('sku', 'LIKE', "ITM-{$currentYear}-%")->latest('id')->first();
-        $nextSequence = $latestItem ? ((int) substr($latestItem->sku, -4)) + 1 : 1;
+        $tenantId = tenant('id');
+        $now = Carbon::now();
+        $currentUser = auth()->id();
+
+        $typeLower = strtolower(trim($request->item_type));
+    
+        $prefix = match ($typeLower) {
+            'fabric'         => 'FAB',
+            'trims'          => 'TRM',
+            'accessories'    => 'ACC',
+            'chemical'       => 'CHM',
+            'finished-goods' => 'FG',
+            default          => 'ITM',
+        };
+
+        if (empty($request->item_code)) {
+            $nextNumber = ItemMaster::where('tenant_id', $tenantId)
+                ->where('item_type', $typeLower)
+                ->count() + 1;
+
+            $sequence = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $itemCode = "{$prefix}-" . date('Y') . "-{$sequence}";
+        } else {
+            $itemCode = $request->item_code;
+        }       
+
+        DB::beginTransaction();
+        try {
+
+            ItemMaster::create([
+                'tenant_id'   => $tenantId,
+                'code'        => $itemCode,
+                'name'        => $request->item_name,
+                'item_type'   =>  $typeLower,
+                'unit_id'     => $request->unit_id,
+                'created_by'     => $currentUser,
+                'created_at'     => $now,
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => true, 'message'=> 'Master Item registered perfectly.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message'=> 'Something went wrong. Error is:'.$e->getMessage()]);
+        }
+
         
-        $finalSku = 'ITM-' . $currentYear . '-' . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-        $purchasePrice = floatval($request->purchase_price ?? 0);
-        $salePrice     = floatval($request->sale_price ?? 0);
-
-        $rowsToInsert = [
-            'sku'              => $finalSku,
-            'name'             => trim($request->name),
-            'style_id'         => trim($request->style_id),
-            'fabric_spec_id'   => $request->fabric_code, 
-            'color_context_id' => $request->color,      
-            'brand_id'         => $request->brand,
-            'category_id'      => trim($request->category_id),
-            'unit_id'          => trim($request->unit_id ?? 1), // ডাটাবেজে UOM না মিললে ডিফল্ট ID: 1
-            'purchase_price'   => $purchasePrice,
-            'sale_price'       => $salePrice,
-            'stock_qty'        => 0,
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ];
-
-        // ডাটাবেজে ডাটা সেভ
-        Item::create($rowsToInsert);
-
-        return redirect()->route('tenant.inventory.items.index')->with('success', 'Master Item registered perfectly.');
     }
 
     public function itemedit($tenant, string $id)
     {
         // ১. নির্দিষ্ট আইটেমটি খুঁজে বের করা (যদি না পায় তবে 404 ইরর দিবে)
-        $item = Item::findOrFail($id);
+        $item = ItemMaster::findOrFail($id);
         
         // ২. ফর্মের ড্রপডাউনে দেখানোর জন্য বাকি মেটা-ডাটা লোড করা
-        $styles        = Style::all();
-        $fabSpec       = FabricSpec::all();
-        $colorContexts = ColorContext::all();
-        $brands        = Brand::all();
-        $categories    = Category::all();
         $units         = Unit::all();
 
         // ভিউ ফাইলে ডাটা পাস করা (ধরে নিচ্ছি আপনার ব্লেড ফাইলটি edit.blade.php নামে আছে)
         return view('tenant.inventory.item.entry', compact(
-            'item', 'styles', 'fabSpec', 'colorContexts', 'brands', 'categories', 'units'
+            'units', 'item'
         ));
     }
 
     public function itemupdate($tenant, Request $request, string $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'unit_id' => 'required|exists:units,id',
-            'purchase_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
+        $validated = $request->validate([            
+            'item_name' => 'required|string|max:255',
+            'item_type' => 'required|string',
+            'unit_id'   => 'required|integer|exists:units,id', // Adjust table name if different
         ]);
 
-        $item = Item::findOrFail($id);
+        $now = Carbon::now();        
+        $currentUser = auth()->id();
 
-        $item->update([
-            'name' => $request->name,
-            'style_id' => $request->style_id,
-            'fabric_spec_id' => $request->fabric_code,
-            'color_context_id' => $request->color,
-            'brand_id' => $request->brand,
-            'category_id' => $request->category_id,
-            'unit_id' => $request->unit_id,
-            'purchase_price' => $request->purchase_price,
-            'sale_price' => $request->sale_price,
-        ]);
+        $item = ItemMaster::findOrFail($id);
 
-        return redirect()->route('tenant.inventory.items.index')
-            ->with('success', 'Master Item configurations updated perfectly.');
+        $typeLower = strtolower(trim($request->item_type));
+
+        try {
+
+            $item->update([
+                'name'      => $validated['item_name'],
+                'item_type' => $typeLower,
+                'unit_id'   => $validated['unit_id'],
+                'updated_by' => $currentUser,
+                'updated_at' => $now,
+            ]);
+
+            return response()->json(['success' => true, 'message'=> 'Master Item updated perfectly.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message'=> 'Something went wrong. Error is:'.$e->getMessage()]);
+        }
     }
 
     public function downloadSampleCsv(): StreamedResponse
@@ -423,5 +424,30 @@ class InventoryController extends Controller
     }
     public function barcode() {
         return view('tenant.inventory.stock.barcode');
+    }
+
+    public function searchApi(Request $request)
+    {
+        $search = $request->get('q');
+
+        $query = ItemMaster::where('tenant_id', tenant('id'));
+        if(!empty($search)){
+            $query->when($search, function ($query, $search) {
+                return $query->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+            });            
+        }
+        $items = $query->get(['id', 'code', 'name', 'item_type']);
+
+        $results = $items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'text' => ($item->code ? '[' . $item->code . '] ' : '') . $item->name,
+                'name' => $item->name,
+                'item_type' => strtolower($item->item_type) === 'fabric' ? 'fabric' : 'trim'
+            ];
+        });
+
+        return response()->json(['results' => $results]);
     }
 }

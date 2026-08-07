@@ -67,9 +67,11 @@ class StyleController extends Controller
             // Ensure the Alpine array payload is present and structured safely
             'items'        => 'required|array|min:1',
             'items.*.item_name' => 'required|string|max:255',
-            'items.*.item_type' => 'required|in:fabric,trim',
-            'items.*.color_id'  => 'nullable|exists:color_contexts,id',
-            'items.*.size_id'   => 'nullable|exists:size_charts,id',
+            'items.*.item_type' => 'required',
+            'items.*.color_id'  => 'required|exists:color_contexts,id',
+            'items.*.size_id'   => 'required|exists:size_charts,id',
+            'items.*.qty'   => 'required|numeric',
+            'items.*.cost'   => 'required',
         ]);
         
         DB::beginTransaction();
@@ -97,11 +99,12 @@ class StyleController extends Controller
                 $costing->bomItems()->create([
                     'tenant_id'   => tenant('id'),
                     'category' => $item['item_type'],
+                    'item_id' => $item['item_id'],
                     'item_description' => $item['item_name'],
                     'consumption' => $item['qty'] ?? 0,
                     'color_id' => $item['color_id'],
                     'size_id' => $item['size_id'],
-                    'item_unit' => $item['item_type'] === 'fabric' ? 'Kg' : 'Pcs',
+                    'item_unit' => getItemUnit($item['item_id']),
                     'unit_price' => $item['cost'] ?? 0,
                     'total_cost' => ($item['qty'] ?? 0) * ($item['cost'] ?? 0)
                 ]);
