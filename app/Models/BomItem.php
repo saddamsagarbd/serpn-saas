@@ -26,4 +26,9 @@ class BomItem extends Model
     {
         return $this->belongsTo(SizeChart::class, 'size_id');
     }
+    
+    public function itemMaster(): BelongsTo
+    {
+        return $this->belongsTo(ItemMaster::class, 'item_id');
+    }
 }

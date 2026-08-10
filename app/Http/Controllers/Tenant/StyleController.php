@@ -39,7 +39,7 @@ class StyleController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('tenant.inventory.style.index');
+        return view('tenant.merchandising.styles.index');
     }
     public function createStyle(){
         $colors = ColorContext::all();
@@ -47,7 +47,7 @@ class StyleController extends Controller
         $buyers = Buyer::all();
         $seasons = Season::all();
         $sizes = SizeChart::all();
-        return view('tenant.inventory.style.create', compact('colors', 'units', 'buyers', 'seasons','sizes'));
+        return view('tenant.merchandising.styles.create', compact('colors', 'units', 'buyers', 'seasons','sizes'));
     }
 
     public function styleStore(Request $request){
@@ -139,7 +139,7 @@ class StyleController extends Controller
         $seasons = Season::all();
         $sizes = SizeChart::all();
 
-        return view('tenant.inventory.style.create', compact('style', 'colors', 'units', 'buyers', 'seasons','sizes'));
+        return view('tenant.merchandising.styles.create', compact('style', 'colors', 'units', 'buyers', 'seasons','sizes'));
     }
 
     // --- 2. Process Style & BOM Update ---
@@ -206,7 +206,7 @@ class StyleController extends Controller
             ->where('tenant_id', tenant('id'))
             ->findOrFail($id);
 
-        return view('tenant.inventory.style.show', compact('style'));
+        return view('tenant.merchandising.styles.show', compact('style'));
     }
 
     public function exportPdf(String $tenant, String $id)

@@ -167,7 +167,7 @@
         </div>
 
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.inventory.styles') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.merch.styles') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
                 <span x-text="isSaving ? 'Saving Master...' : 'Save Style Master'"></span>
             </button>
@@ -261,8 +261,8 @@ function styleCreationApp(initialData) {
             this.isSaving = true;
 
             let url = this.isEdit 
-                ? "{{ route('tenant.inventory.styles.update', ['id' => '__id']) }}".replace('__id', this.styleId)
-                : "{{ route('tenant.inventory.styles.store') }}";
+                ? "{{ route('tenant.merch.styles.update', ['id' => '__id']) }}".replace('__id', this.styleId)
+                : "{{ route('tenant.merch.styles.store') }}";
 
             let payload = {
                 style_code: this.styleCode,
@@ -304,7 +304,7 @@ function styleCreationApp(initialData) {
                 this.isSaving = false;
                 if (data.success) {
                     if (typeof toastr !== 'undefined') toastr.success(data.message || "Saved successfully.");
-                    window.location.href = "{{ route('tenant.inventory.styles') }}";
+                    window.location.href = "{{ route('tenant.merch.styles') }}";
                 } else {
                     alert("Execution Error: " + data.message);
                 }

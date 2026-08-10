@@ -60,7 +60,6 @@ return [
                         ['label' => 'Size Charts',      'route' => 'tenant.inventory.sizes',   'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Fabric Spec',      'route' => 'tenant.inventory.fabrics', 'enabled' => true, 'business_types' => ['merchandising']],
                         ['label' => 'Color Context',    'route' => 'tenant.inventory.color',   'enabled' => true, 'business_types' => ['merchandising']],
-                        ['label' => 'Styles',           'route' => 'tenant.inventory.styles',  'enabled' => true, 'business_types' => ['merchandising']],
 
                         // Manufacturing-only setup items
                         ['label' => 'Raw Materials',    'route' => 'tenant.inventory.raw-materials',     'enabled' => true, 'business_types' => ['manufacturing']],
@@ -99,14 +98,15 @@ return [
             'business_types' => ['merchandising'],
             'items' => [
                 // 'Buyers' এবং 'Styles & Seasons' এখান থেকে সেটআপে (Master Data) চলে গেছে
-                ['label' => 'Costing Sheet',         'route' => 'tenant.merch.costing',           'enabled' => true],
-                ['label' => 'Costing Approval',      'route' => 'tenant.merch.costing.approval',  'enabled' => true],
-                ['label' => 'Order & Matrix Entry',  'route' => 'tenant.merch.orders',            'enabled' => true],
-                ['label' => 'MPR (Material Req.)',   'route' => 'tenant.merch.mpr',               'enabled' => true],
-                ['label' => 'Booking / Sourcing',    'route' => 'tenant.merch.booking',           'enabled' => true],
-                ['label' => 'TNA (Time & Action)',   'route' => 'tenant.merch.tna',               'enabled' => true],
-                ['label' => 'Sample Tracking',       'route' => 'tenant.merch.samples',           'enabled' => true],
-                ['label' => 'Shipment / L-C Docs',   'route' => 'tenant.merch.shipment-docs',     'enabled' => true],
+                ['label' => 'Styles',                'route' => 'tenant.merch.styles',           'enabled' => true],
+                // ['label' => 'Costing Sheet',         'route' => 'tenant.merch.costing',           'enabled' => true],
+                // ['label' => 'Costing Approval',      'route' => 'tenant.merch.costing.approval',  'enabled' => true],
+                // ['label' => 'Order & Matrix Entry',  'route' => 'tenant.merch.orders',            'enabled' => true],
+                ['label' => 'MPR (Material Req.)',   'route' => 'tenant.merch.mpr.index',               'enabled' => true],
+                // ['label' => 'Booking / Sourcing',    'route' => 'tenant.merch.booking',           'enabled' => true],
+                // ['label' => 'TNA (Time & Action)',   'route' => 'tenant.merch.tna',               'enabled' => true],
+                // ['label' => 'Sample Tracking',       'route' => 'tenant.merch.samples',           'enabled' => true],
+                // ['label' => 'Shipment / L-C Docs',   'route' => 'tenant.merch.shipment-docs',     'enabled' => true],
             ],
         ],
 
@@ -160,9 +160,9 @@ return [
             'enabled' => true,
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
-                ['label' => 'MRP Order',   'route' => 'tenant.purchase.mrp.index',    'enabled' => true, 'business_types' => ['*']],
-                // ['label' => 'Purchase Order',   'route' => 'tenant.purchase.index',    'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn',         'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Purchase Requisition',   'route' => 'tenant.purchase.pr.index',    'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Purchase Order',   'route' => 'tenant.purchase.po.index',    'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn.index',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['merchandising']],
@@ -179,7 +179,7 @@ return [
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
                 ['label' => 'POS',            'route' => 'tenant.sales.pos',            'enabled' => true, 'business_types' => ['general_retail']],
-                ['label' => 'Sales Orders',   'route' => 'tenant.sales.sales',          'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Sales Orders',   'route' => 'tenant.sales.index',          'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Export Invoice', 'route' => 'tenant.sales.export-invoice', 'enabled' => true, 'business_types' => ['merchandising']],
                 ['label' => 'Customers',      'route' => 'tenant.sales.customers',      'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Sales Return',   'route' => 'tenant.sales.sales-return',   'enabled' => true, 'business_types' => ['*']],

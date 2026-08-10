@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', 'MRP Order List')
+@section('title', 'Sales Order List')
 @section('content')
 
 <div class="space-y-6" x-data="{ 
@@ -9,7 +9,7 @@
 
     fetchOrders() {
         this.loading = true;
-        let url = '{{ route('tenant.purchase.mrp.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
+        let url = '{{ route('tenant.merch.mpr.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
             url += '?search=' + encodeURIComponent(this.searchQuery);
         }
@@ -31,7 +31,7 @@
         <div class="space-y-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">MRP Order List</h2>
+                    <h2 class="text-xl font-bold text-gray-800">MPR Order List</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
                 </div>
                 <a href="{{ route('tenant.purchase.mrp.order-create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
@@ -61,11 +61,11 @@
                     </thead>
                     <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
                         <template x-if="loading">
-                            <tr><td colspan="9" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching mrp order...</td></tr>
+                            <tr><td colspan="9" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching MPR order...</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length === 0">
-                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No matching mrp order found.</td></tr>
+                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No matching MPR order found.</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length > 0">

@@ -9,7 +9,7 @@
 
     fetchStyles() {
         this.loading = true;
-        let url = '{{ route('tenant.inventory.styles') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
+        let url = '{{ route('tenant.merch.styles') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
             url += '?search=' + encodeURIComponent(this.searchQuery);
         }
@@ -34,7 +34,7 @@
                     <h2 class="text-xl font-bold text-gray-800">Style Master Data Feed</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
                 </div>
-                <a href="{{ route('tenant.inventory.styles.create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('tenant.merch.styles.create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
                     + Add New Style
                 </a>
             </div>
@@ -70,7 +70,7 @@
                                 <tr class="hover:bg-gray-50/80 transition">
                                     <!-- 1. Clickable Style Code Link to go directly to details preview -->
                                     <td class="p-4 font-mono">
-                                        <a :href="'/inventory/styles/' + style.id + '/details'" 
+                                        <a :href="'/merchandising/styles/' + style.id + '/details'" 
                                         class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
                                         x-text="style.style_number">
                                         </a>
@@ -85,13 +85,13 @@
                                     
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
                                         <!-- 2. Preview Details Button -->
-                                        <a :href="'/inventory/styles/' + style.id + '/details'" 
+                                        <a :href="'/merchandising/styles/' + style.id + '/details'" 
                                         class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
                                             Preview
                                         </a>
 
                                         <!-- Edit Button -->
-                                        <a :href="'/inventory/styles/' + style.id + '/edit'" 
+                                        <a :href="'/merchandising/styles/' + style.id + '/edit'" 
                                         class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs">
                                             Edit
                                         </a>

@@ -27,8 +27,10 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
-    MRPController,
+    MPRController,
     OrderController,
+    PurchaseOrderController,
+    PurchaseRequisitionController,
     SeasonController,
     SizeChartController,
     SupplierController
@@ -100,15 +102,6 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::post('/seasons/store', [SeasonController::class, 'store'])->name('seasons.store');
                 Route::put('/seasons/{id}/update', [SeasonController::class, 'update'])->name('seasons.update');
 
-                // Style
-                Route::get('styles', [StyleController::class, 'index'])->name('styles');
-                Route::get('styles/create', [StyleController::class, 'createStyle'])->name('styles.create');
-                Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
-                Route::get('styles/{id}/edit', [StyleController::class, 'edit'])->name('styles.edit');
-                Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
-                Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
-                Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
-
                 // Febric Spec
                 Route::get('fabrics', [FebricController::class, 'index'])->name('fabrics');
                 Route::post('fabrics/store', [FebricController::class, 'styleStore'])->name('fabrics.store');
@@ -150,16 +143,31 @@ Route::domain('{tenant}.serpn-saas.test')
             });
 
             // ---- Purchase ----
+            Route::prefix('merchandising')->name('merch.')->middleware('feature:merchandising')->group(function () {
+                // Style
+                Route::get('styles', [StyleController::class, 'index'])->name('styles');
+                Route::get('styles/create', [StyleController::class, 'createStyle'])->name('styles.create');
+                Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
+                Route::get('styles/{id}/edit', [StyleController::class, 'edit'])->name('styles.edit');
+                Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
+                Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
+                Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
+                
+                Route::get('/mpr-order', [MPRController::class, 'index'])->name('mpr.index');
+                Route::get('/mpr-order-create', [MPRController::class, 'createMrpOrder'])->name('mpr.order-create');
+                Route::post('/mpr-order-post', [MPRController::class, 'mrpOrderCreate'])->name('mpr.order-store');
+                Route::get('/mpr-order-details/{id}', [MPRController::class, 'mrpOrderDetails'])->name('mpr.order-details');
+                Route::get('/mpr-order/{id}/export-pdf', [MPRController::class, 'exportPdf'])->name('mpr-order-export-pdf');
+                Route::get('/mpr-order-edit/{id}', [MPRController::class, 'mrpOrderEdit'])->name('mpr.order-edit');
+                Route::put('/mpr-orders-update/{id}', [MPRController::class, 'update'])->name('mpr.orders-update');
+                
+            });
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
-                Route::get('/mrp-order', [MRPController::class, 'index'])->name('mrp.index');
-                Route::get('/mrp-order-create', [MRPController::class, 'salesOrder'])->name('mrp.order-create');
-                Route::post('/mrp-order-post', [MRPController::class, 'salesOrderCreate'])->name('mrp.order-store');
-                Route::get('/mrp-order-details/{id}', [MRPController::class, 'salesOrderDetails'])->name('mrp.order-details');
-                Route::get('/mrp-order/{id}/export-pdf', [MRPController::class, 'exportPdf'])->name('mrp-order-export-pdf');
-                Route::get('/mrp-order-edit/{id}', [MRPController::class, 'salesOrderEdit'])->name('mrp.order-edit');
-                Route::put('/mrp-orders-update/{id}', [MRPController::class, 'update'])->name('mrp.orders-update');
 
-                Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn');
+                Route::get('/purchase-requisition', [PurchaseRequisitionController::class, 'index'])->name('pr.index');
+                Route::get('/purchase-order', [PurchaseOrderController::class, 'index'])->name('po.index');
+
+                Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
 
                 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers');
@@ -174,8 +182,8 @@ Route::domain('{tenant}.serpn-saas.test')
 
             // ---- Sales ----
             Route::prefix('sales')->name('sales.')->middleware('feature:sales')->group(function () {
+                Route::get('/orders', [SalesController::class, 'index'])->name('index');
                 Route::get('pos', [SalesController::class, 'pos'])->name('pos');
-                Route::get('sales', [SalesController::class, 'index'])->name('sales');
                 Route::get('export-invoice', [SalesController::class, 'exportInvoice'])->name('export-invoice');
                 Route::get('customers', [SalesController::class, 'customers'])->name('customers');
                 Route::get('sales-return', [SalesController::class, 'salesReturn'])->name('sales-return');

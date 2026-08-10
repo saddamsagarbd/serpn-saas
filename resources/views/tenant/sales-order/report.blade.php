@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', 'MRP Order Report')
+@section('title', 'MPR Order Report')
 @section('content')
 
 <div class="space-y-6">
@@ -8,7 +8,7 @@
         <div class="space-y-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">MRP Order Details</h2>
+                    <h2 class="text-xl font-bold text-gray-800">MPR Order Details</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
                 </div>
             </div>
@@ -40,7 +40,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="p-4 text-center text-gray-400">No matching mrp order found.</td>
+                                <td colspan="4" class="p-4 text-center text-gray-400">No matching MPR order found.</td>
                             </tr>
                         @endforelse
                     </tbody>

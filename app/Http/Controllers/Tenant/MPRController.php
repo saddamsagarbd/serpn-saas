@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class MRPController extends Controller
+class MPRController extends Controller
 {
     public function index(Request $request) {
         if($request->ajax()){
@@ -57,13 +57,13 @@ class MRPController extends Controller
                 ->make(true);
             
         }
-        return view('tenant.purchase.mrp.index');
+        return view('tenant.merchandising.mpr.index');
     }
-    public function salesOrder() {        
+    public function createMrpOrder() {        
         $styles = Style::with(['buyer', 'season', 'costing'])->where('tenant_id', tenant('id'))->get();
         $colors = ColorContext::get();
         $sizes = SizeChart::get();
-        return view('tenant.purchase.mrp.order-form', compact('styles', 'colors', 'sizes'));
+        return view('tenant.merchandising.mpr.order-form', compact('styles', 'colors', 'sizes'));
     }
     // Example Format: ORD-202608-0001 (Prefix-YearMonth-Sequential Number)
     public function generateOrderNumber()
@@ -86,7 +86,9 @@ class MRPController extends Controller
         return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
-    public function salesOrderCreate(Request $request) {
+    public function mrpOrderCreate(Request $request) {
+
+        // dd($request->all());
         
         $request->validate([
             'sales_org'               => 'nullable|string',
@@ -104,6 +106,7 @@ class MRPController extends Controller
             // Item Matrix Validation
             'items'                   => 'required|array|min:1',
             'items.*.style_id'        => 'required|exists:styles,id',
+            'items.*.sku'             => 'required|string',
             'items.*.color'           => 'required|string',
             'items.*.size'            => 'required|string',
             'items.*.quantity'        => 'required|integer|min:1',
@@ -141,6 +144,7 @@ class MRPController extends Controller
                 $orderItemsData[] = [
                     'sales_order_id' => $salesOrder->id,
                     'style_id'       => $item['style_id'],
+                    'sku'            => $item['sku'],
                     'color'          => $item['color'],
                     'size'           => $item['size'],
                     'quantity'       => $item['quantity'],
@@ -195,21 +199,52 @@ class MRPController extends Controller
         return $pdf->stream($pdfFileName);
     }
 
-    public function salesOrderEdit($tenant, String $id){
+    public function mrpOrderEdit($tenant, String $id){
         $salesOrder = SalesOrder::with(['items', 'buyer'])->where('tenant_id', tenant('id'))->findOrFail($id);
         $styles = Style::with(['buyer', 'costing'])->get();
         $colors = ColorContext::all();
         $sizes = SizeChart::all();
         
-        return view('tenant.purchase.mrp.order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
+        return view('tenant.merchandising.mpr.order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
     }
 
-    public function salesOrderDetails(Request $request, $tenant, String $id){
+    public function mrpOrderDetails(Request $request, $tenant, String $id){
 
-        $salesOrder = SalesOrder::with(['items', 'buyer', 'items.costing.bomItems'])->where('tenant_id', tenant('id'))->findOrFail($id);
-        $bomItems = $salesOrder->items->flatMap->costing->flatMap->bomItems;
+        $salesOrder = SalesOrder::with([
+            'buyer',                     // Line item-এর Size relation
+            'items.style.bomItems.itemMaster', // Style -> bomItems
+            'items.style.bomItems.color',
+            'items.style.bomItems.size',
+        ])->where('tenant_id', tenant('id'))->findOrFail($id);
 
-        return view('tenant.purchase.mrp.report', compact('salesOrder', 'bomItems'));
+        $groupedMrpDetails = $salesOrder->items->map(function ($line) {
+            $orderQty = $line->quantity ?? 0;
+            $bomItems = collect();
+
+            if ($line->style && $line->style->bomItems) {
+                $bomItems = $line->style->bomItems->map(function ($bom) use ($orderQty) {
+                    return [
+                        'item_name'    => $bom->itemMaster->name ?? $bom->item_description ?? 'N/A',
+                        'color_name'   => $bom->color->name ?? 'All',
+                        'size_name'    => $bom->size->name ?? 'All',
+                        'consumption'  => $bom->consumption ?? 0,
+                        'unit_price'   => $bom->unit_price ?? 0,
+                        'required_qty' => ($bom->consumption ?? 0) * $orderQty,
+                    ];
+                });
+            }
+
+            return [
+                'sku'        => $line->sku ?? 'N/A',
+                'style_code' => $line->style->style_number ?? $line->style->style_code ?? 'N/A',
+                'color_name' => $line->color->name ?? 'N/A',
+                'size_name'  => $line->size->name ?? 'N/A',
+                'order_qty'  => $orderQty,
+                'bom_items'  => $bomItems
+            ];
+        });
+
+        return view('tenant.merchandising.mpr.report', compact('salesOrder', 'groupedMrpDetails'));
     }
 
     public function update(Request $request, $tenant, String $id)

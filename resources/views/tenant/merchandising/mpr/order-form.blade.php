@@ -1,13 +1,13 @@
 @extends('layouts.tenant')
-@section('title', isset($salesOrder) ? 'Edit Sales Order' : 'Sales Order Entry')
+@section('title', isset($salesOrder) ? 'Edit MPR Order' : 'MPR Order Entry')
 
 @section('content')
-<div x-data="salesOrderApp({{ json_encode($styles) }}, {{ json_encode($salesOrder ?? null) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+<div x-data="salesOrderApp({{ json_encode($styles) }}, {{ json_encode($colors) }}, {{ json_encode($sizes) }}, {{ json_encode($salesOrder ?? null) }})" class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
     
     <!-- টপবার (ডাইনামিক টাইটেল) -->
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/40">
         <div>
-            <h4 class="text-base font-bold text-slate-900" x-text="isEdit ? 'Edit Sales Order #' + buyerPoNumber : 'New Sales Order Entry'"></h4>
+            <h4 class="text-base font-bold text-slate-900" x-text="isEdit ? 'Edit MPR Order #' + buyerPoNumber : 'New MPR Order Entry'"></h4>
             <p class="text-xs text-slate-400 mt-0.5" x-text="isEdit ? 'Update buyer sales order details and breakdown items.' : 'Create a buyer sales order linked with style matrix, plants, and commercial channels.'"></p>
         </div>
     </div>
@@ -120,7 +120,8 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                            <th class="p-3 pl-4 w-2/12">Color</th>
+                            <th class="p-3 pl-4 w-2/12">Generated SKU</th>
+                            <th class="p-3 w-2/12">Color</th>
                             <th class="p-3 w-2/12">Size</th>
                             <th class="p-3 w-2/12">Plant (Factory)</th>
                             <th class="p-3 w-2/12">Shipping Point</th>
@@ -132,7 +133,11 @@
                     <tbody class="text-xs divide-y divide-slate-100 text-slate-700">
                         <template x-for="(row, index) in items" :key="index">
                             <tr>
+                                <!-- Auto Calculated SKU Display -->
                                 <td class="p-2.5 pl-4">
+                                    <span class="inline-block px-2 py-1 bg-slate-100 rounded text-[11px] font-mono font-bold text-indigo-600 border border-slate-200" x-text="getCalculatedSku(row)"></span>
+                                </td>
+                                <td class="p-2.5">
                                     <select x-model="row.color" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
                                         <option value="">Select Color</option>
                                         @foreach($colors as $color)
@@ -168,7 +173,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700 text-xs">
-                            <td colspan="4" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Order Volume & Calculated Value</td>
+                            <td colspan="5" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Order Volume & Calculated Value</td>
                             <td class="p-3 text-right font-mono text-slate-800 font-bold text-sm" x-text="currency + ' ' + grandTotalAmount.toFixed(2)"></td>
                             <td class="p-3 text-right font-mono text-indigo-600 font-bold text-sm" x-text="totalOrderQty.toLocaleString() + ' Pcs'"></td>
                             <td></td>
@@ -180,7 +185,7 @@
 
         <!-- ৩. সাবমিশন অ্যাকশন বার -->
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.purchase.mrp.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.merch.mpr.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
                 <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update Sales Order' : 'Confirm & Generate Sales Order')"></span>
             </button>
@@ -191,11 +196,13 @@
 
 @push('scripts')
 <script>
-function salesOrderApp(stylesData, editData = null) {
+function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
     return {
         isEdit: !!editData,
         orderId: editData ? editData.id : null,
         availableStyles: stylesData || [],
+        colorsList: colorsData || [],
+        sizesList: sizesData || [],
         
         selectedStyleId: editData ? (editData.items[0]?.style_id || '') : '',
         buyerName: editData && editData.buyer ? editData.buyer.name : '',
@@ -233,6 +240,22 @@ function salesOrderApp(stylesData, editData = null) {
                 unit_price: 0, 
                 quantity: '' 
             }],
+
+        // Live Calculated SKU Helper
+        getCalculatedSku(row) {
+            if (!this.selectedStyleId) return 'SELECT STYLE';
+            
+            const style = this.availableStyles.find(s => String(s.id) === String(this.selectedStyleId));
+            const styleCode = style ? (style.style_number || 'STL-' + style.id) : 'STL';
+
+            const color = this.colorsList.find(c => String(c.id) === String(row.color));
+            const colorName = color ? color.name : 'COLOR';
+
+            const size = this.sizesList.find(s => String(s.id) === String(row.size));
+            const sizeName = size ? size.short_name : 'SIZE';
+
+            return `${styleCode}-${colorName}-${sizeName}`.toUpperCase().replace(/\s+/g, '-');
+        },
 
         onStyleChange() {
             const style = this.availableStyles.find(s => s.id == this.selectedStyleId);
@@ -284,6 +307,7 @@ function salesOrderApp(stylesData, editData = null) {
 
             const formattedItems = this.items.map(item => ({
                 style_id: this.selectedStyleId,
+                sku: this.getCalculatedSku(item),
                 color: item.color,
                 size: item.size,
                 plant: item.plant,
@@ -295,12 +319,12 @@ function salesOrderApp(stylesData, editData = null) {
             let targetUrl = "";
             let httpMethod = "";
 
-            if(this.isEdit){
-                targetUrl = "{{ route('tenant.purchase.mrp.orders-update', ['id' => '__id']) }}";
+            if (this.isEdit) {
+                targetUrl = "{{ route('tenant.merch.mpr.orders-update', ['id' => '__id']) }}";
                 targetUrl = targetUrl.replace('__id', this.orderId);
                 httpMethod = "PUT";
-            }else{
-                targetUrl = "{{ route('tenant.purchase.mrp.order-store') }}";
+            } else {
+                targetUrl = "{{ route('tenant.merch.mpr.order-store') }}";
                 httpMethod = "POST";
             }
 
@@ -331,7 +355,7 @@ function salesOrderApp(stylesData, editData = null) {
                 this.isSaving = false;
                 if(data.success) {
                     alert(this.isEdit ? "Sales Order updated successfully!" : "Sales Order created successfully!");
-                    window.location.href = "{{ route('tenant.purchase.mrp.index') }}";
+                    window.location.href = "{{ route('tenant.merch.mpr.index') }}";
                 } else {
                     alert("Error: " + data.message);
                 }
