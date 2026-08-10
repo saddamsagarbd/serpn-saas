@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', 'MPR Order List')
+@section('title', 'MRP Order List')
 @section('content')
 
 <div class="space-y-6" x-data="{ 
@@ -9,7 +9,7 @@
 
     fetchOrders() {
         this.loading = true;
-        let url = '{{ route('tenant.merch.mpr.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
+        let url = '{{ route('tenant.merch.mrp.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
             url += '?search=' + encodeURIComponent(this.searchQuery);
         }
@@ -34,7 +34,7 @@
                     <h2 class="text-xl font-bold text-gray-800">MPR Order List</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Central hub for buying house style specification sheets.</p>
                 </div>
-                <a href="{{ route('tenant.merch.mpr.order-create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('tenant.merch.mrp.order-create') }}" class="bg-indigo-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-indigo-700 shadow-sm transition">
                     + Create MRP
                 </a>
             </div>
@@ -72,7 +72,7 @@
                             <template x-for="(order, index) in orders" :key="order.id || index">
                                 <tr class="hover:bg-gray-50/80 transition">
                                     <td class="p-4 font-mono">
-                                        <a :href="'/merchandising/mpr-order-details/' + order.id" 
+                                        <a :href="'/merchandising/mrp-order-details/' + order.id" 
                                         class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
                                         x-text="order.buyer_po">
                                         </a>
@@ -88,7 +88,7 @@
                                     
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
                                         <!-- Edit Button -->
-                                        <a :href="'/merchandising/mpr-order-edit/' + order.id" 
+                                        <a :href="'/merchandising/mrp-order-edit/' + order.id" 
                                         class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs cursor-pointer">
                                             Edit
                                         </a>

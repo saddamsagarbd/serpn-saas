@@ -180,7 +180,7 @@
 
         <!-- ৩. সাবমিশন অ্যাকশন বার -->
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.merch.mpr.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.merch.mrp.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
                 <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update Sales Order' : 'Confirm & Generate Sales Order')"></span>
             </button>
@@ -331,7 +331,7 @@ function salesOrderApp(stylesData, editData = null) {
                 this.isSaving = false;
                 if(data.success) {
                     alert(this.isEdit ? "Sales Order updated successfully!" : "Sales Order created successfully!");
-                    window.location.href = "{{ route('tenant.merch.mpr.index') }}";
+                    window.location.href = "{{ route('tenant.merch.mrp.index') }}";
                 } else {
                     alert("Error: " + data.message);
                 }

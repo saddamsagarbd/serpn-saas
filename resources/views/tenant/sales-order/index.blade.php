@@ -9,7 +9,7 @@
 
     fetchOrders() {
         this.loading = true;
-        let url = '{{ route('tenant.merch.mpr.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
+        let url = '{{ route('tenant.merch.mrp.index') }}'; // কনফিগারেশন রুট অনুযায়ী আপডেট
         if (this.searchQuery) {
             url += '?search=' + encodeURIComponent(this.searchQuery);
         }

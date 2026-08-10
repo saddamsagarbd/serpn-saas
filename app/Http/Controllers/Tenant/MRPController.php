@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class MPRController extends Controller
+class MRPController extends Controller
 {
     public function index(Request $request) {
         if($request->ajax()){
@@ -57,13 +57,13 @@ class MPRController extends Controller
                 ->make(true);
             
         }
-        return view('tenant.merchandising.mpr.index');
+        return view('tenant.merchandising.mrp.index');
     }
     public function createMrpOrder() {        
         $styles = Style::with(['buyer', 'season', 'costing'])->where('tenant_id', tenant('id'))->get();
         $colors = ColorContext::get();
         $sizes = SizeChart::get();
-        return view('tenant.merchandising.mpr.order-form', compact('styles', 'colors', 'sizes'));
+        return view('tenant.merchandising.mrp.order-form', compact('styles', 'colors', 'sizes'));
     }
     // Example Format: ORD-202608-0001 (Prefix-YearMonth-Sequential Number)
     public function generateOrderNumber()
@@ -205,7 +205,7 @@ class MPRController extends Controller
         $colors = ColorContext::all();
         $sizes = SizeChart::all();
         
-        return view('tenant.merchandising.mpr.order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
+        return view('tenant.merchandising.mrp.order-form', compact('styles', 'colors', 'sizes', 'salesOrder'));
     }
 
     public function mrpOrderDetails(Request $request, $tenant, String $id){
@@ -244,11 +244,36 @@ class MPRController extends Controller
             ];
         });
 
-        return view('tenant.merchandising.mpr.report', compact('salesOrder', 'groupedMrpDetails'));
+        return view('tenant.merchandising.mrp.report', compact('salesOrder', 'groupedMrpDetails'));
     }
 
     public function update(Request $request, $tenant, String $id)
     {
+        $request->validate([
+            'sales_org'               => 'nullable|string',
+            'distribution_channel'    => 'required|string', // Export / Domestic
+            'job_mode'                => 'required|string', // FOB / CMPTW / CM
+            'division'                => 'required|string', // Merchant Team
+            'buyer_id'                => 'required|exists:buyers,id',
+            'ship_to_party'           => 'required|string',
+            'buyer_po_number'         => 'required|string',
+            'po_received_date'        => 'required|date',
+            'advance_receive_date'    => 'nullable|date',
+            'requested_delivery_date' => 'required|date|after_or_equal:po_received_date',
+            'currency'                => 'nullable|string',
+
+            // Item Matrix Validation
+            'items'                   => 'required|array|min:1',
+            'items.*.style_id'        => 'required|exists:styles,id',
+            'items.*.sku'             => 'required|string',
+            'items.*.color'           => 'required|string',
+            'items.*.size'            => 'required|string',
+            'items.*.quantity'        => 'required|integer|min:1',
+            'items.*.unit_price'      => 'required|numeric|min:0',
+            'items.*.plant'           => 'required|string',
+            'items.*.shipping_point'  => 'required|string',
+        ]);
+
         try {
             $salesOrder = SalesOrder::findOrFail($id);
 
@@ -273,6 +298,7 @@ class MPRController extends Controller
             foreach ($request->items as $item) {
                 $salesOrder->items()->create([
                     'style_id'       => $item['style_id'],
+                    'sku'            => $item['sku'],
                     'color'          => $item['color'],
                     'size'           => $item['size'],
                     'plant'          => $item['plant'],

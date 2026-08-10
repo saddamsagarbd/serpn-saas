@@ -27,7 +27,7 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
-    MPRController,
+    MRPController,
     OrderController,
     PurchaseOrderController,
     PurchaseRequisitionController,
@@ -153,13 +153,13 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
                 Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
                 
-                Route::get('/mpr-order', [MPRController::class, 'index'])->name('mpr.index');
-                Route::get('/mpr-order-create', [MPRController::class, 'createMrpOrder'])->name('mpr.order-create');
-                Route::post('/mpr-order-post', [MPRController::class, 'mrpOrderCreate'])->name('mpr.order-store');
-                Route::get('/mpr-order-details/{id}', [MPRController::class, 'mrpOrderDetails'])->name('mpr.order-details');
-                Route::get('/mpr-order/{id}/export-pdf', [MPRController::class, 'exportPdf'])->name('mpr-order-export-pdf');
-                Route::get('/mpr-order-edit/{id}', [MPRController::class, 'mrpOrderEdit'])->name('mpr.order-edit');
-                Route::put('/mpr-orders-update/{id}', [MPRController::class, 'update'])->name('mpr.orders-update');
+                Route::get('/mrp-order', [MRPController::class, 'index'])->name('mrp.index');
+                Route::get('/mrp-order-create', [MRPController::class, 'createMrpOrder'])->name('mrp.order-create');
+                Route::post('/mrp-order-post', [MRPController::class, 'mrpOrderCreate'])->name('mrp.order-store');
+                Route::get('/mrp-order-details/{id}', [MRPController::class, 'mrpOrderDetails'])->name('mrp.order-details');
+                Route::get('/mrp-order/{id}/export-pdf', [MRPController::class, 'exportPdf'])->name('mrp-order-export-pdf');
+                Route::get('/mrp-order-edit/{id}', [MRPController::class, 'mrpOrderEdit'])->name('mrp.order-edit');
+                Route::put('/mrp-orders-update/{id}', [MRPController::class, 'update'])->name('mrp.orders-update');
                 
             });
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
