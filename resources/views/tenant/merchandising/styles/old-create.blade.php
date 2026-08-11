@@ -3,7 +3,6 @@
 
 @push('styles')
 <style>
-    /* Select2 Tailwind Override */
     .select2-container--default .select2-selection--single {
         border-color: #e2e8f0 !important;
         border-radius: 0.5rem !important;

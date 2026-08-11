@@ -12,6 +12,7 @@ use App\Models\Unit;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -61,8 +62,15 @@ class StyleController extends Controller
             'style_name'   => 'required|string|max:255',
             'buyer_id'     => 'required|exists:buyers,id',
             'season_id'    => 'required|exists:seasons,id',
+            'currency'     => 'nullable|string|max:10',
             'target_price' => 'nullable|numeric|min:0',
+            'offered_price'=> 'nullable|numeric|min:0',
             'image'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+
+            'service_cost'    => 'nullable|numeric|min:0',
+            'revenue_percent' => 'nullable|numeric|min:0|max:100',
+            'ait_percent'     => 'nullable|numeric|min:0|max:100',
+            'vat_percent'     => 'nullable|numeric|min:0|max:100',
             
             // Ensure the Alpine array payload is present and structured safely
             'items'        => 'required|array|min:1',
@@ -78,54 +86,78 @@ class StyleController extends Controller
 
         try {
 
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('styles', 'public');
+            }
+
             $style = Style::create([
-                'tenant_id' => tenant('id'),
-                'buyer_id' => $request->buyer_id,
-                'season_id' => $request->season_id,
+                'tenant_id'    => tenant('id'),
+                'buyer_id'     => $request->buyer_id,
+                'season_id'    => $request->season_id,
                 'style_number' => $request->style_code,
                 'product_name' => $request->style_name,
-                'created_by' => auth()->id()
+                'image'        => $imagePath,
+                'created_by'   => auth()->id()
             ]);
 
             // 2. Save the initial BOM costing sheet instance
             $costing = $style->costing()->create([
-                'tenant_id'   => tenant('id'),
-                'target_fob' => $request->target_price ?? 0.00,
-                'offered_fob' => 0.00,
+                'tenant_id'          => tenant('id'),
+                'currency'           => $request->currency ?? 'USD',
+                'target_fob'         => $request->target_price ?? 0.0000,
+                'offered_fob'        => $request->offered_price ?? $request->target_price ?? 0.0000,
+                'total_service_cost' => $request->service_cost ?? 0.0000,
+                'revenue_percent'    => $request->revenue_percent ?? 0.00,
+                'ait_percent'        => $request->ait_percent ?? 0.00,
+                'vat_percent'        => $request->vat_percent ?? 0.00,
+                'status'             => 'draft',
             ]);            
         
             // 3. Loop through your dynamic Alpine items array
             foreach ($request->items as $item) {
+                $qty = (float)($item['qty'] ?? 0);
+                $cost = (float)($item['cost'] ?? 0);
+                $itemId = $item['item_id'] ?? null;
+
                 $costing->bomItems()->create([
-                    'tenant_id'   => tenant('id'),
-                    'category' => $item['item_type'],
-                    'item_id' => $item['item_id'],
+                    'tenant_id'        => tenant('id'),
+                    'category'         => $item['item_type'],
+                    'item_id'          => $itemId,
                     'item_description' => $item['item_name'],
-                    'consumption' => $item['qty'] ?? 0,
-                    'color_id' => $item['color_id'],
-                    'size_id' => $item['size_id'],
-                    'item_unit' => getItemUnit($item['item_id']),
-                    'unit_price' => $item['cost'] ?? 0,
-                    'total_cost' => ($item['qty'] ?? 0) * ($item['cost'] ?? 0)
+                    'consumption'      => $qty,
+                    'color_id'         => $item['color_id'],
+                    'size_id'          => $item['size_id'],
+                    'item_unit'        => $itemId ? getItemUnit($itemId) : 'Pcs',
+                    'unit_price'       => $cost,
+                    'total_cost'       => $qty * $cost
                 ]);
             }
 
             // 4. Fire the new model utility method to tally the total material costs
-            $costing->updateCalculatedTotalRmCost();
+            if (method_exists($costing, 'recalculateCosting')) {
+                $costing->recalculateCosting();
+            } else {
+                $costing->updateCalculatedTotalRmCost();
+            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Style created successfully!'
+                'message' => 'Style and initial BOM created successfully!'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            dd($e->getMessage());
+            Log::error('Style Store Failed: ' . $e->getMessage(), [
+                'tenant_id' => tenant('id'),
+                'user_id'   => auth()->id(),
+                'trace'     => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong.'.$e->getMessage()
-            ]);
+                'message' => 'Something went wrong while saving style: ' . $e->getMessage()
+            ], 500);
         }
 
     }
