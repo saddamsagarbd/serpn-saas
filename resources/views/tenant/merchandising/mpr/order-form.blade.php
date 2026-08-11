@@ -125,8 +125,8 @@
                             <th class="p-3 w-2/12">Size</th>
                             <th class="p-3 w-2/12">Plant (Factory)</th>
                             <th class="p-3 w-2/12">Shipping Point</th>
-                            <th class="p-3 w-1.5/12 text-right">Unit Price</th>
-                            <th class="p-3 w-1.5/12 text-right">Quantity (Pcs)</th>
+                            <th class="p-3 w-2/12 text-right">Unit Price</th>
+                            <th class="p-3 w-2/12 text-right">Quantity (Pcs)</th>
                             <th class="p-3 w-1/12 text-center">Action</th>
                         </tr>
                     </thead>
@@ -185,9 +185,9 @@
 
         <!-- ৩. সাবমিশন অ্যাকশন বার -->
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
-            <a href="{{ route('tenant.merch.mrp.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
+            <a href="{{ route('tenant.merch.mpr.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
-                <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update MRP' : 'Confirm & Generate MRP')"></span>
+                <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update MRMPRP' : 'Confirm & Generate MPR')"></span>
             </button>
         </div>
     </form>
@@ -320,11 +320,11 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
             let httpMethod = "";
 
             if (this.isEdit) {
-                targetUrl = "{{ route('tenant.merch.mrp.orders-update', ['id' => '__id']) }}";
+                targetUrl = "{{ route('tenant.merch.mpr.orders-update', ['id' => '__id']) }}";
                 targetUrl = targetUrl.replace('__id', this.orderId);
                 httpMethod = "PUT";
             } else {
-                targetUrl = "{{ route('tenant.merch.mrp.order-store') }}";
+                targetUrl = "{{ route('tenant.merch.mpr.order-store') }}";
                 httpMethod = "POST";
             }
 
@@ -354,8 +354,8 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
             .then(data => {
                 this.isSaving = false;
                 if(data.success) {
-                    alert(this.isEdit ? "MRP updated successfully!" : "MRP created successfully!");
-                    window.location.href = "{{ route('tenant.merch.mrp.index') }}";
+                    alert(this.isEdit ? "MPR updated successfully!" : "MPR created successfully!");
+                    window.location.href = "{{ route('tenant.merch.mpr.index') }}";
                 } else {
                     alert("Error: " + data.message);
                 }
