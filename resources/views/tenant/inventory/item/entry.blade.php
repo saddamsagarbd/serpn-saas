@@ -55,6 +55,8 @@
                             <option value="accessories" {{ (old('item_type', $item->item_type ?? '') == 'accessories') ? 'selected' : '' }}>Accessories</option>
                             <option value="chemical" {{ (old('item_type', $item->item_type ?? '') == 'chemical') ? 'selected' : '' }}>Chemical</option>
                             <option value="finished-goods" {{ (old('item_type', $item->item_type ?? '') == 'finished-goods') ? 'selected' : '' }}>Finished Goods</option>
+                            <option value="vap" {{ (old('item_type', $item->item_type ?? '') == 'vap') ? 'selected' : '' }}>Value Added Process</option>
+                            <option value="pc" {{ (old('item_type', $item->item_type ?? '') == 'pc') ? 'selected' : '' }}>Production Cost</option>
                             <option value="other" {{ (old('item_type', $item->item_type ?? '') == 'other') ? 'selected' : '' }}>Other</option>
                         </select>
                     </div>                    

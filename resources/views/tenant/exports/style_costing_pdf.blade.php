@@ -1,77 +1,350 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
     <meta charset="utf-8">
-    <title>Style BOM Profile</title>
+    <title>Buyer Cost Sheet - {{ $style->style_number }}</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; font-size: 12px; line-height: 1.4; }
-        .header-title { text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; color: #1e293b; }
-        .meta-table { w-full; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        .meta-label { font-weight: bold; color: #64748b; font-size: 11px; }
-        .bom-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .bom-table th { background-color: #0f172a; color: #ffffff; text-transform: uppercase; font-size: 10px; font-weight: bold; padding: 8px; text-align: left; }
-        .bom-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            font-size: 10px;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 8px;
+        }
+
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+
+        .sheet-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #b45309;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .meta-label {
+            font-weight: bold;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .product-img {
+            max-width: 110px;
+            max-height: 110px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Cost Sheet Main Table */
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .cost-table th, .cost-table td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 6px;
+        }
+
+        .cost-table th {
+            background-color: #d97706;
+            color: #ffffff;
+            text-transform: uppercase;
+            font-size: 9px;
+            font-weight: bold;
+            text-align: left;
+        }
+
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .total-row { background-color: #f8fafc; font-weight: bold; }
+        .font-bold { font-weight: bold; }
+        .font-mono { font-family: Courier, monospace; }
+
+        /* Section Specific Styling */
+        .bg-ttl-section {
+            background-color: #fef3c7;
+            font-weight: bold;
+            color: #78350f;
+        }
+
+        .bg-base-cost {
+            background-color: #78350f;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .bg-revenue {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            font-weight: bold;
+        }
+
+        .bg-fob {
+            background-color: #78350f;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .bg-offered {
+            background-color: #10b981;
+            color: #022c22;
+            font-weight: bold;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header-title">{{ tenant()->company_name }} - {{ $style->style_number }} (Costing)</div>
-    <div style="text-align: center; font-size: 9px; color: #94a3b8; margin-bottom: 20px;">Isolated Context: Tenant Profile Database</div>
+@php
+    $costing = $style->costing;
+    $bomItems = $costing ? $costing->bomItems : collect();
 
-    <!-- Metadata Grid Block -->
-    <table width="100%" class="meta-table" cellspacing="5">
+    // Grouping Fabrics and Trims
+    $fabrics = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->item?->item_type ?? '') === 'fabric');
+    $trims = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->item?->item_type ?? '') !== 'fabric');
+
+    // Calculations
+    $ttlFabricCost = $fabrics->sum(fn($i) => $i->consumption * $i->unit_price);
+    $ttlTrimCost = $trims->sum(fn($i) => $i->consumption * $i->unit_price);
+
+    $printCost = floatval($costing->print_cost ?? 0);
+    $embCost = floatval($costing->emb_cost ?? 0);
+    $washCost = floatval($costing->wash_cost ?? 0);
+    $valueAddCost = $printCost + $embCost + $washCost;
+
+    $cmCost = floatval($costing->cm_cost ?? 0);
+    $overheadCost = floatval($costing->overhead_cost ?? 0);
+    $makingCost = $cmCost + $overheadCost;
+
+    $ttlBaseCost = $ttlFabricCost + $ttlTrimCost + $valueAddCost + $makingCost;
+
+    $revenuePercent = floatval($costing->revenue_percent ?? 6);
+    $revenueAmt = $ttlBaseCost * ($revenuePercent / 100);
+    $ttlWithRevenue = $ttlBaseCost + $revenueAmt;
+
+    $aitPercent = floatval($costing->ait_percent ?? 5);
+    $aitAmt = $ttlWithRevenue * ($aitPercent / 100);
+    $ttlWithAit = $ttlWithRevenue + $aitAmt;
+
+    $vatPercent = floatval($costing->vat_percent ?? 10);
+    $vatAmt = $ttlWithAit * ($vatPercent / 100);
+
+    $ttlFob = $ttlWithAit + $vatAmt;
+    $offeredPrice = floatval($costing->offered_fob ?? $ttlFob);
+    $currencySymbol = ($costing->currency ?? 'USD') === 'USD' ? '$' : '৳';
+@endphp
+
+    <!-- HEADER / META INFORMATION MATRIX -->
+    <table class="header-table">
         <tr>
-            <td class="meta-label" width="18%">Style Number:</td>
-            <td width="32%">{{ $style->style_number }}</td>
-            <td class="meta-label" width="18%">Buyer:</td>
-            <td width="32%">{{ $style->buyer->name }}</td>
-        </tr>
-        <tr>
-            <td class="meta-label">Product Name:</td>
-            <td>{{ $style->product_name }}</td>
-            <td class="meta-label">Season Name:</td>
-            <td>{{ $style->season->name }}</td>
-        </tr>
-        <tr>
-            <td class="meta-label">Target FOB:</td>
-            <td style="font-weight: bold; color: #4f46e5;">${{ number_format($style->costing->target_fob, 2) }}</td>
-            <td class="meta-label">Export Date:</td>
-            <td>{{ date('Y-m-d H:i') }}</td>
+            <td width="70%" style="vertical-align: top;">
+                <div class="company-name">{{ tenant()->company_name ?? 'Company Name' }}</div>
+                <div class="sheet-title">Buyer Cost Sheet</div>
+                
+                <table width="100%" style="margin-top: 8px;" cellpadding="2">
+                    <tr>
+                        <td class="meta-label" width="22%">Style Number:</td>
+                        <td width="28%"><b>{{ $style->style_number }}</b></td>
+                        <td class="meta-label" width="20%">Buyer:</td>
+                        <td width="30%">{{ $style->buyer->name ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Product Name:</td>
+                        <td>{{ $style->product_name }}</td>
+                        <td class="meta-label">Season:</td>
+                        <td>{{ $style->season->name ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Target FOB:</td>
+                        <td style="font-weight: bold; color: #4f46e5;">{{ $currencySymbol }} {{ number_format($costing->target_fob ?? 0, 2) }}</td>
+                        <td class="meta-label">Export Date:</td>
+                        <td>{{ date('Y-m-d H:i') }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td width="30%" class="text-right" style="vertical-align: top;">
+                @php
+                    $fullPath = storage_path('/app/public/' . $style->product_image);
+                @endphp
+                @if($style->product_image && file_exists($fullPath))
+                    <img src="{{ $fullPath }}" class="product-img" alt="{{ $style->product_name }}">
+                @endif
+            </td>
         </tr>
     </table>
 
-    <!-- BOM Grid Details Matrix -->
-    <table class="bom-table">
+    <!-- MAIN COST SHEET TABLE -->
+    <table class="cost-table">
         <thead>
             <tr>
-                <th width="45%">Material Description</th>
-                <th width="15%" class="text-center">Category</th>
-                <th width="15%" class="text-center">Color</th>
-                <th width="15%" class="text-center">Size</th>
-                <th width="15%" class="text-right">Consumption</th>
-                <th width="12%" class="text-right">Unit Price</th>
-                <th width="13%" class="text-right">Total Cost</th>
+                <th width="28%">Item</th>
+                <th width="32%">Details</th>
+                <th width="12%" class="text-right">Cons/Qnty</th>
+                <th width="13%" class="text-right">Unit Price</th>
+                <th width="15%" class="text-right">TTL Cost</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($style->costing->bomItems as $item)
-                <tr>
-                    <td>style_costing_pdf.blade.php<b>{{ $item->item_description }}</b></td>
-                    <td class="text-center" style="text-transform: uppercase; font-size: 9px;">{{ $item->category }}</td>
-                    <td class="text-center">{{ $item->color?->name ?? "N/A" }}</td>
-                    <td class="text-center">{{ $item->size?->short_name ?? "N/A" }}</td>
-                    <td class="text-right">{{ number_format($item->consumption, 4) }} <span style="color:#64748b; font-size:9px;">{{ $item->unit }}</span></td>
-                    <td class="text-right">${{ number_format($item->unit_price, 4) }}</td>
-                    <td class="text-right" style="font-weight: bold;">${{ number_format($item->total_cost, 4) }}</td>
-                </tr>
-            @endforeach
-            <tr class="total-row">
-                <td colspan="6" class="text-right" style="padding: 10px; font-size: 10px; uppercase;">Calculated Raw Material Total:</td>
-                <td class="text-right" style="color: #10b981; font-size: 12px;">${{ number_format($style->costing->total_rm_cost, 4) }}</td>
+
+            <!-- 1. FABRIC ITEMS -->
+            @forelse($fabrics as $item)
+            <tr>
+                <td class="font-bold" style="color: #312e81;">{{ $item->item_description }}</td>
+                <td style="color: #475569;">
+                    {{ $item->item->details ?? $item->item_description }}
+                    @if(optional($item->item)->uom || $item->item_unit)
+                        <span style="font-size: 8px; color: #64748b;">({{ $item->item_unit ?? $item->item->uom }})</span>
+                    @endif
+                </td>
+                <td class="text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
+                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
             </tr>
+            @empty
+            <tr>
+                <td colspan="5" style="color: #94a3b8; font-style: italic;">No fabric items added.</td>
+            </tr>
+            @endforelse
+
+            <!-- TOTAL FABRIC COST -->
+            <tr class="bg-ttl-section">
+                <td colspan="2">TTL FABRIC COST</td>
+                <td class="text-right font-mono">{{ number_format($fabrics->sum('consumption'), 2) }}</td>
+                <td></td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFabricCost, 2) }}</td>
+            </tr>
+
+            <!-- 2. TRIMS & ACCESSORIES -->
+            @foreach($trims as $item)
+            <tr>
+                <td class="font-bold" style="color: #334155;">{{ $item->item_description }}</td>
+                <td style="color: #475569;">
+                    {{ $item->item->details ?? $item->item_description }}
+                    @if(optional($item->itemMaster)->unit || $item->item_unit)
+                        <span style="font-size: 8px; color: #64748b;">({{ $item->item_unit ?? $item->itemMaster->unit->short_name }})</span>
+                    @endif
+                </td>
+                <td class="text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
+                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
+            </tr>
+            @endforeach
+
+            <!-- TOTAL TRIM COST -->
+            <tr class="bg-ttl-section">
+                <td colspan="4">TTL TRIM COST</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlTrimCost, 2) }}</td>
+            </tr>
+
+            <!-- 3. VALUE ADD COST (SERVICES) -->
+            <tr>
+                <td class="font-bold">PRINT</td>
+                <td style="color: #94a3b8;">-</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">EMB</td>
+                <td style="color: #94a3b8;">-</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">WASH</td>
+                <td style="color: #94a3b8;">-</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
+            </tr>
+
+            <!-- VALUE ADD COST TOTAL -->
+            <tr class="bg-ttl-section">
+                <td colspan="4">VALUE ADD COST</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($valueAddCost, 2) }}</td>
+            </tr>
+
+            <!-- 4. MAKING COST -->
+            <tr>
+                <td class="font-bold">CM</td>
+                <td style="color: #94a3b8;">-</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="font-bold">OVERHEAD COST</td>
+                <td style="color: #94a3b8;">-</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
+            </tr>
+
+            <!-- MAKING COST TOTAL -->
+            <tr class="bg-ttl-section">
+                <td colspan="3">MAKING COST</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($makingCost, 2) }}</td>
+            </tr>
+
+            <!-- 5. GRAND TOTALS & MARKUPS -->
+            <tr class="bg-base-cost">
+                <td colspan="3">TTL COST (BASE)</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlBaseCost, 2) }}</td>
+            </tr>
+
+            <tr class="bg-revenue">
+                <td colspan="2">REVENUE</td>
+                <td class="text-right font-mono font-bold" style="color: #e11d48;">{{ number_format($revenuePercent, 2) }}%</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($revenueAmt, 2) }}</td>
+                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($ttlWithRevenue, 2) }}</td>
+            </tr>
+
+            <tr>
+                <td colspan="2">AIT - {{ number_format($aitPercent, 0) }}%</td>
+                <td class="text-right font-mono">{{ number_format($aitPercent, 2) }}%</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($aitAmt, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlWithAit, 2) }}</td>
+            </tr>
+
+            <tr>
+                <td colspan="2">VAT - {{ number_format($vatPercent, 0) }}%</td>
+                <td class="text-right font-mono">{{ number_format($vatPercent, 2) }}%</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($vatAmt, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
+            </tr>
+
+            <tr class="bg-fob">
+                <td colspan="3">TTL FOB</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
+            </tr>
+
+            <tr class="bg-offered">
+                <td colspan="3">OFFERED PRICE</td>
+                <td class="text-right font-mono">1.00</td>
+                <td class="text-right font-mono" style="font-size: 14px;">{{ $currencySymbol }} {{ number_format($offeredPrice, 2) }}</td>
+            </tr>
+
         </tbody>
     </table>
 

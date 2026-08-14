@@ -15,9 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('tenant_id')->index();
             $table->foreignId('style_costing_id')->constrained('style_costings')->onDelete('cascade');
+            $table->foreignId('item_id')->constrained('item_masters')->onDelete('cascade');
             $table->string('item_description');
-            $table->enum('category', ['fabric', 'trim']);    // Matches your form select item_type options
-            $table->string('item_unit');
             
             // Foreign keys pointing to your master variant tables
             $table->foreignId('color_id')->nullable()->constrained('color_contexts')->NullonDelete();

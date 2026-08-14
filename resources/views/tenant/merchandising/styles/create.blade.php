@@ -43,7 +43,13 @@
     'revenue_percent' => isset($style) && $style->costing ? $style->costing->revenue_percent : 6.00,
     'ait_percent' => isset($style) && $style->costing ? $style->costing->ait_percent : 5.00,
     'vat_percent' => isset($style) && $style->costing ? $style->costing->vat_percent : 10.00,
-    'services' => isset($style) && $style->costing && isset($style->costing->services) ? $style->costing->services : [
+    'services' => isset($style) && $style->costing && isset($style->costing) ? [
+        'print_cost' => $style->costing->print_cost,
+        'emb_cost' => $style->costing->emb_cost,
+        'wash_cost' => $style->costing->wash_cost,
+        'cm_cost' => $style->costing->cm_cost,
+        'overhead_cost' => $style->costing->overhead_cost
+    ]  : [
         'print_cost' => 0.00,
         'emb_cost' => 0.00,
         'wash_cost' => 0.00,
@@ -123,6 +129,30 @@
                     <div class="space-y-1">
                         <label class="text-[11px] font-bold text-slate-500 uppercase">Target Price (<span x-text="currencySymbol"></span>)</label>
                         <input type="number" step="0.0001" x-model.number="targetPrice" placeholder="0.0000" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:bg-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div class="space-y-1">
+                        
+                        <div x-show="!imagePreview">
+                            
+                            <label class="text-[11px] font-bold text-slate-500 uppercase">Style Image (JPG, PNG)</label>
+                            <input type="file" 
+                                x-ref="fileInput"
+                                @change="handleImageUpload($event)" 
+                                accept=".jpg,.jpeg,.png" 
+                                class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500 transition file:mr-3 file:py-0.5 file:px-2 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                        </div>
+
+                        <div x-show="imagePreview" class="relative inline-block mt-1">
+                            <img :src="imagePreview" class="h-20 w-20 object-cover rounded-lg border border-slate-300 shadow-sm">
+                            <button type="button" 
+                                    @click="removeImage" 
+                                    class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1 shadow-md transition transform hover:scale-110 flex items-center justify-center"
+                                    title="Delete Image">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,6 +358,7 @@
 @push('scripts')
 <script>
 function styleCreationApp(initialData) {
+    console.log(initialData);
     return {
         isEdit: initialData.isEdit,
         styleId: initialData.id,
@@ -336,6 +367,8 @@ function styleCreationApp(initialData) {
         buyerId: initialData.buyer_id,
         seasonId: initialData.season_id,
         targetPrice: initialData.target_price,
+        imagePreview: initialData.image ? '/storage/' + initialData.image : null,
+        imageFile: null,
         currency: initialData.currency,
         currencySymbol: (initialData.currency === 'TAKA' || initialData.currency === 'BDT') ? '৳' : '$',
         
@@ -346,6 +379,30 @@ function styleCreationApp(initialData) {
         services: initialData.services,
         isSaving: false,
         items: initialData.items,
+
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Format Checking (JPG, JPEG, PNG)
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only JPG, JPEG, and PNG images are allowed!');
+                    event.target.value = '';
+                    return;
+                }
+
+                this.imageFile = file;
+                this.imagePreview = URL.createObjectURL(file); // Create Blob URL for live preview
+            }
+        },
+
+        removeImage() {
+            this.imagePreview = null;
+            this.imageFile = null;
+            if (this.$refs.fileInput) {
+                this.$refs.fileInput.value = '';
+            }
+        },
 
         initSelect2(el, item) {
             this.$nextTick(() => {
@@ -440,7 +497,7 @@ function styleCreationApp(initialData) {
         },
 
         get offeredPrice() {
-            return Math.round(this.calculatedFobPrice).toFixed(2);
+            return this.calculatedFobPrice.toFixed(2);
         },
 
         submitForm() {
@@ -455,33 +512,48 @@ function styleCreationApp(initialData) {
                 ? "{{ route('tenant.merch.styles.update', ['id' => '__id']) }}".replace('__id', this.styleId)
                 : "{{ route('tenant.merch.styles.store') }}";
 
-            let payload = {
-                style_code: this.styleCode,
-                style_name: this.styleName,
-                buyer_id: this.buyerId,
-                season_id: this.seasonId,
-                target_price: this.targetPrice,
-                revenue_percent: this.revenuePercent,
-                ait_percent: this.aitPercent,
-                vat_percent: this.vatPercent,
-                services: this.services,
-                calculated_fob: this.calculatedFobPrice,
-                offered_price: this.offeredPrice,
-                items: this.items
-            };
+            let formData = new FormData();
+            formData.append('style_code', this.styleCode);
+            formData.append('style_name', this.styleName);
+            formData.append('buyer_id', this.buyerId);
+            formData.append('season_id', this.seasonId);
+            formData.append('target_price', this.targetPrice || 0);
+            formData.append('currency', this.currency);
+            formData.append('revenue_percent', this.revenuePercent);
+            formData.append('ait_percent', this.aitPercent);
+            formData.append('vat_percent', this.vatPercent);
+            formData.append('calculated_fob', this.calculatedFobPrice);
+            formData.append('offered_price', this.offeredPrice);
+
+            if (this.imageFile) {
+                formData.append('image', this.imageFile);
+            }
+
+            Object.keys(this.services).forEach(key => {
+                formData.append(`services[${key}]`, this.services[key] || 0);
+            });
+
+            this.items.forEach((item, index) => {
+                formData.append(`items[${index}][item_id]`, item.item_id || '');
+                formData.append(`items[${index}][item_name]`, item.item_name || '');
+                formData.append(`items[${index}][item_type]`, item.item_type || '');
+                formData.append(`items[${index}][color_id]`, item.color_id || '');
+                formData.append(`items[${index}][size_id]`, item.size_id || '');
+                formData.append(`items[${index}][qty]`, item.qty || 0);
+                formData.append(`items[${index}][cost]`, item.cost || 0);
+            });
 
             if (this.isEdit) {
-                payload._method = 'PUT';
+                formData.append('_method', 'PUT');
             }
 
             fetch(url, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: formData
             })
             .then(async response => {
                 const data = await response.json();

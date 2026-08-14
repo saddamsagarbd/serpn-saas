@@ -17,6 +17,12 @@ Livewire.start();
 import $ from 'jquery';
 window.$ = window.jQuery = $;
 
+if (!$.isFunction) {
+    $.isFunction = function (obj) {
+        return typeof obj === 'function';
+    };
+}
+
 $.isArray = Array.isArray;
 
 import select2 from 'select2';
