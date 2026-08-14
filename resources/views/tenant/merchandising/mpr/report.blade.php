@@ -14,11 +14,21 @@
             </div>
 
             <!-- Client-side Quick Search -->
-            <div class="relative">
-                <input type="text" x-model="searchQuery" placeholder="Search SKU, style, color..." class="border border-gray-300 rounded-lg text-xs px-3 py-2 pl-8 focus:outline-none focus:border-indigo-500 w-64 shadow-sm">
-                <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <a href="{{ route('tenant.merch.mpr-order-export-pdf', $salesOrder->id) }}" 
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export PDF
+                </a>
+                <div class="relative">
+                    <input type="text" x-model="searchQuery" placeholder="Search SKU, style, color..." class="border border-gray-300 rounded-lg text-xs px-3 py-2 pl-8 focus:outline-none focus:border-indigo-500 w-64 shadow-sm">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            
             </div>
         </div>
 
@@ -38,7 +48,7 @@
                         <th class="p-3">Color Context</th>
                         <th class="p-3">Size Chart</th>
                         <th class="p-3 text-right">Consumption</th>
-                        <th class="p-3 text-right">Unit Price</th>
+                        <th class="p-3 text-right">Unit</th>
                         <th class="p-3 text-right">Total Required Qty</th>
                     </tr>
                 </thead>
@@ -49,7 +59,7 @@
                             <td class="p-3">{{ $item['color_name'] }}</td>
                             <td class="p-3">{{ $item['size_name'] }}</td>
                             <td class="p-3 text-right font-mono">{{ number_format($item['consumption'], 4) }}</td>
-                            <td class="p-3 text-right font-mono">${{ number_format($item['unit_price'], 4) }}</td>
+                            <td class="p-3 text-right font-mono">{{ $item['unit'] }}</td>
                             <td class="p-3 text-right font-mono font-bold text-indigo-600">
                                 {{ number_format($item['required_qty'], 2) }}
                             </td>

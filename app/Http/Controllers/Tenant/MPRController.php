@@ -12,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Str;
 
 class MPRController extends Controller
 {
@@ -187,16 +188,68 @@ class MPRController extends Controller
 
     public function exportPdf(String $tenant, String $id)
     {
-        $salesOrder = SalesOrder::with(['items', 'buyer'])->where('tenant_id', tenant('id'))->findOrFail($id);
+        $salesOrder = SalesOrder::with([
+            'buyer',                     // Line item-এর Size relation
+            'items.style.bomItems.itemMaster', // Style -> bomItems
+            'items.style.bomItems.color',
+            'items.style.bomItems.size',
+        ])->where('tenant_id', tenant('id'))->findOrFail($id);
+
+        $consolidatedMrpDetails = $this->calculateMrpDetails($salesOrder);
 
         // Render the view to raw HTML then feed it to DomPDF engine
-        $pdf = Pdf::loadView('tenant.exports.sales_order_pdf', compact('salesOrder'))
-                ->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('tenant.exports.mpr_pdf', compact('salesOrder', 'consolidatedMrpDetails'))
+        ->setPaper('a4', 'portrait')
+        ->setOption([
+            'isRemoteEnabled'      => true,
+            'isHtml5ParserEnabled' => true,
+            'defaultFont'          => 'sans-serif'
+        ]);
 
-        $pdfFileName = 'SO_' . str_replace(' ', '_', $salesOrder->buyer_po_number) . '.pdf';
+        $poNumber    = $salesOrder->buyer_po_number ? Str::slug($salesOrder->buyer_po_number) : $id;
+        $pdfFileName = 'MPR_SO_' . $poNumber . '.pdf';
         
         // Use stream() to preview in-browser, download() to force save file
         return $pdf->stream($pdfFileName);
+    }
+
+    private function calculateMrpDetails($salesOrder): array
+    {
+        $bomConsolidated = [];
+        $totalOrderQty   = $salesOrder->items->sum('quantity') ?? $salesOrder->items->sum('qty') ?? 0;
+
+        foreach ($salesOrder->items as $soItem) {
+            $orderQty = floatval($soItem->quantity ?? $soItem->qty ?? 0);
+            $costing  = $soItem->style?->costing;
+
+            if ($costing && $costing->bomItems) {
+                foreach ($costing->bomItems as $bom) {
+                    // Unique Grouping Key (Item + Color + Size)
+                    $key = $bom->item_id . '_' . $bom->color_id . '_' . $bom->size_id;
+
+                    $consumption = floatval($bom->consumption ?? 0);
+                    $requiredQty = $orderQty * $consumption;
+
+                    if (!isset($bomConsolidated[$key])) {
+                        $bomConsolidated[$key] = [
+                            'item_name'    => $bom->item_description ?? $bom->item?->name ?? 'N/A',
+                            'color_name'   => $bom->color?->name ?? 'N/A',
+                            'size_name'    => $bom->size?->short_name ?? $bom->size?->name ?? 'N/A',
+                            'consumption'  => $consumption,
+                            'unit'         => $bom->item_unit ?? $bom->item?->uom ?? 'Pcs',
+                            'required_qty' => 0,
+                        ];
+                    }
+
+                    $bomConsolidated[$key]['required_qty'] += $requiredQty;
+                }
+            }
+        }
+
+        return [
+            'total_order_qty' => $totalOrderQty,
+            'bom_items'       => array_values($bomConsolidated),
+        ];
     }
 
     public function mrpOrderEdit($tenant, String $id){
@@ -246,6 +299,7 @@ class MPRController extends Controller
                             'color_name'   => $bom->color->name ?? 'N/A',
                             'size_name'    => $bom->size->name ?? 'N/A',
                             'consumption'  => $bom->consumption ?? 0,
+                            'unit'         => $bom->itemMaster->unit->short_name ?? 'N/A',
                             'unit_price'   => $bom->unit_price ?? 0,
                             'required_qty' => $requiredQtyForThisLine,
                         ]);
