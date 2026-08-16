@@ -160,10 +160,10 @@ return [
             'enabled' => true,
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
-                ['label' => 'Purchase Requisition',   'route' => 'tenant.purchase.pr.index',    'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Purchase Order',   'route' => 'tenant.purchase.po.index',    'enabled' => true, 'business_types' => ['*']],
+                // ['label' => 'Purchase Requisition',   'route' => 'tenant.purchase.pr.index',    'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Purchase Order (PO)',   'route' => 'tenant.purchase.po.index',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn.index',         'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers',   'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers.index',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['merchandising']],
             ],

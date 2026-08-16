@@ -165,12 +165,14 @@ Route::domain('{tenant}.serpn-saas.test')
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
 
                 Route::get('/purchase-requisition', [PurchaseRequisitionController::class, 'index'])->name('pr.index');
-                Route::get('/purchase-order', [PurchaseOrderController::class, 'index'])->name('po.index');
+                Route::get('/orders', [PurchaseOrderController::class, 'index'])->name('po.index');
+                Route::get('/po-create', [PurchaseOrderController::class, 'create'])->name('po.create');
+                Route::get('/po/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
 
-                Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers');
+                Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
                 Route::get('/suppliers-form', [SupplierController::class, 'create'])->name('suppliers.form');
                 Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');

@@ -9,11 +9,7 @@ use Illuminate\Support\Str;
 
 class Supplier extends Model
 {
-    protected $fillable = [
-        'coa_id', 'supplier_code', 'name', 'contact_person', 'email', 'phone', 'address',
-        'tax_id', 'payment_terms_days', 'lead_time_days', 'currency',
-        'bank_name', 'bank_account_number', 'is_active',
-    ];
+    protected $guarded = [];
 
     protected $casts = ['is_active' => 'boolean'];
 
