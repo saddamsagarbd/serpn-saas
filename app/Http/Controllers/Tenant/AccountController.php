@@ -28,7 +28,7 @@ class AccountController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = ChartOfAccount::with('parent')->select('chart_of_accounts.*');
+            $data = ChartOfAccount::with('parent')->where('tenant_id', tenant('id'))->select('chart_of_accounts.*');
             
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -56,6 +56,7 @@ class AccountController extends Controller
         ]);
 
         $coa = ChartOfAccount::create([
+            'tenant_id' => tenant('id'),
             'name' => $validated['name'],
             'code' => $validated['code'],
             'type' => $validated['type'],
@@ -85,7 +86,7 @@ class AccountController extends Controller
             'opening_balance' => 'nullable|numeric',
         ]);
 
-        $coa = ChartOfAccount::findOrFail($id);
+        $coa = ChartOfAccount::where('tenant_id', tenant('id'))->findOrFail($id);
         
         $coa->update([
             'name' => $validated['name'],
@@ -113,8 +114,8 @@ class AccountController extends Controller
     public function income()
     {
         // ড্রপডাউনের জন্য ইনকাম হেড এবং ক্যাশ/ব্যাংক (Asset) হেড ফিল্টার
-        $incomeHeads = ChartOfAccount::where('type', 'income')->where('status', 'active')->get();
-        $assetHeads = ChartOfAccount::where('type', 'asset')->where('status', 'active')->get();
+        $incomeHeads = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'income')->where('status', 'active')->get();
+        $assetHeads = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'asset')->where('status', 'active')->get();
         
         return view('tenant.account.income', compact('incomeHeads', 'assetHeads'));
     }
@@ -126,8 +127,8 @@ class AccountController extends Controller
     public function expense()
     {
         // ড্রপডাউনের জন্য ইনকাম হেড এবং ক্যাশ/ব্যাংক (Asset) হেড ফিল্টার
-        $expenseHeads = ChartOfAccount::where('type', 'expense')->where('status', 'active')->get();
-        $assetHeads = ChartOfAccount::where('type', 'asset')->where('status', 'active')->get();
+        $expenseHeads = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'expense')->where('status', 'active')->get();
+        $assetHeads = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'asset')->where('status', 'active')->get();
         
         return view('tenant.account.expense', compact('expenseHeads', 'assetHeads'));
     }
@@ -139,6 +140,7 @@ class AccountController extends Controller
     public function transactions(Request $request)
     {
         $vouchers = Voucher::with('entries.account')
+                    ->where('tenant_id', tenant('id'))
                     ->orderBy('date', 'desc')
                     ->orderBy('id', 'desc')
                     ->paginate(15);
@@ -151,7 +153,7 @@ class AccountController extends Controller
      */
     public function cashBook(Request $request)
     {
-        $cashAccount = ChartOfAccount::where('type', 'asset')
+        $cashAccount = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'asset')
             ->where(function($q) {
                 $q->where('name', 'like', '%cash%')
                 ->orWhere('code', '1001'); // আমাদের তৈরি করা প্রথম অ্যাসেট কোড
@@ -168,7 +170,7 @@ class AccountController extends Controller
             $toDate = $request->get('to_date', date('Y-m-d'));
 
             // শুধুমাত্র ক্যাশ অ্যাকাউন্টের ডেবিট ও ক্রেডিট ট্রানজেকশন লোড
-            $entries = LedgerEntry::where('chart_of_account_id', $cashAccount->id)
+            $entries = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $cashAccount->id)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
@@ -187,6 +189,7 @@ class AccountController extends Controller
     {
         // চার্ট অফ অ্যাকাউন্টস থেকে সব ব্যাংক অ্যাকাউন্ট খুঁজে বের করা
         $bankAccounts = ChartOfAccount::with('ledgerEntries')
+            ->where('tenant_id', tenant('id'))
             ->where('type', 'asset')
             ->where(function($q) {
                 $q->where('name', 'like', '%bank%')
@@ -200,13 +203,13 @@ class AccountController extends Controller
         $selectedAccount = null;
 
         if ($selectedAccountId) {
-            $selectedAccount = ChartOfAccount::find($selectedAccountId);
+            $selectedAccount = ChartOfAccount::where('tenant_id', tenant('id'))->findOrFail($selectedAccountId);
             $openingBalance = $selectedAccount->opening_balance;
 
             $fromDate = $request->input('from_date', date('Y-m-01'));
             $toDate = $request->input('to_date', date('Y-m-d'));
 
-            $entries = LedgerEntry::where('chart_of_account_id', $selectedAccountId)
+            $entries = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $selectedAccountId)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
@@ -224,16 +227,17 @@ class AccountController extends Controller
      */
     public function ledger(Request $request)
     {
-        $accounts = ChartOfAccount::where('status', 'active')->get();
+        $accounts = ChartOfAccount::where('tenant_id', tenant('id'))->where('status', 'active')->get();
         $selectedAccount = $request->get('account_id');
         $entries = [];
         $openingBalance = 0;
 
         if ($selectedAccount) {
-            $account = ChartOfAccount::findOrFail($selectedAccount);
+            $account = ChartOfAccount::where('tenant_id', tenant('id'))->findOrFail($selectedAccount);
             $openingBalance = $account->opening_balance;
 
-            $entries = LedgerEntry::where('chart_of_account_id', $selectedAccount)
+            $entries = LedgerEntry::where('tenant_id', tenant('id'))
+                ->where('chart_of_account_id', $selectedAccount)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->orderBy('vouchers.date', 'asc')
@@ -259,7 +263,7 @@ class AccountController extends Controller
     public function trialBalance()
     {
         // সমস্ত একটিভ অ্যাকাউন্ট এবং তাদের টোটাল ডেবিট ও ক্রেডিট সামারি বের করা
-        $accounts = ChartOfAccount::where('status', 'active')->get();
+        $accounts = ChartOfAccount::where('tenant_id', tenant('id'))->where('status', 'active')->get();
         
         $trialBalanceData = [];
         $totalDebitSum = 0;
@@ -267,8 +271,8 @@ class AccountController extends Controller
 
         foreach ($accounts as $account) {
             // ডেডিকেটেড লেজার এন্ট্রি থেকে ডেবিট ও ক্রেডিট যোগফল নেওয়া
-            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('debit');
-            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)->sum('credit');
+            $debitTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)->sum('debit');
+            $creditTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)->sum('credit');
             
             $opening = $account->opening_balance ?? 0;
             $finalDebit = 0;
@@ -308,16 +312,16 @@ class AccountController extends Controller
         $toDate = $request->input('to_date', date('Y-m-d'));
 
         // ১. অপারেটিং ইনকাম এন্ট্রি ক্যালকুলেশন
-        $incomeAccounts = ChartOfAccount::where('type', 'income')->get();
+        $incomeAccounts = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'income')->get();
         $incomeData = [];
         $totalIncome = 0;
 
         foreach ($incomeAccounts as $account) {
-            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $creditTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('credit');
-            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $debitTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('debit');
@@ -330,16 +334,16 @@ class AccountController extends Controller
         }
 
         // ২. অপারেটিং এক্সপেন্স এন্ট্রি ক্যালকুলেশন
-        $expenseAccounts = ChartOfAccount::where('type', 'expense')->get();
+        $expenseAccounts = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'expense')->get();
         $expenseData = [];
         $totalExpense = 0;
 
         foreach ($expenseAccounts as $account) {
-            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $debitTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('debit');
-            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $creditTotal = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('credit');

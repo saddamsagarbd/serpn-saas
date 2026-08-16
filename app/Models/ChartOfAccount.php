@@ -10,11 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ChartOfAccount extends Model
 {
-    protected $fillable = [
-        'code', 'name', 'type', 'parent_id',
-        'opening_balance',
-        'is_bank_account', 'is_control_account', 'is_system_defined', 'status',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'opening_balance'     => 'decimal:2',
