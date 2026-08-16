@@ -358,7 +358,6 @@
 @push('scripts')
 <script>
 function styleCreationApp(initialData) {
-    console.log(initialData);
     return {
         isEdit: initialData.isEdit,
         styleId: initialData.id,

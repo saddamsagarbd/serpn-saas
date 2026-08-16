@@ -236,7 +236,7 @@ class MPRController extends Controller
                             'color_name'   => $bom->color?->name ?? 'N/A',
                             'size_name'    => $bom->size?->short_name ?? $bom->size?->name ?? 'N/A',
                             'consumption'  => $consumption,
-                            'unit'         => $bom->item_unit ?? $bom->item?->uom ?? 'Pcs',
+                            'unit'         => $bom->item_unit ?? $bom->itemMaster->unit->short_name ?? 'Pcs',
                             'required_qty' => 0,
                         ];
                     }

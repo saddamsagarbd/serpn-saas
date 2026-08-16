@@ -111,7 +111,8 @@
     <table class="bom-table">
         <thead>
             <tr>
-                <th width="35%">Component Item</th>
+                <th width="5%">Sl#</th>
+                <th width="30%">Component Item</th>
                 <th width="15%">Color Context</th>
                 <th width="12%">Size Chart</th>
                 <th width="13%" class="text-right">Consumption</th>
@@ -120,14 +121,15 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($consolidatedMrpDetails['bom_items'] as $item)
+            @forelse($consolidatedMrpDetails['bom_items'] as $index => $item)
                 <tr>
+                    <td class="font-bold" style="color: #0f172a;">{{ ++$index }}</td>
                     <td class="font-bold" style="color: #0f172a;">{{ $item['item_name'] }}</td>
                     <td>{{ $item['color_name'] ?? 'N/A' }}</td>
                     <td>{{ $item['size_name'] ?? 'N/A' }}</td>
-                    <td class="text-right font-mono">{{ number_format($item['consumption'], 4) }}</td>
-                    <td class="text-center font-mono" style="color: #64748b;">{{ $item['unit'] }}</td>
-                    <td class="text-right font-mono font-bold" style="color: #4338ca;">
+                    <td class="text-right">{{ number_format($item['consumption'], 4) }}</td>
+                    <td class="text-center">{{ $item['unit'] }}</td>
+                    <td class="text-right font-bold" style="color: #4338ca;">
                         {{ number_format($item['required_qty'], 2) }}
                     </td>
                 </tr>
