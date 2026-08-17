@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\BomItem;
 use App\Models\ColorContext;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\SizeChart;
 use App\Models\Style;
+use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -381,6 +383,67 @@ class MPRController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function getMprItems($tenant, String $style_id, String $supplier_id){
+
+        $supplier = Supplier::where('tenant_id', tenant('id'))->findOrFail($supplier_id);
+
+        $totalSalesOrderQty = DB::table('sales_order_items')
+                            ->join('sales_orders', 'sales_order_items.sales_order_id', '=', 'sales_orders.id')
+                            ->where('sales_orders.tenant_id', tenant('id'))
+                            ->where('sales_order_items.style_id', $style_id)
+                            ->sum('sales_order_items.quantity');
+
+
+        $mprItems = DB::table('bom_items')
+            ->join('style_costings', 'bom_items.style_costing_id', '=', 'style_costings.id')
+            ->join('styles', 'style_costings.style_id', '=', 'styles.id')
+            ->join('item_masters', 'bom_items.item_id', '=', 'item_masters.id')
+            ->leftJoin('color_contexts', 'bom_items.color_id', '=', 'color_contexts.id') // যদি Color টেবিল থাকে
+            ->leftJoin('size_charts', 'bom_items.size_id', '=', 'size_charts.id')
+            ->leftJoin('units', 'item_masters.unit_id', '=', 'units.id')
+            ->where('bom_items.tenant_id', tenant('id'))
+            ->where('style_costings.style_id', $style_id)
+            ->when($supplier->supplier_type, function ($query, $type) {
+                if($type == "trims" || $type == "packaging"){
+                    return $query->whereIn('item_masters.item_type', ['trims', 'accessories']);                    
+                }
+                return $query->where('item_masters.item_type', $type);
+            })
+            ->select([
+                'bom_items.id as bom_item_id',
+                'item_masters.id as item_master_id',
+                'item_masters.name as item_name',
+                'units.short_name as unit_name',
+                'color_contexts.name as color_name',
+                'size_charts.short_name as size_name',
+                'bom_items.consumption',        // ১ পিস জামায় কতটুকু মালামাল লাগে
+                'bom_items.wastage_percent',    // ওয়েস্টেজ পার্সেন্টেজ (যদি থাকে)
+                'bom_items.unit_price as estimated_rate'
+            ])
+            ->get()
+            ->map(function ($item) use ($totalSalesOrderQty) {
+                // হিসাব: (Total SO Qty * Unit Consumption) + Wastage %
+                $baseQty = $totalSalesOrderQty * $item->consumption;
+                $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
+                $totalRequiredQty = $baseQty + $wastageQty;
+
+                return [
+                    'item_id'     => $item->item_master_id,
+                    'name'        => $item->item_name,
+                    'color'       => $item->color_name ?? 'N/A',
+                    'size'        => $item->size_name ?? 'All',
+                    'mpr_qty'     => round($totalRequiredQty, 2),  // মোট রিকোয়ার্ড পরিমাণ
+                    'order_qty'   => round($totalRequiredQty, 2),  // বাই-ডিফল্ট এটাই Booking Qty
+                    'unit'        => $item->unit_name ?? 'Pcs',
+                    'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
+                ];
+            });
+
+        return response()->json($mprItems);
+        
+        
     }
 
 }

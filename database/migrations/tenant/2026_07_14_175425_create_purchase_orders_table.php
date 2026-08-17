@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('po_no')->unique(); // e.g., PO-2664 
             $table->foreignId('supplier_id')->constrained(); //
-            $table->foreignId('material_requisition_id')->nullable()->constrained(); // MPR-এর রেফারেন্স
+            $table->foreignId('sales_order_id')->nullable()->constrained(); // MPR-এর রেফারেন্স
             $table->date('po_date');
             $table->date('delivery_date')->nullable(); // 
             

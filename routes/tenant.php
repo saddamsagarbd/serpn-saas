@@ -72,6 +72,7 @@ Route::domain('{tenant}.serpn-saas.test')
             Route::get('settings', [SettingController::class, 'index'])->name('settings');
 
             Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
+            Route::get('/api/get-mpr-items/{style_id}/{supplier_id}', [MPRController::class, 'getMprItems'])->name('api.get-mpr-items');
 
             // ---- Inventory ----
             Route::prefix('inventory')->name('inventory.')->middleware('feature:inventory')->group(function () {
@@ -167,7 +168,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('/purchase-requisition', [PurchaseRequisitionController::class, 'index'])->name('pr.index');
                 Route::get('/orders', [PurchaseOrderController::class, 'index'])->name('po.index');
                 Route::get('/po-create', [PurchaseOrderController::class, 'create'])->name('po.create');
+                Route::post('/po-store', [PurchaseOrderController::class, 'store'])->name('po.store');
                 Route::get('/po/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
+                Route::put('/po-update/{id}', [PurchaseOrderController::class, 'store'])->name('po.update');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');

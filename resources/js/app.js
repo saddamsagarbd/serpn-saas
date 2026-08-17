@@ -2,28 +2,17 @@ import './bootstrap';
 import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import { createIcons, icons } from 'lucide';
 
-// ১. উইন্ডো অবজেক্টে গ্লোবালি অ্যাসাইন করুন
 window.Alpine = Alpine;
 window.Livewire = Livewire;
 
-// ২. ডম (DOM) কন্টেন্ট লোড হওয়ার পর Lucide আইকন এবং লাইভওয়্যার ইনিশিয়েট করুন
 document.addEventListener('DOMContentLoaded', () => {
     createIcons({ icons });
 });
 
-// ৩. লাইভওয়্যার বুটস্ট্র্যাপ রান করুন
 Livewire.start();
 
 import $ from 'jquery';
 window.$ = window.jQuery = $;
-
-if (!$.isFunction) {
-    $.isFunction = function (obj) {
-        return typeof obj === 'function';
-    };
-}
-
-$.isArray = Array.isArray;
 
 import select2 from 'select2';
 select2();
