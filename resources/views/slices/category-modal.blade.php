@@ -10,7 +10,6 @@
             <button @click="openModal = false" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
         </div>
 
-        {{-- 🛠️ পরিবর্তন: @submit.prevent যুক্ত করা হয়েছে এবং ডাইনামিক :action রিমুভ করা হয়েছে কারণ আমরা Fetch দিয়ে হ্যান্ডেল করছি --}}
         <form @submit.prevent="saveCategory()" class="p-6 space-y-4">
             @csrf
             
@@ -20,15 +19,17 @@
             </div>
 
             <div class="space-y-1">
-                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Parent Assignment Hierarchy</label>
-                <select name="parent_id" x-model="categoryData.parent_id" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Parent Category</label>
+                <select name="parent_id" 
+                        x-model="categoryData.parent_id" 
+                        class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
                     <option value="">-- No Parent (Keep as Root Level) --</option>
-                    @foreach($parentCategories as $parent)
-                        {{-- নিজের ক্যাটাগরি নিজেই যাতে প্যারেন্ট না হতে পারে তার জন্য টেমপ্লেট কন্ডিশন ঠিক আছে --}}
-                        <template x-if="categoryData.id != '{{ $parent->id }}'">
-                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                    
+                    <template x-for="parent in parentCategories" :key="parent.id">
+                        <template x-if="categoryData.id != parent.id">
+                            <option :value="parent.id" x-text="parent.name"></option>
                         </template>
-                    @endforeach
+                    </template>
                 </select>
             </div>
 

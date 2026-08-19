@@ -1,94 +1,7 @@
 @extends('layouts.tenant')
 @section('title','Category')
 @section('content')
-<div class="space-y-6" x-data="{ 
-    openModal: false, 
-    isEdit: false,
-    formAction: '{{ route('tenant.inventory.categories.store') }}',
-    categoryData: { id: '', name: '', parent_id: '', description: '' },
-    categories: [],
-    loading: false,
-    searchQuery: '',
-    
-    initCreate() {
-        this.isEdit = false;
-        this.formAction = '{{ route('tenant.inventory.categories.store') }}';
-        this.categoryData = { id: '', name: '', parent_id: '', description: '' };
-        this.openModal = true;
-    },
-    editCategory(data) {
-        console.log(data);
-        this.isEdit = true;
-
-        let baseUrl = '{{ route("tenant.inventory.categories.update", ["id" => ":id"]) }}';
-        this.formAction = baseUrl.replace(':id', data.id);
-        
-        this.categoryData = { 
-            id: data.id, 
-            name: data.name, 
-            parent_id: data.parent_id ?? '', 
-            description: data.description ?? '' 
-        };
-        this.openModal = true;
-    },
-    fetchCategories() {
-        this.loading = true;
-        let url = '{{ route('tenant.inventory.categories.index') }}';
-        
-        if (this.searchQuery) {
-            url += '?search[value]=' + encodeURIComponent(this.searchQuery);
-        }
-
-        fetch(url, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(res => {
-            this.categories = res.data || [];
-            this.loading = false;
-        })
-        .catch(err => {
-            console.error('Error fetching categories:', err);
-            this.loading = false;
-        });
-    },
-    saveCategory() {
-        const token = document.querySelector('input[name=\'_token\']')?.value;
-
-        let formData = {
-            name: this.categoryData.name,
-            parent_id: this.categoryData.parent_id || null,
-            description: this.categoryData.description || ''
-        };
-
-        fetch(this.formAction, {
-            method: this.isEdit ? 'PUT' : 'POST',   // ← real method, no _method needed
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': token
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Validation or Server Error');
-            return response.json();
-        })
-        .then(data => {
-            this.openModal = false;
-            this.fetchCategories();
-            if (typeof toastr !== 'undefined') {
-                toastr.success(data.message || 'Saved successfully!');
-            }
-        })
-        .catch(err => {
-            console.error('Error saving category:', err);
-            alert('Failed to save category. Please check your inputs.');
-        });
-    }
-}" x-init="fetchCategories()">
+<div class="space-y-6" x-data="categoryForm()" x-init="fetchCategories()">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <div class="space-y-6">
             <div class="flex justify-between items-center">
@@ -180,5 +93,111 @@
             el.__x.$data.fetchCategories();
         }
     });
+
+    function categoryForm() {
+        return { // 👈 এখানে 'return {' মিসিং ছিল
+            openModal: false, 
+            isEdit: false,
+            formAction: "{{ route('tenant.inventory.categories.store') }}",
+            categoryData: { id: '', name: '', parent_id: '', description: '' },
+            categories: [],
+            loading: false,
+            searchQuery: '',
+            parentCategories: [],
+
+            init() {
+                this.loadParentCategories();
+            },
+
+            loadParentCategories() {
+                fetch("{{ route('tenant.api.get-parent-categories') }}")
+                    .then(res => res.json())
+                    .then(data => {
+                        this.parentCategories = data;
+                    })
+                    .catch(err => console.error("Error loading parents:", err));
+            },
+            
+            initCreate() {
+                this.isEdit = false;
+                this.formAction = "{{ route('tenant.inventory.categories.store') }}";
+                this.categoryData = { id: '', name: '', parent_id: '', description: '' };
+                this.openModal = true;
+            },
+
+            editCategory(data) {
+                this.isEdit = true;
+                let baseUrl = '{{ route("tenant.inventory.categories.update", ["id" => ":id"]) }}';
+                this.formAction = baseUrl.replace(':id', data.id);
+                
+                this.categoryData = { 
+                    id: data.id, 
+                    name: data.name, 
+                    parent_id: data.parent_id ?? '', 
+                    description: data.description ?? '' 
+                };
+                this.openModal = true;
+            },
+
+            fetchCategories() {
+                this.loading = true;
+                let url = "{{ route('tenant.inventory.categories.index') }}";
+                
+                if (this.searchQuery) {
+                    url += '?search[value]=' + encodeURIComponent(this.searchQuery);
+                }
+
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(res => {
+                    this.categories = res.data || [];
+                    this.loading = false;
+                })
+                .catch(err => {
+                    console.error('Error fetching categories:', err);
+                    this.loading = false;
+                });
+            },
+
+            saveCategory() {
+                let formData = {
+                    name: this.categoryData.name,
+                    parent_id: this.categoryData.parent_id || null,
+                    description: this.categoryData.description || ''
+                };
+
+                fetch(this.formAction, {
+                    method: this.isEdit ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // 👈 CSRF টোকেন সহজভাবে পাস করা হয়েছে
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Validation or Server Error');
+                    return response.json();
+                })
+                .then(data => {
+                    this.openModal = false;
+                    
+                    // 🔥 অন-দ্য-ফ্লাই ক্যাটাগরি এবং প্যারেন্ট ড্রপডাউন রিফ্রেশ
+                    this.fetchCategories();
+                    this.loadParentCategories(); 
+
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(data.message || 'Saved successfully!');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error saving category:', err);
+                    alert('Failed to save category. Please check your inputs.');
+                });
+            }
+        }
+    }
 </script>
 @endpush

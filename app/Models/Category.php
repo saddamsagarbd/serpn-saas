@@ -10,16 +10,7 @@ use Illuminate\Support\Str;
 class Category extends Model
 {
     // আলাদা ডেটাবেস হওয়ায় এখানে কোনো টেন্যান্ট ট্রেইট/স্কোপের প্রয়োজন নেই।
-    
-    protected $fillable = [
-        'serial_number',
-        'code',
-        'name',
-        'slug',
-        'parent_id',
-        'description',
-        'is_active'
-    ];
+    protected $guarded = [];
 
     /**
      * Get parent category inside current tenant database context
