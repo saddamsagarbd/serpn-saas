@@ -87,12 +87,12 @@
                                         <!-- 2. Preview Details Button -->
                                         <a :href="'/merchandising/styles/' + style.id + '/details'" 
                                         class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
-                                            Preview
+                                            Costing
                                         </a>
 
                                         <a :href="'/merchandising/styles/' + style.id + '/bom'" 
                                         class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
-                                            Preview
+                                            BOM
                                         </a>
 
                                         <!-- Edit Button -->
