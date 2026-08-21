@@ -9,6 +9,7 @@
         'item_name' => isset($item) ? $item->name : '',
         'item_type' => isset($item) ? $item->item_type : '',
         'unit_id' => isset($item) ? $item->unit_id : '',
+        'category_id' => isset($item) ? $item->category_id : '',
     ])
 }})">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
@@ -50,7 +51,7 @@
                         <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Item Type *</label>
                         <select x-model="itemType" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
                             <option value="">-- Select Type --</option>
-                            <option value="fabric" {{ (old('item_type', $item->item_type ?? '') == 'fabric') ? 'selected' : '' }}>Fabric</option>
+                            <option value="fabrics" {{ (old('item_type', $item->item_type ?? '') == 'fabrics') ? 'selected' : '' }}>Fabrics</option>
                             <option value="trims" {{ (old('item_type', $item->item_type ?? '') == 'trims') ? 'selected' : '' }}>Trims</option>
                             <option value="accessories" {{ (old('item_type', $item->item_type ?? '') == 'accessories') ? 'selected' : '' }}>Accessories</option>
                             <option value="chemical" {{ (old('item_type', $item->item_type ?? '') == 'chemical') ? 'selected' : '' }}>Chemical</option>
@@ -58,6 +59,18 @@
                             <option value="vap" {{ (old('item_type', $item->item_type ?? '') == 'vap') ? 'selected' : '' }}>Value Added Process</option>
                             <option value="pc" {{ (old('item_type', $item->item_type ?? '') == 'pc') ? 'selected' : '' }}>Production Cost</option>
                             <option value="other" {{ (old('item_type', $item->item_type ?? '') == 'other') ? 'selected' : '' }}>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category *</label>
+                        <select x-model="categoryId" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
+                            <option value="">-- Select Category --</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (old('category_id', $item->category_id ?? '') == $category->id) ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>                    
 
@@ -98,6 +111,7 @@ function itemCreationApp(initialData) {
         itemName: initialData.item_name,
         itemType: initialData.item_type,
         unitId: initialData.unit_id,
+        categoryId: initialData.category_id,
         isSaving: false,
 
         submitForm() {
@@ -122,7 +136,10 @@ function itemCreationApp(initialData) {
                 item_name: this.itemName,
                 item_type: this.itemType,
                 unit_id: this.unitId,
+                category_id: this.categoryId,
             };
+
+            console.log(payload);
 
             if (this.isEdit) {
                 payload._method = 'PUT';

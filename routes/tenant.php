@@ -153,7 +153,9 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('styles/{id}/edit', [StyleController::class, 'edit'])->name('styles.edit');
                 Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
                 Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
+                Route::get('styles/{id}/bom', [StyleController::class, 'bom'])->name('styles.bom');
                 Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
+                Route::get('styles/{id}/export-dom-pdf', [StyleController::class, 'exportBomPdf'])->name('styles.export-dom-pdf');
                 
                 Route::get('/mpr-order', [MPRController::class, 'index'])->name('mpr.index');
                 Route::get('/mpr-order-create', [MPRController::class, 'createMrpOrder'])->name('mpr.order-create');

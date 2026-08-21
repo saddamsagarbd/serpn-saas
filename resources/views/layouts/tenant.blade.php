@@ -30,7 +30,7 @@
                 @include('partials.tenant-header')
 
                 <!-- ৩. মেইন ডাইনামিক কন্টেন্ট সেকশন -->
-                <main class="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
+                <main class="flex-1 overflow-y-auto p-2 bg-[#f8fafc]">
                     @yield('content')
                 </main>
                 

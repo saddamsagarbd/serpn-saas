@@ -195,7 +195,16 @@ class StyleController extends Controller
 
     public function edit($tenant, String $id)
     {
-        $style = Style::with(['costing.bomItems'])->where('tenant_id', tenant('id'))->findOrFail($id);
+        $style = Style::with([
+            'buyer', 
+            'season', 
+            'costing.bomItems.itemMaster',
+            'costing.bomItems.color',
+            'costing.bomItems.size'
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+        
         $colors = ColorContext::all();
         $units = Unit::all();
         $buyers = Buyer::all();
@@ -246,6 +255,7 @@ class StyleController extends Controller
             'items.*.size_id'   => 'required|exists:size_charts,id',
             'items.*.qty'       => 'required|numeric|min:0',
             'items.*.cost'      => 'required|numeric|min:0',
+            'items.*.wastage'   => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -312,8 +322,9 @@ class StyleController extends Controller
             $costing->bomItems()->delete();
 
             foreach ($request->items as $item) {
-                $qty      = (float) ($item['qty'] ?? 0);
-                $cost     = (float) ($item['cost'] ?? 0);
+                $qty        = (float) ($item['qty'] ?? 0);
+                $cost       = (float) ($item['cost'] ?? 0);
+                $totalcost  = (float) (($qty * $cost) * (1 + ($item['wastage'] / 100 ?? 0)));
                 $itemId   = $item['item_id'] ?? null;
 
                 $costing->bomItems()->create([
@@ -321,10 +332,11 @@ class StyleController extends Controller
                     'item_id'          => $itemId,
                     'item_description' => $item['item_name'],
                     'consumption'      => $qty,
+                    'wastage_percent'  => $item['wastage'],
                     'color_id'         => $item['color_id'],
                     'size_id'          => $item['size_id'],
                     'unit_price'       => $cost,
-                    'total_cost'       => $qty * $cost,
+                    'total_cost'       => $totalcost,
                 ]);
             }
 
@@ -373,6 +385,21 @@ class StyleController extends Controller
 
         return view('tenant.merchandising.styles.show', compact('style'));
     }
+    
+    public function bom($tenant, String $id)
+    {
+        $style = Style::with([
+            'buyer', 
+            'season', 
+            'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
+            'costing.bomItems.color',
+            'costing.bomItems.size'
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+
+        return view('tenant.merchandising.styles.bom', compact('style'));
+    }
 
     public function exportPdf(String $tenant, String $id)
     {
@@ -390,7 +417,29 @@ class StyleController extends Controller
         $pdf = Pdf::loadView('tenant.exports.style_costing_pdf', compact('style'))
                 ->setPaper('a4', 'portrait');
 
-        $pdfFileName = 'BOM_' . str_replace(' ', '_', $style->style_number) . '.pdf';
+        $pdfFileName = 'costing_' . str_replace(' ', '_', $style->style_number) . '.pdf';
+        
+        // Use stream() to preview in-browser, download() to force save file
+        return $pdf->stream($pdfFileName);
+    }
+
+    public function exportBomPdf(String $tenant, String $id)
+    {
+        $style = Style::with([
+            'buyer', 
+            'season', 
+            'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
+            'costing.bomItems.color',
+            'costing.bomItems.size'
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+
+        // Render the view to raw HTML then feed it to DomPDF engine
+        $pdf = Pdf::loadView('tenant.exports.style_bom_pdf', compact('style'))
+                ->setPaper('a4', 'portrait');
+
+        $pdfFileName = 'bom_' . str_replace(' ', '_', $style->style_number) . '.pdf';
         
         // Use stream() to preview in-browser, download() to force save file
         return $pdf->stream($pdfFileName);

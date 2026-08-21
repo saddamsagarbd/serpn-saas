@@ -7,8 +7,8 @@
     $bomItems = $costing ? $costing->bomItems : collect();
     
     // Grouping BOM items
-    $fabrics = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') === 'fabric');
-    $trims = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') !== 'fabric');
+    $fabrics = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') === 'fabrics');
+    $trims = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') !== 'fabrics');
 
     // Totals calculation
     $ttlFabricCost = $fabrics->sum(fn($i) => $i->consumption * $i->unit_price);
@@ -80,8 +80,9 @@
                         <tr class="bg-slate-100 font-bold border-b border-slate-300 text-slate-700">
                             <th class="p-2 border-r border-slate-300 w-3/12">Item</th>
                             <th class="p-2 border-r border-slate-300 w-4/12">Details & UOM</th>
-                            <th class="p-2 border-r border-slate-300 text-right w-1.5/12">Cons/Qnty</th>
+                            <th class="p-2 border-r border-slate-300 text-right w-1.5/12">Qty</th>
                             <th class="p-2 border-r border-slate-300 text-right w-1.5/12">Unit Price</th>
+                            <th class="p-2 border-r border-slate-300 text-right w-1.5/12">Wastage (%)</th>
                             <th class="p-2 text-right w-2/12">TTL Cost</th>
                         </tr>
                     </thead>
@@ -91,7 +92,7 @@
                         @forelse($fabrics as $item)
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-semibold text-indigo-900">
-                                {{ $item->item_description ?? $item->item->name ?? 'Fabric' }}
+                                {{ $item->itemMaster->category->name ?? $item->item_description ?? 'Fabrics' }}
                             </td>
                             <td class="p-2 border-r border-slate-200 text-slate-600">
                                 {{ $item->item->details ?? $item->item_description }}
@@ -101,6 +102,7 @@
                             </td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
+                            <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->wastage_percent, 2) }}%</td>
                             <td class="p-2 text-right font-mono font-semibold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
                         </tr>
                         @empty
@@ -114,6 +116,7 @@
                             <td colspan="2" class="p-2 border-r border-slate-300 uppercase">TTL Fabric Cost</td>
                             <td class="p-2 border-r border-slate-300 text-right font-mono">{{ number_format($fabrics->sum('consumption'), 2) }}</td>
                             <td class="p-2 border-r border-slate-300"></td>
+                            <td class="p-2 border-r border-slate-300"></td>
                             <td class="p-2 text-right font-mono text-sm text-amber-900">{{ $currencySymbol }} {{ number_format($ttlFabricCost, 2) }}</td>
                         </tr>
 
@@ -121,7 +124,7 @@
                         @foreach($trims as $item)
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-semibold uppercase text-slate-700">
-                                {{ $item->item_description ?? $item->item->name ?? 'Trim' }}
+                                {{ $item->itemMaster->category->name ?? $item->item_description ?? $item->item->name ?? 'Trim' }}
                             </td>
                             <td class="p-2 border-r border-slate-200 text-slate-600">
                                 {{ $item->item->details ?? $item->item_description }}
@@ -131,34 +134,35 @@
                             </td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
+                            <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->wastage_percent, 2) }}%</td>
                             <td class="p-2 text-right font-mono font-semibold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
                         </tr>
                         @endforeach
 
                         <!-- TOTAL TRIM COST -->
                         <tr class="bg-amber-100 font-bold border-y-2 border-amber-300 text-slate-900">
-                            <td colspan="4" class="p-2 border-r border-slate-300 uppercase">TTL Trim Cost</td>
+                            <td colspan="5" class="p-2 border-r border-slate-300 uppercase">TTL Trim Cost</td>
                             <td class="p-2 text-right font-mono text-sm text-amber-900">{{ $currencySymbol }} {{ number_format($ttlTrimCost, 2) }}</td>
                         </tr>
 
                         <!-- 3. VALUE ADD COST (SERVICES) -->
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-bold text-indigo-700 uppercase">PRINT</td>
-                            <td class="p-2 border-r border-slate-200 text-slate-500">-</td>
+                            <td colspan="2" class="p-2 border-r border-slate-200 text-slate-500">-</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">1.00</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
                         </tr>
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-bold text-indigo-700 uppercase">EMB</td>
-                            <td class="p-2 border-r border-slate-200 text-slate-500">-</td>
+                            <td colspan="2" class="p-2 border-r border-slate-200 text-slate-500">-</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">1.00</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
                         </tr>
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-bold text-indigo-700 uppercase">WASH</td>
-                            <td class="p-2 border-r border-slate-200 text-slate-500">-</td>
+                            <td colspan="2" class="p-2 border-r border-slate-200 text-slate-500">-</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">1.00</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
@@ -166,21 +170,21 @@
 
                         <!-- VALUE ADD COST TOTAL -->
                         <tr class="bg-amber-100 font-bold border-y border-amber-300 text-slate-900">
-                            <td colspan="4" class="p-2 border-r border-slate-300 uppercase">Value Add Cost</td>
+                            <td colspan="5" class="p-2 border-r border-slate-300 uppercase">Value Add Cost</td>
                             <td class="p-2 text-right font-mono text-sm text-amber-900">{{ $currencySymbol }} {{ number_format($valueAddCost, 2) }}</td>
                         </tr>
 
                         <!-- 4. MAKING COST (CM & OVERHEAD) -->
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-bold text-slate-700 uppercase">CM</td>
-                            <td class="p-2 border-r border-slate-200 text-slate-500">-</td>
+                            <td colspan="2" class="p-2 border-r border-slate-200 text-slate-500">-</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">1.00</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
                         </tr>
                         <tr class="hover:bg-slate-50">
                             <td class="p-2 border-r border-slate-200 font-bold text-slate-700 uppercase">OVERHEAD COST</td>
-                            <td class="p-2 border-r border-slate-200 text-slate-500">-</td>
+                            <td colspan="2" class="p-2 border-r border-slate-200 text-slate-500">-</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">1.00</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
@@ -188,47 +192,47 @@
 
                         <!-- MAKING COST TOTAL -->
                         <tr class="bg-amber-100 font-bold border-y-2 border-amber-300 text-slate-900">
-                            <td colspan="3" class="p-2 border-r border-slate-300 uppercase">Making Cost</td>
+                            <td colspan="4" class="p-2 border-r border-slate-300 uppercase">Making Cost</td>
                             <td class="p-2 border-r border-slate-300 text-right font-mono">1.00</td>
                             <td class="p-2 text-right font-mono text-sm text-amber-900">{{ $currencySymbol }} {{ number_format($makingCost, 2) }}</td>
                         </tr>
 
                         <!-- 5. SUMMARY GRAND TOTALS & MARKUPS -->
-                        <tr class="bg-amber-800 text-dark font-bold">
-                            <td colspan="3" class="p-2.5 border-r border-amber-700 uppercase tracking-wider">TTL Cost (Base)</td>
+                        <tr class="bg-amber-800 text-white font-bold">
+                            <td colspan="4" class="p-2.5 border-r border-amber-700 uppercase tracking-wider">TTL Cost (Base)</td>
                             <td class="p-2.5 border-r border-amber-700 text-right font-mono">1.00</td>
                             <td class="p-2.5 text-right font-mono text-base">{{ $currencySymbol }} {{ number_format($ttlBaseCost, 2) }}</td>
                         </tr>
 
                         <tr class="bg-sky-100 text-blue-900 font-bold">
-                            <td colspan="2" class="p-2 border-r border-sky-200 uppercase">REVENUE</td>
+                            <td colspan="3" class="p-2 border-r border-sky-200 uppercase">REVENUE</td>
                             <td class="p-2 border-r border-sky-200 text-right font-mono text-rose-600 font-extrabold">{{ number_format($revenuePercent, 2) }}%</td>
                             <td class="p-2 border-r border-sky-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($revenueAmt, 2) }}</td>
                             <td class="p-2 text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($ttlWithRevenue, 2) }}</td>
                         </tr>
 
                         <tr class="bg-slate-50 text-slate-800 font-bold">
-                            <td colspan="2" class="p-2 border-r border-slate-200 uppercase">AIT- {{ number_format($aitPercent, 0) }}%</td>
+                            <td colspan="3" class="p-2 border-r border-slate-200 uppercase">AIT- {{ number_format($aitPercent, 0) }}%</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($aitPercent, 2) }}%</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($aitAmt, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlWithAit, 2) }}</td>
                         </tr>
 
                         <tr class="bg-slate-50 text-slate-800 font-bold">
-                            <td colspan="2" class="p-2 border-r border-slate-200 uppercase">VAT {{ number_format($vatPercent, 0) }}%</td>
+                            <td colspan="3" class="p-2 border-r border-slate-200 uppercase">VAT {{ number_format($vatPercent, 0) }}%</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($vatPercent, 2) }}%</td>
                             <td class="p-2 border-r border-slate-200 text-right font-mono">{{ $currencySymbol }} {{ number_format($vatAmt, 2) }}</td>
                             <td class="p-2 text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
                         </tr>
 
-                        <tr class="bg-amber-800 text-dark font-bold text-sm">
-                            <td colspan="3" class="p-2.5 border-r border-amber-700 uppercase tracking-wider">TTL FOB</td>
+                        <tr class="bg-amber-800 text-white font-bold text-sm">
+                            <td colspan="4" class="p-2.5 border-r border-amber-700 uppercase tracking-wider">TTL FOB</td>
                             <td class="p-2.5 border-r border-amber-700 text-right font-mono">1.00</td>
                             <td class="p-2.5 text-right font-mono text-base">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
                         </tr>
 
                         <tr class="bg-emerald-500 text-slate-950 font-black text-sm">
-                            <td colspan="3" class="p-3 border-r border-emerald-600 uppercase tracking-widest">OFFERED PRICE</td>
+                            <td colspan="4" class="p-3 border-r border-emerald-600 uppercase tracking-widest">OFFERED PRICE</td>
                             <td class="p-3 border-r border-emerald-600 text-right font-mono">1.00</td>
                             <td class="p-3 text-right font-mono text-lg">{{ $currencySymbol }} {{ number_format($offeredPrice, 2) }}</td>
                         </tr>

@@ -116,41 +116,24 @@
     $costing = $style->costing;
     $bomItems = $costing ? $costing->bomItems : collect();
     
-    // Grouping BOM items
+    // Grouping BOM items (Exact matching with Cost Sheet)
     $fabrics = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') === 'fabrics');
     $trims = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') !== 'fabrics');
 
+    // Helper closure to calculate item total with Wastage %
+    $calcItemTotal = function($item) {
+        $cons = floatval($item->consumption ?? 0);
+        $price = floatval($item->unit_price ?? 0);
+        $wastage = floatval($item->wastage_percent ?? 0);
+        return ($cons * $price) * (1 + ($wastage / 100));
+    };
+
     // Totals calculation
-    $ttlFabricCost = $fabrics->sum(fn($i) => $i->consumption * $i->unit_price);
-    $ttlTrimCost = $trims->sum(fn($i) => $i->consumption * $i->unit_price);
-    
-    $printCost = floatval($costing->print_cost ?? 0);
-    $embCost = floatval($costing->emb_cost ?? 0);
-    $washCost = floatval($costing->wash_cost ?? 0);
-    $valueAddCost = $printCost + $embCost + $washCost;
+    $ttlFabricCost = $fabrics->sum($calcItemTotal);
+    $ttlTrimCost = $trims->sum($calcItemTotal);
+    $grandTotalMaterialCost = $ttlFabricCost + $ttlTrimCost;
 
-    $cmCost = floatval($costing->cm_cost ?? 0);
-    $overheadCost = floatval($costing->overhead_cost ?? 0);
-    $makingCost = $cmCost + $overheadCost;
-
-    $ttlBaseCost = $ttlFabricCost + $ttlTrimCost + $valueAddCost + $makingCost;
-
-    // Markup calculations
-    $revenuePercent = floatval($costing->revenue_percent ?? 6);
-    $revenueAmt = $ttlBaseCost * ($revenuePercent / 100);
-    $ttlWithRevenue = $ttlBaseCost + $revenueAmt;
-
-    $aitPercent = floatval($costing->ait_percent ?? 5);
-    $aitAmt = $ttlWithRevenue * ($aitPercent / 100);
-    $ttlWithAit = $ttlWithRevenue + $aitAmt;
-
-    $vatPercent = floatval($costing->vat_percent ?? 10);
-    $vatAmt = $ttlWithAit * ($vatPercent / 100);
-
-    $ttlFob = $ttlWithAit + $vatAmt;
-    $offeredPrice = floatval($costing->offered_price ?? $ttlFob);
-    $targetPrice = $costing->target_fob;
-
+    $targetPrice = $costing->target_fob ?? 0;
     $currencySymbol = ($costing->currency ?? 'USD') === 'USD' ? '$' : '৳';
 @endphp
 
@@ -259,96 +242,10 @@
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlTrimCost, 2) }}</td>
             </tr>
 
-            <!-- 3. VALUE ADD COST (SERVICES) -->
-            <tr>
-                <td class="font-bold">PRINT</td>
-                <td colspan="2" style="color: #94a3b8;">-</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="font-bold">EMB</td>
-                <td colspan="2" style="color: #94a3b8;">-</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="font-bold">WASH</td>
-                <td colspan="2" style="color: #94a3b8;">-</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
-            </tr>
-
-            <!-- VALUE ADD COST TOTAL -->
-            <tr class="bg-ttl-section">
-                <td colspan="5">VALUE ADD COST</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($valueAddCost, 2) }}</td>
-            </tr>
-
-            <!-- 4. MAKING COST -->
-            <tr>
-                <td class="font-bold">CM</td>
-                <td colspan="2" style="color: #94a3b8;">-</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="font-bold">OVERHEAD COST</td>
-                <td colspan="2" style="color: #94a3b8;">-</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
-            </tr>
-
-            <!-- MAKING COST TOTAL -->
-            <tr class="bg-ttl-section">
-                <td colspan="4">MAKING COST</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($makingCost, 2) }}</td>
-            </tr>
-
-            <!-- 5. GRAND TOTALS & MARKUPS -->
-            <tr class="bg-base-cost">
-                <td colspan="4">TTL COST (BASE)</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlBaseCost, 2) }}</td>
-            </tr>
-
-            <tr class="bg-revenue">
-                <td colspan="3">REVENUE</td>
-                <td class="text-right font-mono font-bold" style="color: #e11d48;">{{ number_format($revenuePercent, 2) }}%</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($revenueAmt, 2) }}</td>
-                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($ttlWithRevenue, 2) }}</td>
-            </tr>
-
-            <tr>
-                <td colspan="3">AIT - {{ number_format($aitPercent, 0) }}%</td>
-                <td class="text-right font-mono">{{ number_format($aitPercent, 2) }}%</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($aitAmt, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlWithAit, 2) }}</td>
-            </tr>
-
-            <tr>
-                <td colspan="3">VAT - {{ number_format($vatPercent, 0) }}%</td>
-                <td class="text-right font-mono">{{ number_format($vatPercent, 2) }}%</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($vatAmt, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
-            </tr>
-
-            <tr class="bg-fob">
-                <td colspan="4">TTL FOB</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
-            </tr>
-
+            <!-- GRAND TOTAL MATERIAL COST -->
             <tr class="bg-offered">
-                <td colspan="4">OFFERED PRICE</td>
-                <td class="text-right font-mono">1.00</td>
-                <td class="text-right font-mono" style="font-size: 14px;">{{ $currencySymbol }} {{ number_format($offeredPrice, 2) }}</td>
+                <td colspan="5">TOTAL MATERIAL COST (FABRIC + TRIMS)</td>
+                <td class="text-right font-mono" style="font-size: 14px;">{{ $currencySymbol }} {{ number_format($grandTotalMaterialCost, 2) }}</td>
             </tr>
 
         </tbody>

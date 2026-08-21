@@ -90,6 +90,11 @@
                                             Preview
                                         </a>
 
+                                        <a :href="'/merchandising/styles/' + style.id + '/bom'" 
+                                        class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
+                                            Preview
+                                        </a>
+
                                         <!-- Edit Button -->
                                         <a :href="'/merchandising/styles/' + style.id + '/edit'" 
                                         class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs">

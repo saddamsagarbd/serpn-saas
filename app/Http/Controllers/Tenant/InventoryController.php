@@ -96,8 +96,8 @@ class InventoryController extends Controller
         return view('tenant.inventory.item.index');
     }
     public function itemCreate(){
-        // ১. আপনার এক্সিসটিং মেটা-ডাটা কোয়েরি সমূহ
         $units         = Unit::all();
+        $categories    = Category::where('is_active', 1)->get();
 
         $currentYear = date('Y');
         $latestItem  = ItemVarient::where('sku', 'LIKE', "ITM-{$currentYear}-%")->latest('id')->first();
@@ -105,7 +105,7 @@ class InventoryController extends Controller
         
         // যেমন: ITM-2026-0005
         $nextSkuPreview = 'ITM-' . $currentYear . '-' . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-        return view('tenant.inventory.item.entry', compact('units', 'nextSkuPreview'));
+        return view('tenant.inventory.item.entry', compact('units', 'nextSkuPreview', 'categories'));
     }
 
     // ৩. ডাটাবেজে আইটেম মাস্টার সেভ করা
@@ -123,7 +123,7 @@ class InventoryController extends Controller
         $typeLower = strtolower(trim($request->item_type));
     
         $prefix = match ($typeLower) {
-            'fabric'         => 'FAB',
+            'fabrics'         => 'FAB',
             'trims'          => 'TRM',
             'accessories'    => 'ACC',
             'chemical'       => 'CHM',
@@ -151,6 +151,7 @@ class InventoryController extends Controller
                 'name'        => $request->item_name,
                 'item_type'   =>  $typeLower,
                 'unit_id'     => $request->unit_id,
+                'category_id'     => $request->category_id,
                 'created_by'     => $currentUser,
                 'created_at'     => $now,
             ]);
@@ -173,9 +174,11 @@ class InventoryController extends Controller
         // ২. ফর্মের ড্রপডাউনে দেখানোর জন্য বাকি মেটা-ডাটা লোড করা
         $units         = Unit::all();
 
+        $categories    = Category::where('is_active', 1)->get();
+
         // ভিউ ফাইলে ডাটা পাস করা (ধরে নিচ্ছি আপনার ব্লেড ফাইলটি edit.blade.php নামে আছে)
         return view('tenant.inventory.item.entry', compact(
-            'units', 'item'
+            'units', 'item', 'categories'
         ));
     }
 
@@ -184,7 +187,8 @@ class InventoryController extends Controller
         $validated = $request->validate([            
             'item_name' => 'required|string|max:255',
             'item_type' => 'required|string',
-            'unit_id'   => 'required|integer|exists:units,id', // Adjust table name if different
+            'unit_id'   => 'required|integer|exists:units,id',
+            'category_id'   => 'required|integer|exists:categories,id',
         ]);
 
         $now = Carbon::now();        
@@ -200,6 +204,7 @@ class InventoryController extends Controller
                 'name'      => $validated['item_name'],
                 'item_type' => $typeLower,
                 'unit_id'   => $validated['unit_id'],
+                'category_id'   => $validated['category_id'],
                 'updated_by' => $currentUser,
                 'updated_at' => $now,
             ]);
