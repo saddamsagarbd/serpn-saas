@@ -6,7 +6,7 @@
     <!-- হেডার গ্রিটিংস এবং সাবস্ক্রিপশন স্ট্যাটাস -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-r from-indigo-900 to-slate-900 p-6 rounded-2xl shadow-sm text-white">
         <div>
-            <h1 class="text-2xl font-black tracking-tight">Welcome Back, {{ auth()->user()->name ?? 'Anonymous' }} 👋</h1>
+            <h1 class="text-2xl font-black tracking-tight">Welcome, {{ auth()->user()->name ?? 'Anonymous' }} 👋</h1>
             <p class="text-xs text-indigo-200 mt-1">Here is a quick overview of your workspace performance and consumption for today.</p>
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/20">

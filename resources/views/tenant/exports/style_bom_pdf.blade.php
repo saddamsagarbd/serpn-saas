@@ -2,13 +2,17 @@
 <html lang="bn">
 <head>
     <meta charset="utf-8">
-    <title>Buyer Cost Sheet - {{ $style->style_number }}</title>
+    <title>Production BOM - {{ $style->style_number }}</title>
     <style>
+        @page {
+            margin: 15px;
+            size: A4 landscape; /* প্রোডাকশন BOM-এ বেশি কলাম থাকায় Landscape বেস্ট */
+        }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #1e293b;
-            font-size: 10px;
-            line-height: 1.3;
+            color: #0f172a;
+            font-size: 8px;
+            line-height: 1.2;
             margin: 0;
             padding: 0;
         }
@@ -16,20 +20,20 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #cbd5e1;
-            padding-bottom: 8px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 5px;
         }
 
         .company-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #0f172a;
             text-transform: uppercase;
         }
 
         .sheet-title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #b45309;
             text-transform: uppercase;
@@ -38,18 +42,18 @@
 
         .meta-label {
             font-weight: bold;
-            color: #64748b;
-            font-size: 10px;
+            color: #475569;
+            font-size: 8px;
         }
 
         .product-img {
-            max-width: 110px;
-            max-height: 110px;
-            border-radius: 6px;
+            max-width: 70px;
+            max-height: 70px;
+            border-radius: 4px;
             border: 1px solid #cbd5e1;
         }
 
-        /* Cost Sheet Main Table */
+        /* Production Table Styling */
         .cost-table {
             width: 100%;
             border-collapse: collapse;
@@ -57,15 +61,15 @@
         }
 
         .cost-table th, .cost-table td {
-            border: 1px solid #cbd5e1;
-            padding: 5px 6px;
+            border: 1px solid #94a3b8;
+            padding: 4px 5px;
         }
 
         .cost-table th {
-            background-color: #d97706;
+            background-color: #1e293b;
             color: #ffffff;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 7.5px;
             font-weight: bold;
             text-align: left;
         }
@@ -76,38 +80,37 @@
         .font-mono { font-family: Courier, monospace; }
 
         /* Section Specific Styling */
+        .bg-section-header {
+            background-color: #e2e8f0;
+            font-weight: bold;
+            color: #0f172a;
+            font-size: 8.5px;
+            text-transform: uppercase;
+        }
+
         .bg-ttl-section {
             background-color: #fef3c7;
             font-weight: bold;
             color: #78350f;
         }
 
-        .bg-base-cost {
-            background-color: #78350f;
-            color: #ffffff;
+        .bg-grand-total {
+            background-color: #0f172a;
+            color: #f59e0b;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
         }
 
-        .bg-revenue {
-            background-color: #e0f2fe;
-            color: #0369a1;
+        .status-badge {
+            padding: 1px 4px;
+            border-radius: 2px;
             font-weight: bold;
+            font-size: 7px;
+            text-transform: uppercase;
         }
-
-        .bg-fob {
-            background-color: #78350f;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        .bg-offered {
-            background-color: #10b981;
-            color: #022c22;
-            font-weight: bold;
-            font-size: 12px;
-        }
+        .status-inhouse { background-color: #d1fae5; color: #065f46; }
+        .status-partial { background-color: #fef3c7; color: #92400e; }
+        .status-pending { background-color: #ffe4e6; color: #9f1239; }
     </style>
 </head>
 <body>
@@ -116,40 +119,50 @@
     $costing = $style->costing;
     $bomItems = $costing ? $costing->bomItems : collect();
     
-    // Grouping BOM items (Exact matching with Cost Sheet)
+    // Grouping Fabrics & Trims
     $fabrics = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') === 'fabrics');
     $trims = $bomItems->filter(fn($i) => strtolower($i->category ?? $i->itemMaster->item_type ?? '') !== 'fabrics');
 
-    // Helper closure to calculate item total with Wastage %
-    $calcItemTotal = function($item) {
-        $cons = floatval($item->consumption ?? 0);
-        $price = floatval($item->unit_price ?? 0);
-        $wastage = floatval($item->wastage_percent ?? 0);
-        return ($cons * $price) * (1 + ($wastage / 100));
-    };
 
-    // Totals calculation
-    $ttlFabricCost = $fabrics->sum($calcItemTotal);
-    $ttlTrimCost = $trims->sum($calcItemTotal);
-    $grandTotalMaterialCost = $ttlFabricCost + $ttlTrimCost;
-
-    $targetPrice = $costing->target_fob ?? 0;
+    // Controller focus: $orderQty parameter passed from MPR
+    $orderQuantity = floatval($orderQty ?? 1);
     $currencySymbol = ($costing->currency ?? 'USD') === 'USD' ? '$' : '৳';
+
+    // Calculation Helper Function
+    $calcRowData = function($item) use ($orderQuantity) {
+        $cons = floatval($item->consumption ?? 0);
+        $excessPercent = floatval($item->wastage_percent ?? 5);
+        
+        $totalReqQty = ($orderQuantity * $cons) * (1 + ($excessPercent / 100));
+        $inhouseQty = floatval($item->inhouse_qty ?? 0);
+        $shortageQty = $inhouseQty - $totalReqQty;
+        $unitPrice = floatval($item->unit_price ?? 0);
+        $totalBudget = $totalReqQty * $unitPrice;
+
+        return (object)[
+            'excessPercent' => $excessPercent,
+            'totalReqQty' => $totalReqQty,
+            'inhouseQty' => $inhouseQty,
+            'shortageQty' => $shortageQty,
+            'unitPrice' => $unitPrice,
+            'totalBudget' => $totalBudget,
+        ];
+    };
 @endphp
 
     <!-- HEADER / META INFORMATION MATRIX -->
     <table class="header-table">
         <tr>
-            <td width="70%" style="vertical-align: top;">
-                <div class="company-name">{{ tenant()->company_name ?? 'Company Name' }}</div>
-                <div class="sheet-title">Buyer Cost Sheet</div>
+            <td width="75%" style="vertical-align: top;">
+                <div class="company-name">{{ tenant()->company_name ?? 'Factory / Company Name' }}</div>
+                <div class="sheet-title">Production Bill of Materials (BOM)</div>
                 
-                <table width="100%" style="margin-top: 8px;" cellpadding="2">
+                <table width="100%" style="margin-top: 6px;" cellpadding="1.5">
                     <tr>
-                        <td class="meta-label" width="22%">Style Number:</td>
-                        <td width="28%"><b>{{ $style->style_number }}</b></td>
-                        <td class="meta-label" width="20%">Buyer:</td>
-                        <td width="30%">{{ $style->buyer->name ?? 'N/A' }}</td>
+                        <td class="meta-label" width="15%">Style Number:</td>
+                        <td width="35%"><b>{{ $style->style_number }}</b></td>
+                        <td class="meta-label" width="15%">Buyer:</td>
+                        <td width="35%">{{ $style->buyer->name ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <td class="meta-label">Product Name:</td>
@@ -158,94 +171,149 @@
                         <td>{{ $style->season->name ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">Target FOB:</td>
-                        <td style="font-weight: bold; color: #4f46e5;">{{ $currencySymbol }} {{ number_format($costing->target_fob ?? 0, 2) }}</td>
+                        <td class="meta-label">Order Quantity:</td>
+                        <td style="font-weight: bold; color: #4f46e5;">{{ number_format($orderQuantity) }} Pcs</td>
                         <td class="meta-label">Export Date:</td>
                         <td>{{ date('Y-m-d H:i') }}</td>
                     </tr>
                 </table>
             </td>
-            <td width="30%" class="text-right" style="vertical-align: top;">
+            <td width="25%" class="text-right" style="vertical-align: top;">
                 @php
-                    $fullPath = storage_path('/app/public/' . $style->product_image);
+                    $fullPath = storage_path('app/public/' . $style->product_image);
                 @endphp
                 @if($style->product_image && file_exists($fullPath))
-                    <img src="{{ $fullPath }}" class="product-img" alt="{{ $style->product_name }}">
+                    <img src="{{ $fullPath }}" class="product-img" alt="Product Image">
                 @endif
             </td>
         </tr>
     </table>
 
-    <!-- MAIN COST SHEET TABLE -->
+    <!-- MAIN PRODUCTION BOM TABLE -->
     <table class="cost-table">
         <thead>
             <tr>
-                <th width="28%">Item</th>
-                <th width="20%">Details</th>
-                <th width="12%" class="text-right">Cons/Qnty</th>
-                <th width="13%" class="text-right">Unit Price</th>
-                <th width="12%" class="text-center">Wastage (%)</th>
-                <th width="15%" class="text-right">TTL Cost</th>
+                <th width="18%">Material Description</th>
+                <th width="8%">GMT Color</th>
+                <th width="8%">Mat. Color</th>
+                <th width="6%" class="text-right">Order Qty</th>
+                <th width="6%" class="text-right">Cons/GMT</th>
+                <th width="6%" class="text-right">Excess %</th>
+                <th width="8%" class="text-right">Total Req Qty</th>
+                <th width="8%" class="text-right">In-House Qty</th>
+                <th width="8%" class="text-right">Short/Excess</th>
+                <th width="7%" class="text-center">PCD Date</th>
+                <th width="5%" class="text-center">Status</th>
+                <th width="6%" class="text-right">Unit Price</th>
+                <th width="6%" class="text-right">TTL Budget</th>
             </tr>
         </thead>
         <tbody>
 
-            <!-- 1. FABRIC ITEMS -->
+            <!-- 1. FABRICS SECTION -->
+            <tr class="bg-section-header">
+                <td colspan="13">1. Fabric Materials</td>
+            </tr>
+            @php $ttlFabricBudget = 0; $ttlFabricReq = 0; @endphp
             @forelse($fabrics as $item)
+            @php
+                $data = $calcRowData($item);
+                $ttlFabricBudget += $data->totalBudget;
+                $ttlFabricReq += $data->totalReqQty;
+            @endphp
             <tr>
-                <td class="font-bold" style="color: #312e81;">{{ $item->itemMaster->category->name ?? $item->item_description ?? 'Fabrics' }}</td>
-                <td style="color: #475569;">
-                    {{ $item->item->details ?? $item->item_description }}
-                    @if(optional($item->item)->uom || $item->item_unit)
-                        <span style="font-size: 8px; color: #64748b;">({{ $item->item_unit ?? $item->item->uom }})</span>
+                <td class="font-bold">{{ $item->item_description ?? $item->itemMaster->name ?? 'Fabric' }}</td>
+                <td>{{ $item->gmt_color ?? 'All' }}</td>
+                <td>{{ $item->material_color ?? 'DTM' }}</td>
+                <td class="text-right font-mono">{{ number_format($orderQuantity) }}</td>
+                <td class="text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
+                <td class="text-right font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
+                <td class="text-right font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
+                <td class="text-right font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
+                <td class="text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
+                    {{ number_format($data->shortageQty, 2) }}
+                </td>
+                <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                <td class="text-center">
+                    @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
+                        <span class="status-badge status-inhouse">Done</span>
+                    @elseif($data->inhouseQty > 0)
+                        <span class="status-badge status-partial">Partial</span>
+                    @else
+                        <span class="status-badge status-pending">Pending</span>
                     @endif
                 </td>
-                <td class="text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
-                <td class="text-right font-mono">{{ number_format($item->wastage_percent, 2) }}%</td>
-                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($data->unitPrice, 2) }}</td>
+                <td class="text-right font-mono font-bold">{{ $currencySymbol }}{{ number_format($data->totalBudget, 2) }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="color: #94a3b8; font-style: italic;">No fabric items added.</td>
+                <td colspan="13" style="color: #94a3b8; font-style: italic;">No fabric items listed.</td>
             </tr>
             @endforelse
 
             <!-- TOTAL FABRIC COST -->
             <tr class="bg-ttl-section">
-                <td colspan="3">TTL FABRIC COST</td>
-                <td class="text-right font-mono">{{ number_format($fabrics->sum('consumption'), 2) }}</td>
-                <td></td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFabricCost, 2) }}</td>
+                <td colspan="6" class="text-right">TTL FABRIC REQUIREMENT & BUDGET</td>
+                <td class="text-right font-mono">{{ number_format($ttlFabricReq, 2) }}</td>
+                <td colspan="5"></td>
+                <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlFabricBudget, 2) }}</td>
             </tr>
 
-            <!-- 2. TRIMS & ACCESSORIES -->
-            @foreach($trims as $item)
+            <!-- 2. TRIMS & ACCESSORIES SECTION -->
+            <tr class="bg-section-header">
+                <td colspan="13">2. Trims & Accessories</td>
+            </tr>
+            @php $ttlTrimBudget = 0; $ttlTrimReq = 0; @endphp
+            @forelse($trims as $item)
+            @php
+                $data = $calcRowData($item);
+                $ttlTrimBudget += $data->totalBudget;
+                $ttlTrimReq += $data->totalReqQty;
+            @endphp
             <tr>
-                <td class="font-bold" style="color: #334155;">{{ $item->item_description }}</td>
-                <td style="color: #475569;">
-                    {{ $item->item->details ?? $item->item_description }}
-                    @if(optional($item->itemMaster)->unit || $item->item_unit)
-                        <span style="font-size: 8px; color: #64748b;">({{ $item->item_unit ?? $item->itemMaster->unit->short_name }})</span>
+                <td class="font-bold">{{ $item->item_description ?? $item->itemMaster->name ?? 'Trim Item' }}</td>
+                <td>{{ $item->gmt_color ?? 'All' }}</td>
+                <td>{{ $item->material_color ?? 'DTM' }}</td>
+                <td class="text-right font-mono">{{ number_format($orderQuantity) }}</td>
+                <td class="text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
+                <td class="text-right font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
+                <td class="text-right font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
+                <td class="text-right font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
+                <td class="text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
+                    {{ number_format($data->shortageQty, 2) }}
+                </td>
+                <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                <td class="text-center">
+                    @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
+                        <span class="status-badge status-inhouse">Done</span>
+                    @elseif($data->inhouseQty > 0)
+                        <span class="status-badge status-partial">Partial</span>
+                    @else
+                        <span class="status-badge status-pending">Pending</span>
                     @endif
                 </td>
-                <td class="text-right font-mono">{{ number_format($item->consumption, 2) }}</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
-                <td class="text-right font-mono">{{ number_format($item->wastage_percent, 2) }}%</td>
-                <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($item->consumption * $item->unit_price, 2) }}</td>
+                <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($data->unitPrice, 2) }}</td>
+                <td class="text-right font-mono font-bold">{{ $currencySymbol }}{{ number_format($data->totalBudget, 2) }}</td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="13" style="color: #94a3b8; font-style: italic;">No trim items listed.</td>
+            </tr>
+            @endforelse
 
             <!-- TOTAL TRIM COST -->
             <tr class="bg-ttl-section">
-                <td colspan="5">TTL TRIM COST</td>
-                <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlTrimCost, 2) }}</td>
+                <td colspan="6" class="text-right">TTL TRIM REQUIREMENT & BUDGET</td>
+                <td class="text-right font-mono">{{ number_format($ttlTrimReq, 2) }}</td>
+                <td colspan="5"></td>
+                <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlTrimBudget, 2) }}</td>
             </tr>
 
             <!-- GRAND TOTAL MATERIAL COST -->
-            <tr class="bg-offered">
-                <td colspan="5">TOTAL MATERIAL COST (FABRIC + TRIMS)</td>
-                <td class="text-right font-mono" style="font-size: 14px;">{{ $currencySymbol }} {{ number_format($grandTotalMaterialCost, 2) }}</td>
+            <tr class="bg-grand-total">
+                <td colspan="12" class="text-right uppercase">Total Material Budget (Fabric + Trims)</td>
+                <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlFabricBudget + $ttlTrimBudget, 2) }}</td>
             </tr>
 
         </tbody>

@@ -393,12 +393,18 @@ class StyleController extends Controller
             'season', 
             'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
             'costing.bomItems.color',
-            'costing.bomItems.size'
+            'costing.bomItems.size',
+            'mprs' => function($q) {
+                $q->latest();
+            }
         ])
         ->where('tenant_id', tenant('id'))
         ->findOrFail($id);
 
-        return view('tenant.merchandising.styles.bom', compact('style'));
+        
+        $orderQty = $style->mprs->sum('quantity') ?: 1;
+        
+        return view('tenant.merchandising.styles.bom', compact('style', 'orderQty'));
     }
 
     public function exportPdf(String $tenant, String $id)
@@ -430,13 +436,20 @@ class StyleController extends Controller
             'season', 
             'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
             'costing.bomItems.color',
-            'costing.bomItems.size'
+            'costing.bomItems.size',
+            'mprs' => function($q) {
+                $q->latest();
+            }
         ])
         ->where('tenant_id', tenant('id'))
         ->findOrFail($id);
 
+        
+        $orderQty = $style->mprs->sum('quantity') ?: 1;
+        
+
         // Render the view to raw HTML then feed it to DomPDF engine
-        $pdf = Pdf::loadView('tenant.exports.style_bom_pdf', compact('style'))
+        $pdf = Pdf::loadView('tenant.exports.style_bom_pdf', compact('style', 'orderQty'))
                 ->setPaper('a4', 'portrait');
 
         $pdfFileName = 'bom_' . str_replace(' ', '_', $style->style_number) . '.pdf';

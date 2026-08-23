@@ -49,6 +49,12 @@ class Style extends Model
         return $this->belongsTo(Season::class);
     }
 
+    public function mprs()
+    {
+        // আপনার MPR বা Order মডেলে style_id ফরেইন কি (Foreign Key) থাকলে
+        return $this->hasMany(SalesOrderItem::class, 'style_id'); 
+    }
+
     // protected static function booted()
     // {
     //     static::creating(function ($model) {
