@@ -415,8 +415,11 @@ class MPRController extends Controller
                 'bom_items.id as bom_item_id',
                 'item_masters.id as item_master_id',
                 'item_masters.name as item_name',
+                'units.id as unit_id',
                 'units.short_name as unit_name',
+                'color_contexts.id as color_id',
                 'color_contexts.name as color_name',
+                'size_charts.id as size_id',
                 'size_charts.short_name as size_name',
                 'bom_items.consumption',        // ১ পিস জামায় কতটুকু মালামাল লাগে
                 'bom_items.wastage_percent',    // ওয়েস্টেজ পার্সেন্টেজ (যদি থাকে)
@@ -432,11 +435,14 @@ class MPRController extends Controller
                 return [
                     'item_id'     => $item->item_master_id,
                     'name'        => $item->item_name,
+                    'color_id'    => $item->color_id ?? 1,
                     'color'       => $item->color_name ?? 'N/A',
+                    'size_id'     => $item->size_id ?? 1,
                     'size'        => $item->size_name ?? 'All',
                     'mpr_qty'     => round($totalRequiredQty, 2),  // মোট রিকোয়ার্ড পরিমাণ
                     'order_qty'   => round($totalRequiredQty, 2),  // বাই-ডিফল্ট এটাই Booking Qty
                     'unit'        => $item->unit_name ?? 'Pcs',
+                    'unit_id'     => $item->unit_id ?? 1,
                     'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
                 ];
             });

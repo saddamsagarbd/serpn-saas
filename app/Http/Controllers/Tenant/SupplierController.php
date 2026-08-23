@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\ChartOfAccount;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class SupplierController extends Controller
         return view('tenant.supplier.index');
     }
     public function create(){
+        $categories = Category::where('tenant_id', tenant('id'))->get();
         return view('tenant.supplier.supplier-form', [
             'paymentTerms'  => self::PAYMENT_TERMS,
             'supplierTypes'  => self::SUPPLIER_TYPES,
