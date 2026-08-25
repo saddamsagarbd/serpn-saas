@@ -23,6 +23,7 @@ use App\Http\Controllers\Tenant\{
     WarehouseController,
     CategoryController,
     ColorContextController,
+    EmployeeController,
     StyleController,
     UnitController,
     VoucherController,
@@ -69,11 +70,27 @@ Route::domain('{tenant}.serpn-saas.test')
             Route::get('/dashboard', TenantDashboard::class)->name('dashboard');
 
             Route::get('profile', [ProfileController::class, 'index'])->name('profile');
-            Route::get('settings', [SettingController::class, 'index'])->name('settings');
+
+            Route::get('company', [SettingController::class, 'company'])->name('company.index');
+            Route::post('company-store', [SettingController::class, 'companyStore'])->name('company.store');
+            Route::put('company-update/{id}', [SettingController::class, 'companyUpdate'])->name('company.update');
+
+
+            Route::get('department', [SettingController::class, 'department'])->name('department.index');
+            Route::get('designation', [SettingController::class, 'designation'])->name('designation.index');
 
             Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
             Route::get('/api/get-mpr-items/{style_id}/{supplier_id}', [MPRController::class, 'getMprItems'])->name('api.get-mpr-items');
             Route::get('/api/get-parent-categories', [CategoryController::class, 'getParentCategories'])->name('api.get-parent-categories');
+
+            // ---- Employee ----
+            Route::prefix('employee')->name('employee.')->middleware('feature:employee')->group(function () {
+                Route::get('/all', [EmployeeController::class, 'index'])->name('index');
+                Route::get('/form', [EmployeeController::class, 'create'])->name('form');
+                Route::post('employees', [EmployeeController::class, 'store'])->name('store');
+                Route::get('/{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [EmployeeController::class, 'update'])->name('update');
+            });
 
             // ---- Inventory ----
             Route::prefix('inventory')->name('inventory.')->middleware('feature:inventory')->group(function () {

@@ -23,7 +23,7 @@ class WarehouseController extends Controller
                     return $row->name ? $row->name : 'N/A';
                 })
                 ->editColumn('address', function($row){
-                    return $row->location ?: 'N/A';
+                    return $row->location ?? 'N/A';
                 })
                 ->editColumn('is_default', function($row){
                     return $row->is_default==1 ?'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">Default</span>': 'N/A';

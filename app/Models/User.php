@@ -5,8 +5,11 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -45,5 +48,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public static function generateCode(): string
+    {
+        do {
+            $code = 'EMP-' . strtoupper(Str::random(5));
+        } while (static::where('emp_id', $code)->exists());
+        return $code;
+    }
+
+    public function details() : BelongsTo {
+        return $this->belongsTo(UserDetail::class);
+    }
+
+    public function permission() : HasMany {
+        return $this->hasMany(Permission::class);
     }
 }

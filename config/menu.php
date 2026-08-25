@@ -29,10 +29,21 @@ return [
     'default_features' => [
         // ['label' => 'Dashboard', 'icon' => 'home',     'route' => 'tenant.dashboard'],
         ['label' => 'Profile',   'icon' => 'user',     'route' => 'tenant.profile'],
-        ['label' => 'Settings',  'icon' => 'settings', 'route' => 'tenant.settings'],
+        ['label' => 'Company',  'icon' => 'building', 'route' => 'tenant.company.index'],
+        ['label' => 'Department',  'icon' => 'folder', 'route' => 'tenant.department.index'],
+        ['label' => 'Designation',  'icon' => 'tag', 'route' => 'tenant.designation.index'],
     ],
 
     'menus' => [
+        'employee' => [
+            'label' => 'User Management',
+            'icon' => 'users',
+            'enabled' => true,
+            'business_types' => ['*'],
+            'items' => [
+                ['label' => 'Employee', 'route' => 'tenant.employee.index', 'enabled' => true, 'business_types' => ['*']],
+            ],
+        ],
 
         // =====================================================================
         // CORE — INVENTORY  (shared skeleton; vertical-only leaves tagged)
