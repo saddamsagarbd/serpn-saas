@@ -76,12 +76,13 @@
                         <th class="p-2.5 border-r border-slate-700">Material Description</th>
                         <th class="p-2.5 border-r border-slate-700">GMT Color</th>
                         <th class="p-2.5 border-r border-slate-700">Req. Mat. Color</th>
-                        <th class="p-2.5 border-r border-slate-700 text-right">Order Qty</th>
+                        <th class="p-2.5 border-r border-slate-700 text-right">GMT Order Qty</th>
                         <th class="p-2.5 border-r border-slate-700 text-right">Cons / GMT</th>
                         <th class="p-2.5 border-r border-slate-700 text-right">Excess %</th>
                         <th class="p-2.5 border-r border-slate-700 text-right bg-indigo-900">Total Req. Qty</th>
                         <th class="p-2.5 border-r border-slate-700 text-right bg-emerald-900">In-House Qty</th>
                         <th class="p-2.5 border-r border-slate-700 text-right">Short / Excess</th>
+                        <th class="p-2.5 border-r border-slate-700 text-center">GRN Date</th>
                         <th class="p-2.5 border-r border-slate-700 text-center">PCD Date</th>
                         <th class="p-2.5 border-r border-slate-700 text-center">Status</th>
                         <th class="p-2.5 border-r border-slate-700 text-right">Unit Price</th>
@@ -121,6 +122,7 @@
                             {{ number_format($data->shortageQty, 2) }}
                         </td>
                         <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
                         
                         <td class="p-2 border-r border-slate-200 text-center">
                             @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
@@ -144,14 +146,14 @@
                     <tr class="bg-amber-100/60 font-bold border-y border-amber-300 text-slate-900">
                         <td colspan="6" class="p-2 text-right uppercase border-r border-amber-300">Total Fabric Requirement</td>
                         <td class="p-2 text-right font-mono border-r border-amber-300 font-bold text-indigo-900">{{ number_format($ttlFabricReq, 2) }}</td>
-                        <td colspan="5" class="border-r border-amber-300"></td>
+                        <td colspan="6" class="border-r border-amber-300"></td>
                         <td class="p-2 text-right font-mono text-sm font-black text-amber-950">{{ $currencySymbol }}{{ number_format($ttlFabricBudget, 2) }}</td>
                     </tr>
 
 
                     <!-- ================= 2. TRIMS & ACCESSORIES SECTION ================= -->
                     <tr class="bg-indigo-50/70 text-indigo-950 font-black uppercase tracking-wider border-y border-indigo-200">
-                        <td colspan="13" class="p-2 px-3">2. Trims & Accessories</td>
+                        <td colspan="14" class="p-2 px-3">2. Trims & Accessories</td>
                     </tr>
                     @php $ttlTrimBudget = 0; $ttlTrimReq = 0; @endphp
                     @forelse($trims as $item)
@@ -180,6 +182,7 @@
                             {{ number_format($data->shortageQty, 2) }}
                         </td>
                         <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
                         
                         <td class="p-2 border-r border-slate-200 text-center">
                             @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
@@ -195,7 +198,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="13" class="p-2 text-center text-slate-400 italic">No trim items listed.</td>
+                        <td colspan="14" class="p-2 text-center text-slate-400 italic">No trim items listed.</td>
                     </tr>
                     @endforelse
 
@@ -203,13 +206,13 @@
                     <tr class="bg-amber-100/60 font-bold border-y border-amber-300 text-slate-900">
                         <td colspan="6" class="p-2 text-right uppercase border-r border-amber-300">Total Trim Requirement</td>
                         <td class="p-2 text-right font-mono border-r border-amber-300 font-bold text-indigo-900">{{ number_format($ttlTrimReq, 2) }}</td>
-                        <td colspan="5" class="border-r border-amber-300"></td>
+                        <td colspan="6" class="border-r border-amber-300"></td>
                         <td class="p-2 text-right font-mono text-sm font-black text-amber-950">{{ $currencySymbol }}{{ number_format($ttlTrimBudget, 2) }}</td>
                     </tr>
 
                     <!-- ================= GRAND TOTAL BUDGET ================= -->
                     <tr class="bg-slate-900 text-white font-black text-sm">
-                        <td colspan="12" class="p-3 text-right uppercase tracking-wider border-r border-slate-800">
+                        <td colspan="13" class="p-3 text-right uppercase tracking-wider border-r border-slate-800">
                             Grand Total Material Budget (Fabric + Trims)
                         </td>
                         <td class="p-3 text-right font-mono text-amber-400 text-base">

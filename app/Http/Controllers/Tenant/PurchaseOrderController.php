@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Yajra\DataTables\Facades\DataTables;
 
 class PurchaseOrderController extends Controller
 {
@@ -22,6 +23,39 @@ class PurchaseOrderController extends Controller
     ];
     
     public function index(Request $request){
+        if($request->ajax()){
+            $orders = PurchaseOrder::with(['supplier', 'order.item'])->where('tenant_id', tenant('id'))->get();
+
+            return DataTables::of($orders)
+                ->addIndexColumn()
+                ->addColumn('po_no', function($row){
+                    return $row->po_no ?? 'N/A';
+                })
+                ->addColumn('supplier_details', function($row){
+                    if (!$row->supplier) {
+                        return 'N/A';
+                    }
+                    
+                    return html_entity_decode(
+                        html_entity_decode($row->supplier->name." (". $row->supplier->phone .")", ENT_QUOTES, 'UTF-8'), 
+                        ENT_QUOTES, 
+                        'UTF-8'
+                    );
+                })
+                ->editColumn('order_details', function($row){
+                    if ($row->order->isEmpty()) {
+                        return 'N/A';
+                    }
+                    return $row->order->map(function ($orderItem) {
+                        $itemName = $orderItem->item->name ?? 'Item';
+                        $qty = $orderItem->mpr_qty ?? 0;
+
+                        return "{$itemName}: {$qty}";
+                    })->implode(', ');
+                })
+                ->rawColumns(['action', 'po_no', 'supplier_details', 'order_details'])
+                ->make(true);
+        }
 
         return view('tenant.purchase.order.index');        
     }
@@ -138,5 +172,13 @@ class PurchaseOrderController extends Controller
                 'message' => 'Failed to store Purchase Order. ' . $e->getMessage()
             ], 500);
         }
+    }
+    
+    public function edit($tenant, String $id){
+        $suppliers = Supplier::where('tenant_id', tenant('id'))->where('is_active', 1)->get();
+        $styles = Style::where('tenant_id', tenant('id'))->get();
+        $supplier_types = self::SUPPLIER_TYPES;
+        $orders = PurchaseOrder::with(['supplier', 'order.item'])->where('tenant_id', tenant('id'))->where('id', $id)->first();
+        return view('tenant.purchase.order.create', compact('suppliers', 'supplier_types', 'styles', 'orders'));        
     }
 }

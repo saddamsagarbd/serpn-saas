@@ -196,12 +196,13 @@
                 <th width="18%">Material Description</th>
                 <th width="8%">GMT Color</th>
                 <th width="8%">Mat. Color</th>
-                <th width="6%" class="text-right">Order Qty</th>
+                <th width="6%" class="text-right">GMT Order Qty</th>
                 <th width="6%" class="text-right">Cons/GMT</th>
                 <th width="6%" class="text-right">Excess %</th>
                 <th width="8%" class="text-right">Total Req Qty</th>
                 <th width="8%" class="text-right">In-House Qty</th>
                 <th width="8%" class="text-right">Short/Excess</th>
+                <th width="7%" class="text-center">GRN Date</th>
                 <th width="7%" class="text-center">PCD Date</th>
                 <th width="5%" class="text-center">Status</th>
                 <th width="6%" class="text-right">Unit Price</th>
@@ -212,7 +213,7 @@
 
             <!-- 1. FABRICS SECTION -->
             <tr class="bg-section-header">
-                <td colspan="13">1. Fabric Materials</td>
+                <td colspan="14">1. Fabric Materials</td>
             </tr>
             @php $ttlFabricBudget = 0; $ttlFabricReq = 0; @endphp
             @forelse($fabrics as $item)
@@ -234,6 +235,7 @@
                     {{ number_format($data->shortageQty, 2) }}
                 </td>
                 <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
                 <td class="text-center">
                     @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
                         <span class="status-badge status-inhouse">Done</span>
@@ -248,7 +250,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="13" style="color: #94a3b8; font-style: italic;">No fabric items listed.</td>
+                <td colspan="14" style="color: #94a3b8; font-style: italic;">No fabric items listed.</td>
             </tr>
             @endforelse
 
@@ -256,13 +258,13 @@
             <tr class="bg-ttl-section">
                 <td colspan="6" class="text-right">TTL FABRIC REQUIREMENT & BUDGET</td>
                 <td class="text-right font-mono">{{ number_format($ttlFabricReq, 2) }}</td>
-                <td colspan="5"></td>
+                <td colspan="6"></td>
                 <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlFabricBudget, 2) }}</td>
             </tr>
 
             <!-- 2. TRIMS & ACCESSORIES SECTION -->
             <tr class="bg-section-header">
-                <td colspan="13">2. Trims & Accessories</td>
+                <td colspan="14">2. Trims & Accessories</td>
             </tr>
             @php $ttlTrimBudget = 0; $ttlTrimReq = 0; @endphp
             @forelse($trims as $item)
@@ -284,6 +286,7 @@
                     {{ number_format($data->shortageQty, 2) }}
                 </td>
                 <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
                 <td class="text-center">
                     @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
                         <span class="status-badge status-inhouse">Done</span>
@@ -298,7 +301,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="13" style="color: #94a3b8; font-style: italic;">No trim items listed.</td>
+                <td colspan="14" style="color: #94a3b8; font-style: italic;">No trim items listed.</td>
             </tr>
             @endforelse
 
@@ -306,13 +309,13 @@
             <tr class="bg-ttl-section">
                 <td colspan="6" class="text-right">TTL TRIM REQUIREMENT & BUDGET</td>
                 <td class="text-right font-mono">{{ number_format($ttlTrimReq, 2) }}</td>
-                <td colspan="5"></td>
+                <td colspan="6"></td>
                 <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlTrimBudget, 2) }}</td>
             </tr>
 
             <!-- GRAND TOTAL MATERIAL COST -->
             <tr class="bg-grand-total">
-                <td colspan="12" class="text-right uppercase">Total Material Budget (Fabric + Trims)</td>
+                <td colspan="13" class="text-right uppercase">Total Material Budget (Fabric + Trims)</td>
                 <td class="text-right font-mono">{{ $currencySymbol }}{{ number_format($ttlFabricBudget + $ttlTrimBudget, 2) }}</td>
             </tr>
 

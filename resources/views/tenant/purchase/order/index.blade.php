@@ -20,6 +20,7 @@
                 
                 // সার্ভার রেসপন্স ম্যাপ করা
                 this.orders = data.data;
+                console.log(this.orders);
                 this.lastPage = data.last_page;
                 this.total = data.total;
             } catch (error) {
@@ -43,14 +44,16 @@
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Yajra DataTables Server-Side Processing Active</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase"></span>
                     <input type="text" placeholder="Search orders..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
                 </div>
                 
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
-                            <th class="p-4">Code</th>
+                            <th class="p-4">PO Number</th>
+                            <th class="p-4">Supplier Info</th>
+                            <th class="p-4">Order Details</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
@@ -58,6 +61,8 @@
                         <template x-for="order in orders" :key="order.id">
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="p-4 font-semibold text-slate-800" x-text="order.po_no"></td>
+                                <td class="p-4 font-semibold text-slate-800" x-text="order.supplier_details"></td>
+                                <td class="p-4 font-semibold text-slate-800" x-text="order.order_details"></td>
                                 
                                 <td class="p-4 text-center">
                                     <a :href="`{{ route('tenant.purchase.po.index') }}/${order.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">

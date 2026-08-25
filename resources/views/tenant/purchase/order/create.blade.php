@@ -36,7 +36,7 @@
             <h2 class="text-xl font-bold text-gray-800" x-text="isEdit ? 'Edit Purchase Order' : 'Create Raw Material PO'"></h2>
             <p class="text-xs text-slate-400 mt-0.5">Generate supplier booking order from MPR requirements.</p>
         </div>
-        <a href="{{ route('tenant.merch.styles') }}" class="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
+        <a href="{{ route('tenant.merch.mpr.index') }}" class="px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
             &larr; Back to MPR
         </a>
     </div>
@@ -111,7 +111,7 @@
                             <th class="p-3 w-1/4">Item Description</th>
                             <th class="p-3">Color</th>
                             <th class="p-3">Size</th>
-                            <th class="p-3 text-right">MPR Req.</th>
+                            <th class="p-3 text-right">GMT Req.</th>
                             <th class="p-3 text-right w-28">Booking Qty</th>
                             <th class="p-3 text-center w-20">Unit</th>
                             <th class="p-3 text-right w-28">Unit Price ($)</th>
@@ -366,7 +366,7 @@
                 .then(data => {
                     this.isSaving = false;
                     if (data.success) {
-                        window.location.href = "{{ route('tenant.merch.styles') }}";
+                        window.location.href = "{{ route('tenant.purchase.po.index') }}";
                     }
                 })
                 .catch(err => {

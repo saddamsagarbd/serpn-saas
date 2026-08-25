@@ -314,7 +314,7 @@
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + revenueAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="revenuePercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
 
                     <!-- AIT Row -->
@@ -324,7 +324,7 @@
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + aitAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="aitPercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
 
                     <!-- VAT Row -->
@@ -334,7 +334,7 @@
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + vatAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="vatPercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
                 </div>
 
@@ -412,6 +412,11 @@ function styleCreationApp(initialData) {
         initSelect2(el, item) {
             this.$nextTick(() => {
                 const $el = $(el);
+
+                if (typeof $el.select2 !== 'function') {
+                    console.error('Select2 is not loaded on jQuery object.');
+                    return;
+                }
 
                 $el.select2({
                     placeholder: "Search Item...",

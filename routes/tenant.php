@@ -172,7 +172,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('/orders', [PurchaseOrderController::class, 'index'])->name('po.index');
                 Route::get('/po-create', [PurchaseOrderController::class, 'create'])->name('po.create');
                 Route::post('/po-store', [PurchaseOrderController::class, 'store'])->name('po.store');
-                Route::get('/po/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
+                Route::get('/orders/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
                 Route::put('/po-update/{id}', [PurchaseOrderController::class, 'store'])->name('po.update');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');

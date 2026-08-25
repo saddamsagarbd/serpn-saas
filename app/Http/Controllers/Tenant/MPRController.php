@@ -234,12 +234,13 @@ class MPRController extends Controller
 
                     if (!isset($bomConsolidated[$key])) {
                         $bomConsolidated[$key] = [
-                            'item_name'    => $bom->item_description ?? $bom->item?->name ?? 'N/A',
-                            'color_name'   => $bom->color?->name ?? 'N/A',
-                            'size_name'    => $bom->size?->short_name ?? $bom->size?->name ?? 'N/A',
-                            'consumption'  => $consumption,
-                            'unit'         => $bom->item_unit ?? $bom->itemMaster->unit->short_name ?? 'Pcs',
-                            'required_qty' => 0,
+                            'category'      => $bom->itemMaster->category->name ?? $bom->itemMaster->category->name ?? 'N/A',
+                            'item_name'     => $bom->item_description ?? $bom->item?->name ?? 'N/A',
+                            'color_name'    => $bom->color?->name ?? 'N/A',
+                            'size_name'     => $bom->size?->short_name ?? $bom->size?->name ?? 'N/A',
+                            'consumption'   => $consumption,
+                            'unit'          => $bom->item_unit ?? $bom->itemMaster->unit->short_name ?? 'Pcs',
+                            'required_qty'  => 0,
                         ];
                     }
 

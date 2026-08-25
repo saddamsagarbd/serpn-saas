@@ -111,22 +111,24 @@
     <table class="bom-table">
         <thead>
             <tr>
-                <th width="5%">Sl#</th>
-                <th width="30%">Component Item</th>
-                <th width="15%">Color Context</th>
-                <th width="12%">Size Chart</th>
-                <th width="13%" class="text-right">Consumption</th>
+                <th width="5%" class="text-center">Sl#</th>
+                <th width="10%" class="text-center">Item</th>
+                <th width="20%" class="text-center">Details</th>
+                <th width="15%" class="text-center">Color</th>
+                <th width="12%" class="text-center">Size</th>
+                <th width="13%" class="text-right">Cons/GMT</th>
                 <th width="8%" class="text-center">Unit</th>
-                <th width="17%" class="text-right">Total Required Qty</th>
+                <th width="17%" class="text-right">Total Req Qty</th>
             </tr>
         </thead>
         <tbody>
             @forelse($consolidatedMrpDetails['bom_items'] as $index => $item)
                 <tr>
-                    <td class="font-bold" style="color: #0f172a;">{{ ++$index }}</td>
-                    <td class="font-bold" style="color: #0f172a;">{{ $item['item_name'] }}</td>
-                    <td>{{ $item['color_name'] ?? 'N/A' }}</td>
-                    <td>{{ $item['size_name'] ?? 'N/A' }}</td>
+                    <td class="font-bold text-center" style="color: #0f172a;">{{ ++$index }}</td>
+                    <td class="font-bold text-center" style="color: #0f172a;">{{ $item['category'] }}</td>
+                    <td class="font-bold text-center" style="color: #0f172a;">{{ $item['item_name'] }}</td>
+                    <td class="text-center">{{ $item['color_name'] ?? 'N/A' }}</td>
+                    <td class="text-center">{{ $item['size_name'] ? ucfirst($item['size_name']) : 'N/A' }}</td>
                     <td class="text-right">{{ number_format($item['consumption'], 4) }}</td>
                     <td class="text-center">{{ $item['unit'] }}</td>
                     <td class="text-right font-bold" style="color: #4338ca;">

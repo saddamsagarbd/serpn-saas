@@ -83,6 +83,7 @@ class StyleController extends Controller
             // Ensure the Alpine array payload is present and structured safely
             'items'        => 'required|array|min:1',
             'items.*.item_name' => 'required|string|max:255',
+            'items.*.item_id'  => 'required|exists:item_masters,id',
             'items.*.color_id'  => 'required|exists:color_contexts,id',
             'items.*.size_id'   => 'required|exists:size_charts,id',
             'items.*.qty'   => 'required|numeric',
@@ -400,7 +401,6 @@ class StyleController extends Controller
         ])
         ->where('tenant_id', tenant('id'))
         ->findOrFail($id);
-
         
         $orderQty = $style->mprs->sum('quantity') ?: 1;
         
