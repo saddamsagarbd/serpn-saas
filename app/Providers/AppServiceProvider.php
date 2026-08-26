@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Stancl\Tenancy\Events\DatabaseMigrated;
 use Stancl\Tenancy\Events\TenantCreated;
@@ -27,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+        
         ini_set('max_execution_time', 120); // ডাটাবেজ তৈরি ও মাইগ্রেশনের জন্য সেফটি টাইম
 
         // Event ফাসাদ ব্যবহার করে TenantCreated ইভেন্টটি লিসেন করুন
