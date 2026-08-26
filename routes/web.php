@@ -9,46 +9,78 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 
-foreach (config('tenancy.central_domains') as $domain) {
-    Route::group(['domain' => $domain], function () {
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-        // 1. landing Page
-        Route::get('/', function () {
-            return view('welcome');
-        });
+// foreach (config('tenancy.central_domains') as $domain) {
+//     Route::group(['domain' => $domain], function () {
 
-        // 2. Super Admin Protected routes (no one can access without authentication)
-        Route::middleware(['auth', 'verified'])->group(function () {
+//         // 1. landing Page
+//         Route::get('/', function () {
+//             return view('welcome');
+//         });
+
+//         // 2. Super Admin Protected routes (no one can access without authentication)
+//         Route::middleware(['auth', 'verified'])->group(function () {
             
-            // Super Admin Dashboard
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('central.dashboard');
+//             // Super Admin Dashboard
+//             Route::get('/dashboard', [DashboardController::class, 'index'])->name('central.dashboard');
 
-            // Super Admin Profile
-            Route::get('/profile', [SettingsController::class, 'index'])->name('profile');
+//             // Super Admin Profile
+//             Route::get('/profile', [SettingsController::class, 'index'])->name('profile');
 
-            // Plan List
-            Route::get('/plans', [PlanController::class, 'index'])->name('plans');
+//             // Plan List
+//             Route::get('/plans', [PlanController::class, 'index'])->name('plans');
 
-            // New Plan Add (POST Request)
-            Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+//             // New Plan Add (POST Request)
+//             Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
 
-            // Tenant List
-            Route::get('/tenants', [TenantController::class, 'index'])->name('tenants');
+//             // Tenant List
+//             Route::get('/tenants', [TenantController::class, 'index'])->name('tenants');
 
-            // New Tenant Add (POST Request)
-            Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
-            Route::put('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
-            Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+//             // New Tenant Add (POST Request)
+//             Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+//             Route::put('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+//             Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
 
-            Route::post('/logout', function (Request $request, Logout $logout) {
-                $logout();
+//             Route::post('/logout', function (Request $request, Logout $logout) {
+//                 $logout();
 
-                return redirect()->route('login');
-            })->name('logout');
+//                 return redirect()->route('login');
+//             })->name('logout');
 
-        });
+//         });
 
-        // ব্রীজের ডিফল্ট লগইন/রেজিস্ট্রেশন রুটস
-        require __DIR__.'/auth.php';
+//         // ব্রীজের ডিফল্ট লগইন/রেজিস্ট্রেশন রুটস
+//         require __DIR__.'/auth.php';
+//     });
+// }
+
+Route::middleware([
+    'web',
+])->group(function () {
+
+    // 1. Landing Page
+    Route::get('/', function () {
+        return view('welcome');
     });
-}
+
+    // 2. Super Admin Protected routes
+    Route::middleware(['auth', 'verified'])->group(function () {
+        
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('central.dashboard');
+        Route::get('/profile', [SettingsController::class, 'index'])->name('profile');
+        Route::get('/plans', [PlanController::class, 'index'])->name('plans');
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+        Route::get('/tenants', [TenantController::class, 'index'])->name('tenants');
+        Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
+        Route::put('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+        Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy'])->name('tenants.destroy');
+
+        Route::post('/logout', function (Request $request, Logout $logout) {
+            $logout();
+            return redirect()->route('login');
+        })->name('logout');
+    });
+
+    require __DIR__.'/auth.php';
+});
