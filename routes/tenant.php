@@ -53,7 +53,7 @@ use App\Http\Controllers\Tenant\{
 |
 */
 
-Route::domain('{tenant}.serpn-saas.test')
+Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
     ->middleware([
         'web',
         InitializeTenancyByDomain::class,
@@ -190,7 +190,7 @@ Route::domain('{tenant}.serpn-saas.test')
                 Route::get('/po-create', [PurchaseOrderController::class, 'create'])->name('po.create');
                 Route::post('/po-store', [PurchaseOrderController::class, 'store'])->name('po.store');
                 Route::get('/orders/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
-                Route::put('/po-update/{id}', [PurchaseOrderController::class, 'store'])->name('po.update');
+                Route::put('/po-update/{id}', [PurchaseOrderController::class, 'update'])->name('po.update');
 
                 Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
