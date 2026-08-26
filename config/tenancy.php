@@ -17,11 +17,11 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
+        'erp24by7.com',
+        'www.erp24by7.com',
         'serpn-saas.test',
         '127.0.0.1',
         'localhost',
-        'erp24by7.com',
-        'www.erp24by7.com',
     ],
 
     /**
