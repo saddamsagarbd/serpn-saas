@@ -20,6 +20,8 @@ return [
         'serpn-saas.test',
         '127.0.0.1',
         'localhost',
+        'erp24by7.com',
+        'www.erp24by7.com',
     ],
 
     /**
