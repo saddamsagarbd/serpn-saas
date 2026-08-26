@@ -21,7 +21,7 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::middleware(['auth', 'verified'])->group(function () {
             
             // Super Admin Dashboard
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('central.dashboard');
 
             // Super Admin Profile
             Route::get('/profile', [SettingsController::class, 'index'])->name('profile');
