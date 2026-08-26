@@ -23,7 +23,7 @@ return [
         // 'www.erp24by7.com',
         // 'serpn-saas.test',
         // '127.0.0.1',
-        // 'localhost',
+        'localhost',
     ],
     
 
