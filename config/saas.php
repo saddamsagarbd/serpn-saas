@@ -4,9 +4,42 @@ return [
 
     'default_features' => [
         'Profile',
-        'Settings',
+        'Company',
+        'Department',
+        'Designation',
     ],
 
+    'employee' => [
+        'Employee',
+        'Categories',
+        'Brands',
+        'Units',
+        'Stock',
+        'Stock Adjustment',
+        'Barcode',
+    ],
+
+    'merchandising' => [
+        'Styles',
+        'MPR Order',
+        'Costing Sheet',
+        'Costing Approval',
+        'Order & Matrix Entry',
+        'Booking / Sourcing',
+        'NA (Time & Action)',
+        'Sample Tracking',
+        'Shipment / L-C Docs',
+    ],
+    'production' => [
+        'Work Orders',
+        'Cutting',
+        'Sewing / Line Output',
+        'Assembly / Line Output',
+        'Finishing & Packing',
+        'QC / Inspection',
+        'Machines / Lines',
+        'Daily Production Report',
+    ],
     'inventory' => [
         'Products',
         'Categories',
