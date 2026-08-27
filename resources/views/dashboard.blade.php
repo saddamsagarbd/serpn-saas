@@ -52,7 +52,7 @@
                 <h3 class="font-bold text-gray-700 mb-4">System Activity logs</h3>
                 <div class="text-sm text-gray-500 space-y-3">
                     <p class="flex items-center justify-between p-2.5 bg-gray-50 rounded"><span>🟢 Database <code>tenant_rahim</code> provisioned successfully.</span> <span class="text-xs">2 mins ago</span></p>
-                    <p class="flex items-center justify-between p-2.5 bg-gray-50 rounded"><span>🟢 Subdomain <code>rahim.serpn-saas.test</code> routing active.</span> <span class="text-xs">5 mins ago</span></p>
+                    <p class="flex items-center justify-between p-2.5 bg-gray-50 rounded"><span>🟢 Subdomain <code>rahim.erp24by7.com</code> routing active.</span> <span class="text-xs">5 mins ago</span></p>
                 </div>
             </div>
         </div>

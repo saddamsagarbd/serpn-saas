@@ -61,6 +61,8 @@ class TenantController extends Controller
             'plan'      => 'required|exists:plans,id',
         ]);
 
+        DB::beginTransaction();
+
         try {
             $now = Carbon::now();
 
@@ -115,10 +117,16 @@ class TenantController extends Controller
                 ]);
             });
 
+            DB::commit();
+
             return redirect()->back()->with('success', 'নতুন Tenant এবং Vendor Admin সফলভাবে অ্যাক্টিভেট হয়েছে!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+
             Log::error('Tenant Creation Fatal Error: ' . $e->getMessage());
+
+            return response()->json(['message' => 'Failed to suspend tenant: ' . $e->getMessage()], 500);
             
             // ডিবাগিং সহজ করার জন্য সরাসরি স্ক্রিনে এরর প্রিন্ট করবে (টেস্টিং পিরিয়ডে)
             dd([
