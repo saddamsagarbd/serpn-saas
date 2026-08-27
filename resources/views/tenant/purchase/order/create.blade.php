@@ -1,5 +1,5 @@
 @extends('layouts.tenant')
-@section('title', isset($po) ? 'Edit Purchase Order' : 'Create Purchase Order')
+@section('title', isset($orders) ? 'Edit Purchase Order' : 'Create Purchase Order')
 
 @push('styles')
 <style>
@@ -28,7 +28,7 @@
 @endpush
 
 @section('content')
-<div class="max-w-7xl mx-auto space-y-6" x-data="poForm(@json($po ?? null))">
+<div class="max-w-7xl mx-auto space-y-6" x-data='poForm(@json($orders ?? null))'>
 
     <!-- Top Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
@@ -64,7 +64,7 @@
                     <select x-ref="styleSelect" name="style_id" required class="w-full text-xs" x-init="$nextTick(() => initStyleSelect2())">
                         <option value=""></option>
                         @foreach($styles as $style)
-                            <option value="{{ $style->id }}" @selected(isset($po) && (string) $po->style_id === (string) $style->id)>
+                            <option value="{{ $style->id }}" @selected(isset($orders) && (string) $orders->style_id === (string) $style->id)>
                                 {{ $style->style_number ?? $style->code }} {{ isset($style->product_name) ? "({$style->product_name})" : '' }}
                             </option>
                         @endforeach
@@ -77,7 +77,7 @@
                     <select x-ref="supplierSelect" name="supplier_id" required class="w-full text-xs" x-init="$nextTick(() => initSupplierSelect2())">
                         <option value="">-- Choose Supplier --</option>
                         @foreach($suppliers ?? [] as $supplier)
-                            <option value="{{ $supplier->id }}" @selected(isset($po) && (string) $po->supplier_id === (string) $supplier->id)>
+                            <option value="{{ $supplier->id }}" @selected(isset($orders) && (string) $orders->supplier_id === (string) $supplier->id)>
                                 {{ $supplier->name }} ({{ strtoupper($supplier_types[$supplier->supplier_type] ?? 'General') }})
                             </option>
                         @endforeach
@@ -234,13 +234,47 @@
 
 <script>
     function poForm(initialPo) {
+        // Date formatting helper function (YYYY-MM-DD)
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return dateStr.split('T')[0].split(' ')[0];
+        };
+
+        // Get array of items safely from Eloquent relation
+        const extractItems = (po) => {
+            if (!po) return [];
+            
+            // Controller থেকে $orders->order রিলেশন পাঠানো হয়েছে
+            const rawItems = po.order || po.items || [];
+            if (!Array.isArray(rawItems)) return [];
+
+            console.log(rawItems);
+
+            return rawItems.map(i => ({
+                item_id: i.item_id ?? null,
+                // item রিলেশন থেকে নাম নেওয়া হচ্ছে, না থাকলে item_name
+                name: i.item ? i.item.name : (i.item_name ?? ''),
+                color: i.color ? i.color.name : (i.color ?? 'N/A'),
+                color_id: i.color_id ?? '',
+                size_id: i.size_id ?? '',
+                size: i.size ? i.size.name : (i.size ?? 'N/A'),
+                mpr_qty: Number(i.mpr_qty ?? 0),
+                order_qty: Number(i.order_qty ?? 0),
+                unit: i.unit ? i.unit.name : (i.unit ?? 'Pcs'),
+                unit_id: i.unit_id ?? '',
+                unit_price: Number(i.unit_price ?? 0),
+            }));
+        };
+
+        console.log(initialPo.po_date);
+
         return {
             isEdit: !!initialPo,
             poId: initialPo ? initialPo.id : null,
             selectedStyleId: initialPo ? String(initialPo.style_id ?? '') : '',
             selectedSupplierId: initialPo ? String(initialPo.supplier_id ?? '') : '',
-            poDate: initialPo ? initialPo.po_date : '{{ date("Y-m-d") }}',
-            deliveryDate: initialPo ? initialPo.delivery_date : '',
+            poDate: initialPo ? formatDate(initialPo.po_date) : '{{ date("Y-m-d") }}',
+            deliveryDate: initialPo ? formatDate(initialPo.delivery_date) : '',
             
             // Charges Mapping with DB Schema
             transportCost: initialPo ? Number(initialPo.transport_cost ?? 0) : 0,
@@ -252,19 +286,7 @@
             paymentTermsText: initialPo ? (initialPo.payment_terms_text ?? '') : '',
             remarks: initialPo ? (initialPo.remarks ?? '') : '',
 
-            items: initialPo && Array.isArray(initialPo.items) ? initialPo.items.map(i => ({
-                item_id: i.item_id ?? null,
-                name: i.item_name ?? i.name ?? '',
-                color: i.color ?? '',
-                color_id: i.color_id ?? '',
-                size_id: i.size_id ?? '',
-                size: i.size ?? '',
-                mpr_qty: i.mpr_qty ?? 0,
-                order_qty: Number(i.order_qty ?? 0),
-                unit: i.unit ?? '',
-                unit_id: i.unit_id ?? '',
-                unit_price: Number(i.unit_price ?? 0),
-            })) : [],
+            items: extractItems(initialPo),
             loading: false,
             isSaving: false,
             pendingStatus: null,
@@ -273,8 +295,14 @@
             initStyleSelect2() {
                 let el = $(this.$refs.styleSelect);
                 if (el.data('select2')) el.select2('destroy');
-                el.select2({ width: '100%', placeholder: '-- Choose Style --', allowClear: true })
-                .on('change', (e) => {
+                el.select2({ width: '100%', placeholder: '-- Choose Style --', allowClear: true });
+
+                // Sync initial value for Edit mode
+                if (this.selectedStyleId) {
+                    el.val(this.selectedStyleId).trigger('change.select2');
+                }
+
+                el.on('change', (e) => {
                     this.selectedStyleId = e.target.value ? String(e.target.value) : '';
                     this.fetchMprItems();
                 });
@@ -283,15 +311,24 @@
             initSupplierSelect2() {
                 let el = $(this.$refs.supplierSelect);
                 if (el.data('select2')) el.select2('destroy');
-                el.select2({ width: '100%', placeholder: '-- Choose Supplier --', allowClear: true })
-                .on('change', (e) => {
+                el.select2({ width: '100%', placeholder: '-- Choose Supplier --', allowClear: true });
+
+                // Sync initial value for Edit mode
+                if (this.selectedSupplierId) {
+                    el.val(this.selectedSupplierId).trigger('change.select2');
+                }
+
+                el.on('change', (e) => {
                     this.selectedSupplierId = e.target.value ? String(e.target.value) : '';
                     this.fetchMprItems();
                 });
+
+                // Release hydration flag after Select2 bindings are complete
                 this.$nextTick(() => { this.hydrating = false; });
             },
 
             fetchMprItems() {
+                // Skip AJAX call when page loads in Edit mode so populated items aren't lost
                 if (this.hydrating || !this.selectedStyleId || !this.selectedSupplierId) return;
 
                 this.loading = true;

@@ -181,6 +181,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::put('/mpr-orders-update/{id}', [MPRController::class, 'update'])->name('mpr.orders-update');
                 
             });
+            
             Route::prefix('purchase')->name('purchase.')->middleware('feature:purchase')->group(function () {
 
                 Route::get('/purchase-requisition', [PurchaseRequisitionController::class, 'index'])->name('pr.index');

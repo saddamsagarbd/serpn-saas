@@ -15,4 +15,5 @@ class ItemMaster extends Model
     public function style(): BelongsTo { return $this->belongsTo(Style::class); }
     public function batches(): HasMany { return $this->hasMany(ProductionBatch::class); }
     public function brand(): BelongsTo { return $this->belongsTo(Brand::class); }
+    public function color(): BelongsTo { return $this->belongsTo(ColorContext::class); }
 }
