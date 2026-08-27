@@ -122,15 +122,17 @@ return [
      */
 
     'selectable_features' => [
-        'inventory' => 'Inventory',
-        'sales'     => 'Sales',
-        'purchase'  => 'Purchase',
-        'accounts'  => 'Accounts',
-        'hrm'       => 'HRM',
-        'crm'       => 'CRM',
-        'website'   => 'Website',
-        'sms'       => 'SMS',
-        'reports'   => 'Reports',
+        'inventory'       => 'Inventory',
+        'merchandising'   => 'Merchandising',
+        'production'      => 'Production',
+        'sales'           => 'Sales',
+        'purchase'        => 'Purchase',
+        'accounts'        => 'Accounts',
+        'hrm'             => 'HRM',
+        'crm'             => 'CRM',
+        'website'         => 'Website',
+        'sms'             => 'SMS',
+        'reports'         => 'Reports',
     ],
 
 ];
