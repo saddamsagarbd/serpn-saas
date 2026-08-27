@@ -115,7 +115,7 @@
                 </div>
                 <div class="w-full space-y-2 text-center">
                     <div class="bg-indigo-600 h-56 w-full rounded-t-lg transition-all duration-300"></div>
-                    <span class="text-[10px] font-bold text-slate-700 font-black uppercase">Jun</span>
+                    <span class="text-[10px] font-bold text-slate-700 uppercase">Jun</span>
                 </div>
             </div>
         </div>
