@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Notifications\TenantCredentialsNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class TenantController extends Controller
 {
@@ -90,8 +94,50 @@ class TenantController extends Controller
 
             // 🚀 ৩. প্যাকেজের অফিশিয়াল ইভেন্ট মেকানিজম (ফ্রেশ ও অটোমেটিক)
             // $tenant = new Tenant($tenantParams);
-            
-            $tenant = Tenant::create($tenantParams);
+
+            $dummyTenant = new Tenant(['id' => $domainPrefix]);
+            $dbName = $dummyTenant->database()->getName();
+            $dbManager = $dummyTenant->database()->manager();
+
+            $dbExists = $dbManager->databaseExists($dbName);
+
+            if($dbExists){
+                $tenant = Tenant::withoutEvents(function () use ($tenantParams) {
+                    return Tenant::create($tenantParams);
+                });
+
+                tenancy()->initialize($tenant);
+
+                $defaultPassword = 'erp247@2026';
+
+                $user = User::firstOrCreate(
+                    ['email' => $tenant->owner_email],
+                    [
+                        'name'     => $tenant->owner_name,
+                        'password' => Hash::make($defaultPassword),
+                        'phone'    => $tenant->owner_phone,
+                        'role'     => 'admin',
+                    ]
+                );
+
+                if ($user->wasRecentlyCreated) {
+                    try {
+                        $scheme = request()->secure() ? 'https://' : 'http://';
+                        $centralDomain = config('tenancy.central_domains')[0] ?? 'erp24by7.com';
+                        $loginUrl = $scheme . $tenant->id . '.' . $centralDomain . '/login';
+
+                        Notification::route('mail', $tenant->owner_email)
+                            ->notify(new TenantCredentialsNotification($tenant, $defaultPassword, $loginUrl));
+                    } catch (\Exception $mailException) {
+                        Log::error('Tenant Credentials Mail Delivery Failed: ' . $mailException->getMessage());
+                    }
+                }
+
+                tenancy()->end();
+                
+            }else{
+                $tenant = Tenant::create($tenantParams);
+            }
 
             sleep(5);
 
@@ -127,13 +173,7 @@ class TenantController extends Controller
             Log::error('Tenant Creation Fatal Error: ' . $e->getMessage());
 
             return response()->json(['message' => 'Failed to suspend tenant: ' . $e->getMessage()], 500);
-            
-            // ডিবাগিং সহজ করার জন্য সরাসরি স্ক্রিনে এরর প্রিন্ট করবে (টেস্টিং পিরিয়ডে)
-            dd([
-                'Error Message' => $e->getMessage(),
-                'Line' => $e->getLine(),
-                'File' => $e->getFile()
-            ]);
+        
         }
     }
 

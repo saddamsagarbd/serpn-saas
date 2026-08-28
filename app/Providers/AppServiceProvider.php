@@ -36,13 +36,13 @@ class AppServiceProvider extends ServiceProvider
         // Event::listen(TenantCreated::class, function (TenantCreated $event) {
         Event::listen(DatabaseMigrated::class, function ($event) {
             $tenant = $event->tenant;
-            $defaultPassword = '12345678';
+            $defaultPassword = 'erp247@2026';
 
             // একটি ফ্ল্যাগ ভেরিয়েবল যা ট্র্যাক করবে ইউজারটি নতুন কি না
             $isNewUser = false;
 
             // ভেন্ডরের নিজস্ব ডাটাবেজ কনটেক্সটে সুইচ করে অটোমেটিক Admin User তৈরি করা
-            $tenant->run(function () use ($tenant, $defaultPassword) {
+            $tenant->run(function () use ($tenant, $defaultPassword, &$isNewUser) {
                 $user =User::updateOrCreate(
                     [
                         'email' => $tenant->owner_email
@@ -52,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
                     'password' => Hash::make($defaultPassword), // ডিফল্ট পাসওয়ার্ড
                     'role'     => 'admin', // ভেন্ডর প্যানেলের মেইন সুপার ইউজার
                 ]);
+                
                 if ($user->wasRecentlyCreated) {
                     $isNewUser = true;
                 }
