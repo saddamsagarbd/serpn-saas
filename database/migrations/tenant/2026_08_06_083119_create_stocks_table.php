@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('tenant_id')->index();
             $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
-            $table->foreignId('item_variant_id')->constrained('item_variants')->onDelete('cascade');
+            $table->foreignId('item_id')->constrained('item_masters')->onDelete('cascade');
             
             $table->decimal('available_qty', 15, 4)->default(0.0000);
             $table->decimal('reserved_qty', 15, 4)->default(0.0000);
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             // একই Warehouse এ একই Variant এর একাধিক Duplicate Row এড়াতে
-            $table->unique(['tenant_id', 'warehouse_id', 'item_variant_id'], 'wh_variant_unique');
+            $table->unique(['tenant_id', 'warehouse_id', 'item_id'], 'wh_variant_unique');
         });
     }
 

@@ -13,11 +13,14 @@ return new class extends Migration
     {
         Schema::create('goods_received_notes', function (Blueprint $table) {
             $table->id();
-            $table->string('grn_no')->unique(); // e.g., GRN-2026-0001
-            $table->foreignId('purchase_order_id')->constrained(); // PO reference
+            $table->string('tenant_id')->index(); // Tenant isolation
+            $table->string('grn_no')->unique(); // GRN-2026-0001
+            $table->foreignId('purchase_order_id')->constrained();
+            $table->foreignId('supplier_id')->nullable()->constrained(); // Direct Supplier Link
+            $table->foreignId('warehouse_id')->constrained(); // Selected Warehouse
             $table->date('received_date');
             $table->foreignId('received_by')->constrained('users');
-            $table->string('challan_no')->nullable(); // Supplier delivery challan
+            $table->string('challan_no')->nullable();
             $table->enum('status', ['received', 'partially_received', 'returned'])->default('received');
             $table->text('remarks')->nullable();
             $table->timestamps();

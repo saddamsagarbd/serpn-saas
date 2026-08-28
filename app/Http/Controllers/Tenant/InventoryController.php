@@ -10,6 +10,7 @@ use App\Models\FabricSpec;
 use App\Models\ItemMaster;
 use App\Models\ItemVarient;
 use App\Models\ProductionBatch;
+use App\Models\Stock;
 use App\Models\Style;
 use App\Models\Unit;
 use Carbon\Carbon;
@@ -385,9 +386,13 @@ class InventoryController extends Controller
 
     public function stock() {
 
-        $stocks = Item::with(['category', 'unit'])->orderBy('stock_qty', 'desc')->get();
+        $stocks = Stock::where('tenant_id', tenant('id'))
+        ->with(['itemVariant', 'warehouse'])
+        ->get();
 
-        $items = Item::with(['category', 'unit', 'brand', 'style'])->get();
+        $items = ItemMaster::where('tenant_id', tenant('id'))
+            ->with(['category', 'unit', 'brand', 'style', 'color'])
+            ->get();
 
         return view('tenant.inventory.stock.index', compact('stocks', 'items'));
     }
@@ -397,36 +402,36 @@ class InventoryController extends Controller
     }
 
     public function stockEntry() {
-        $items = Item::orderBy('name', 'asc')->get();
+        $items = ItemMaster::orderBy('name', 'asc')->get();
         $batches = ProductionBatch::with('item')->latest()->get();
         return view('tenant.inventory.stock.entry', compact('items', 'batches'));
     }
     // Batch Production Form Submission (Handles index.blade.php functionality)
-    public function storeBatchProduction(Request $request) {
-        $request->validate([
-            'item_id' => 'required|exists:items,id',
-            'production_date' => 'required|date',
-            'quantity' => 'required|integer|min:1',
-        ]);
+    // public function storeBatchProduction(Request $request) {
+    //     $request->validate([
+    //         'item_id' => 'required|exists:item_masters,id',
+    //         'production_date' => 'required|date',
+    //         'quantity' => 'required|integer|min:1',
+    //     ]);
 
-        return DB::transaction(function () use ($request) {
-            $batchNo = 'BAT-' . date('Ymd') . '-' . rand(10, 99);
+    //     return DB::transaction(function () use ($request) {
+    //         $batchNo = 'BAT-' . date('Ymd') . '-' . rand(10, 99);
             
-            ProductionBatch::create([
-                'item_id' => $request->item_id,
-                'batch_no' => $batchNo,
-                'production_date' => $request->production_date,
-                'quantity' => $request->quantity,
-                'barcode_start' => '#001',
-                'barcode_end' => '#' . str_pad($request->quantity, 3, '0', STR_PAD_LEFT)
-            ]);
+    //         ProductionBatch::create([
+    //             'item_id' => $request->item_id,
+    //             'batch_no' => $batchNo,
+    //             'production_date' => $request->production_date,
+    //             'quantity' => $request->quantity,
+    //             'barcode_start' => '#001',
+    //             'barcode_end' => '#' . str_pad($request->quantity, 3, '0', STR_PAD_LEFT)
+    //         ]);
 
-            $item = Item::findOrFail($request->item_id);
-            $item->increment('stock_qty', $request->quantity);
+    //         $stock = Stock::findOrFail($request->item_id);
+    //         $stock->increment('stock_qty', $request->quantity);
 
-            return redirect()->back()->with('success', "Batch $batchNo Registered & Stock Levels Updated.");
-        });
-    }
+    //         return redirect()->back()->with('success', "Batch $batchNo Registered & Stock Levels Updated.");
+    //     });
+    // }
     public function barcode() {
         return view('tenant.inventory.stock.barcode');
     }

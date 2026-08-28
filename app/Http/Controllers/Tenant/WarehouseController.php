@@ -45,7 +45,7 @@ class WarehouseController extends Controller
             $data = [
                 "tenant_id"         => tenant('id'),
                 "name"              => trim($request->name),
-                "location"           => trim($request->address),
+                "location"          => trim($request->address),
                 "is_default"        => $request->isDefault ?? false,
             ];
 

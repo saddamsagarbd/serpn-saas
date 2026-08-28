@@ -59,23 +59,31 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                        <th class="p-3 pl-6">Style No</th>
-                        <th class="p-3">Fabric Code / Brand</th>
+                        <th class="p-3">Category</th>
                         <th class="p-3">Item Description</th>
-                        <th class="p-3 text-center">Color</th>
                         <th class="p-3 text-right">Stock Qty</th>
                         <th class="p-3 pr-6 text-right">Asset Value</th>
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-slate-100 text-slate-700">
                     @forelse($stocks as $stock)
+                        @php
+                            // Item details from relation (or fallback)
+                            $item = $stock->itemVariant ?? $stock;
+                        @endphp
                         <tr class="hover:bg-slate-50/40 transition">
-                            <td class="p-3 pl-6 font-mono font-bold text-indigo-600">{{ $stock->style_no ?? 'N/A' }}</td>
-                            <td class="p-3 font-mono text-slate-500">{{ $stock->fabric_code ?? $stock->brand ?? 'Plain' }}</td>
-                            <td class="p-3 font-bold text-slate-800">{{ $stock->name }}</td>
-                            <td class="p-3 text-center"><span class="bg-slate-100 px-2 py-0.5 text-[9px] font-bold rounded text-slate-600 uppercase">{{ $stock->color ?? 'Multi' }}</span></td>
-                            <td class="p-3 text-right font-mono font-bold text-slate-900">{{ number_format($stock->stock_qty) }}</td>
-                            <td class="p-3 pr-6 text-right font-mono font-bold text-indigo-600">{{ number_format($stock->stock_qty * $stock->purchase_price, 2) }} ৳</td>
+                            <td class="p-3 font-mono text-slate-500">
+                                {{ $item->category->name ?? $stock->category ?? 'Plain' }}
+                            </td>
+                            <td class="p-3 font-bold text-slate-800">
+                                {{ $item->name ?? 'N/A' }}
+                            </td>
+                            <td class="p-3 text-right font-mono font-bold text-slate-900">
+                                {{ number_format($stock->available_qty ?? $stock->stock_qty ?? 0) }}
+                            </td>
+                            <td class="p-3 pr-6 text-right font-mono font-bold text-indigo-600">
+                                {{ number_format(($stock->available_qty ?? $stock->stock_qty ?? 0) * ($item->purchase_price ?? 0), 2) }} ৳
+                            </td>
                         </tr>
                     @empty
                         <tr>

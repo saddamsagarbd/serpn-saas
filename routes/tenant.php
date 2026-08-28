@@ -28,6 +28,7 @@ use App\Http\Controllers\Tenant\{
     UnitController,
     VoucherController,
     FebricController,
+    GrnController,
     MPRController,
     OrderController,
     PurchaseOrderController,
@@ -191,8 +192,8 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/orders/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
                 Route::put('/po-update/{id}', [PurchaseOrderController::class, 'update'])->name('po.update');
 
-                Route::get('/grn', [PurchaseController::class, 'goodsReceivedNotes'])->name('grn.index');
-                Route::post('/grn-transaction', [PurchaseController::class, 'saveGRNTransaction'])->name('grn.store');
+                Route::get('/grn', [GrnController::class, 'goodsReceivedNotes'])->name('grn.index');
+                Route::post('/grn-transaction', [GrnController::class, 'saveGRNTransaction'])->name('grn.store');
 
                 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
                 Route::get('/suppliers-form', [SupplierController::class, 'create'])->name('suppliers.form');
@@ -200,8 +201,8 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
-                Route::get('/purchase-return', [PurchaseController::class, 'purchaseReturn'])->name('return');
-                Route::get('/fabric-booking', [PurchaseController::class, 'fabricBooking'])->name('fabric-booking');
+                Route::get('/purchase-return', [GrnController::class, 'purchaseReturn'])->name('return');
+                Route::get('/fabric-booking', [GrnController::class, 'fabricBooking'])->name('fabric-booking');
             });
 
             // ---- Sales ----

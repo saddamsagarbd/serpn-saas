@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GoodsReceivedNote extends Model
+class GoodsReceivedNoteItem extends Model
 {
     protected $guarded = [];
 }

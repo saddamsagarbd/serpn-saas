@@ -14,12 +14,20 @@ return new class extends Migration
         Schema::create('goods_received_note_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('goods_received_note_id')->constrained()->onDelete('cascade');
-            $table->foreignId('purchase_order_item_id')->constrained(); // PO item link
-            $table->foreignId('item_id')->constrained(); //
-            $table->decimal('quantity_received', 15, 2);
+            $table->foreignId('purchase_order_item_id')->constrained();
+            $table->foreignId('item_id')->constrained('item_masters')->onDelete('cascade');
             
-            // ⚡ Production Batch linking: Jodi asha product-er kono specific batch auto toiri korte chan
-            $table->string('batch_no')->nullable(); 
+            // Quantity Tracking
+            $table->decimal('quantity_received', 15, 2);
+            $table->decimal('rejected_qty', 15, 2)->default(0); // Quality check control
+            
+            // Financial Tracking for Stock Valuation
+            $table->decimal('unit_price', 15, 2)->default(0);
+            $table->decimal('total_amount', 15, 2)->default(0);
+            
+            // QA Status & Batch
+            $table->string('qa_status')->default('Good'); // Good, Damaged, Partial
+            $table->string('batch_no')->nullable();
             
             $table->timestamps();
         });
