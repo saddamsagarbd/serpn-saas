@@ -28,7 +28,7 @@ class GrnController extends Controller
             'order.color',
             'order.size',
             'order.unit',
-        ])->where('status', 'Approved')->get();
+        ])->get();
 
         $warehouses = Warehouse::where('tenant_id', tenant('id'))->get();
         return view('tenant.purchase.goods-received-notes', compact('purchaseOrders', 'warehouses'));
