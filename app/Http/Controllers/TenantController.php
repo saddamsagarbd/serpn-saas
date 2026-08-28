@@ -149,7 +149,7 @@ class TenantController extends Controller
 
             // ৪. সেন্ট্রাল কনটেক্সটে ফিরে গিয়ে সাবস্ক্রিপশন রেকর্ড করা
             // (যেহেতু টেন্যান্ট ক্রিয়েশনের পর লারাভেল টেন্যান্ট ডিবি-তে থাকে, তাই সেন্ট্রাল ডিবি-তে লিখতে এটি দরকার)
-            tenancy()->central(function () use ($tenant, $domainPrefix, $now) {
+            tenancy()->central(function () use ($tenant, $domainPrefix, $now, $request) {
                 // ৩. ডোমেইন তৈরি করা
                 $centralDomain = config('tenancy.central_domains')[0] ?? 'serpn-saas.test';
                 $fullDomain = $domainPrefix . '.' . $centralDomain;
@@ -160,7 +160,7 @@ class TenantController extends Controller
             
                 DB::table("tenant_subscriptions")->insert([
                     'tenant_id'     => $tenant->id,
-                    'plan_id'       => $tenant->plan,
+                    'plan_id'       => $request->plan,
                     'trial_ends_at' => $now->copy()->addMonths(1),
                     'starts_at'     => $now->copy()->addMonths(1),
                     'ends_at'       => $now->copy()->addMonths(13),
