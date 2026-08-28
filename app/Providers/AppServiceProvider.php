@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Notifications\TenantCredentialsNotification;
+use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Database\Events\MigrationsStarted;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +32,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        Event::listen(MigrationsStarted::class, function () {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        });
+
+        Event::listen(MigrationsEnded::class, function () {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        });
         
         ini_set('max_execution_time', 120); // ডাটাবেজ তৈরি ও মাইগ্রেশনের জন্য সেফটি টাইম
 
