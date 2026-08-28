@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Domain extends Model
 {
     use HasFeatures;
+
+    protected $guarded = [];
 }

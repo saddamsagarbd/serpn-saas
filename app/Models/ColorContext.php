@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class ColorContext extends Model
 {
-    protected $fillable = ['name', 'color_code'];
+    protected $guarded = [];
 }

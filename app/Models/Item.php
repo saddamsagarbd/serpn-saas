@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Item extends Model
 {
-    protected $fillable = ['category_id', 'unit_id', 'sku', 'style_id', 'fabric_code', 'name', 'color', 'brand', 'stock_qty', 'purchase_price', 'sale_price'];
+    protected $guarded = [];
 
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
     public function unit(): BelongsTo { return $this->belongsTo(Unit::class); }

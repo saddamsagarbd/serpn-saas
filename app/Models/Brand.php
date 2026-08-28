@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Brand extends Model
 {
-    protected $fillable = ['name', 'code', 'status'];
+    protected $guarded = [];
 
     // ১. এই ব্র্যান্ডটি যদি কোনো ব্র্যান্ডের সাব-ব্র্যান্ড হয় (Parent Relation)
     public function parent(): BelongsTo

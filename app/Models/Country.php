@@ -8,4 +8,5 @@ use Nnjeim\World\Models\Country as BaseCountry;
 class Country extends BaseCountry
 {
     protected $connection = 'mysql';
+    protected $guarded = [];
 }
