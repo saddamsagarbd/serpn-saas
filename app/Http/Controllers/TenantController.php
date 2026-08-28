@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\TenantCredentialsNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -105,6 +106,11 @@ class TenantController extends Controller
                 $tenant = Tenant::withoutEvents(function () use ($tenantParams) {
                     return Tenant::create($tenantParams);
                 });
+
+                Artisan::call('tenants:migrate', [
+                    '--tenants' => [$tenant->id],
+                    '--force'   => true,
+                ]);
 
                 tenancy()->initialize($tenant);
 
