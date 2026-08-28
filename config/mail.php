@@ -55,9 +55,8 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
-            'local_domain' => env('MAIL_EHLO_DOMAIN'),
             
+            // SSL Verification Bypass
             'stream' => [
                 'ssl' => [
                     'allow_self_signed' => true,
@@ -66,7 +65,6 @@ return [
                 ],
             ],
         ],
-
         'ses' => [
             'transport' => 'ses',
         ],

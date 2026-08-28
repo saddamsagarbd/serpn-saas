@@ -157,10 +157,14 @@ class TenantController extends Controller
                 $tenant->domains()->create([
                     'domain' => $fullDomain
                 ]);
+
+                $planId = is_array($request->plan) 
+                    ? $request->plan['id'] 
+                    : (is_object($request->plan) ? $request->plan->id : $request->plan);
             
                 DB::table("tenant_subscriptions")->insert([
                     'tenant_id'     => $tenant->id,
-                    'plan_id'       => $request->plan,
+                    'plan_id'       => (int) $planId,
                     'trial_ends_at' => $now->copy()->addMonths(1),
                     'starts_at'     => $now->copy()->addMonths(1),
                     'ends_at'       => $now->copy()->addMonths(13),

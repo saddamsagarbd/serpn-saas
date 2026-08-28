@@ -9,5 +9,8 @@ class Domain extends Model
 {
     use HasFeatures;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'domain',
+        'tenant_id',
+    ];
 }
