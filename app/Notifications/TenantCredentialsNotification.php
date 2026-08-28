@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TenantCredentialsNotification extends Notification
+class TenantCredentialsNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -41,7 +41,7 @@ class TenantCredentialsNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('🚀 Your ERP Workspace is Ready - ' . $this->tenant->company_name)
+            ->subject('Your ERP Workspace is Ready - ' . $this->tenant->company_name)
             ->greeting('Hello ' . $this->tenant->owner_name . ',')
             ->line('Congratulations! Your isolated ERP cluster and database instance have been successfully provisioned.')
             ->line('Here are your administrative login credentials:')
