@@ -192,7 +192,7 @@
                         <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
                             <template x-for="(item, index) in items" :key="item.id">
                                 <tr class="hover:bg-slate-50/50 transition-all">
-                                    <td class="p-2 pl-4">
+                                    <td class="p-2 pl-4" wire:ignore>
                                         <select 
                                             x-init="initSelect2($el, item)" 
                                             class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
@@ -409,17 +409,22 @@ function styleCreationApp(initialData) {
                 this.$refs.fileInput.value = '';
             }
         },
-
+        
         initSelect2(el, item) {
-            const $el = $(el);
+            // Retry initialization once jQuery & Select2 are loaded
+            const checkAndInit = () => {
+                const $ = window.$ || window.jQuery;
+                if (!$ || typeof $.fn.select2 !== 'function') {
+                    setTimeout(checkAndInit, 50); // Poll every 50ms until JS bundle loads
+                    return;
+                }
 
-            // Stop if the element is already bound to Select2
-            if ($el.hasClass('select2-hidden-accessible') || $el.data('select2')) {
-                return;
-            }
+                const $el = $(el);
 
-            this.$nextTick(() => {
-                if (typeof $.fn.select2 !== 'function') return;
+                // Prevent double binding
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    return;
+                }
 
                 $el.select2({
                     placeholder: "Search Item...",
@@ -435,11 +440,11 @@ function styleCreationApp(initialData) {
                         processResults: function (data) {
                             const rawResults = data?.results || [];
                             return {
-                                results: rawResults.map(item => ({
-                                    id: item.id,
-                                    text: item.text,
-                                    name: item.name || '',
-                                    item_type: item.item_type || 'trim'
+                                results: rawResults.map(i => ({
+                                    id: i.id,
+                                    text: i.text,
+                                    name: i.name || '',
+                                    item_type: i.item_type || 'trim'
                                 }))
                             };
                         },
@@ -447,7 +452,7 @@ function styleCreationApp(initialData) {
                     }
                 });
 
-                // Set initial selected option safely
+                // Set initial option safely
                 if (item.item_id && item.item_name) {
                     if (!$el.find("option[value='" + item.item_id + "']").length) {
                         const option = new Option(item.item_name, item.item_id, true, true);
@@ -473,7 +478,9 @@ function styleCreationApp(initialData) {
                     item.item_id = '';
                     item.item_name = '';
                 });
-            });
+            };
+
+            this.$nextTick(checkAndInit);
         },
 
         addItem() {

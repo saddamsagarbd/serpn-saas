@@ -3,13 +3,11 @@ import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.e
 import { createIcons, icons } from 'lucide';
 
 import $ from 'jquery';
-
-import select2 from 'select2';
-import 'select2/dist/css/select2.min.css';
-
 window.$ = window.jQuery = $;
 
-select2();
+import select2 from 'select2';
+select2($);
+import 'select2/dist/css/select2.min.css';
 
 window.Alpine = Alpine;
 window.Livewire = Livewire;
