@@ -59,6 +59,7 @@
     'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
         ? $style->costing->bomItems->map(function($item) {
             return [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'item_id' => $item->item_id ?? '',
                 'item_name' => $item->item_description,
                 'item_type' => strtolower($item->category) === 'fabric' ? 'fabric' : 'trim',
@@ -69,7 +70,7 @@
                 'cost' => $item->unit_price
             ];
           }) 
-        : [['item_id' => '', 'item_name' => '', 'item_type' => 'fabric', 'color_id' => '', 'size_id' => '', 'qty' => '', 'wastage' => '', 'cost' => '']]
+        : [['id' => (string) \Illuminate\Support\Str::uuid(),'item_id' => '', 'item_name' => '', 'item_type' => 'fabric', 'color_id' => '', 'size_id' => '', 'qty' => '', 'wastage' => '', 'cost' => '']]
 ]) }})" class="bg-slate-100 min-h-screen p-2 sm:p-4 space-y-4">
 
     <!-- Top Header -->
@@ -189,7 +190,7 @@
                             </tr>
                         </thead>
                         <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
-                            <template x-for="(item, index) in items" :key="item._uid">
+                            <template x-for="(item, index) in items" :key="item.id">
                                 <tr class="hover:bg-slate-50/50 transition-all">
                                     <td class="p-2 pl-4">
                                         <select 
@@ -486,7 +487,7 @@ function styleCreationApp(initialData) {
 
         addItem() {
             this.items.push({ 
-                _uid: crypto.randomUUID(),
+                id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)),
                 item_id: '', 
                 item_name: '', 
                 item_type: 'fabrics', 
