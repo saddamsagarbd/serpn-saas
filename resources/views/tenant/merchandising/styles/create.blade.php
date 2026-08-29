@@ -424,10 +424,14 @@ function styleCreationApp(initialData) {
                     existingData.dataAdapter._request.abort();
                 }
 
-
                 // 1. Destroy previous instance and clear listeners to avoid state corruption
                 if ($el.hasClass('select2-hidden-accessible')) {
-                    $el.select2('destroy');
+                    try { 
+                        $el.select2('destroy'); 
+                    } catch (e) { 
+                        /* already gone, ignore */ 
+                        console.log(e);
+                    }
                 }
                 $el.off('select2:select select2:unselect select2:clear change');
 
@@ -452,7 +456,17 @@ function styleCreationApp(initialData) {
                             return $request;
                         },
                         processResults: function (data) {
-                            return { results: data.results };
+                            const rawResults = data?.results || [];
+                            const safeResults = rawResults
+                                .filter(item => item && item.id)
+                                .map(item => ({
+                                    id: item.id,
+                                    text: item.text || item.name || 'Item',
+                                    name: item.name || '',
+                                    item_type: item.item_type || 'trim'
+                                }));
+
+                            return { results: safeResults };
                         },
                         cache: true
                     },

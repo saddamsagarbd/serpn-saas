@@ -450,11 +450,13 @@ class InventoryController extends Controller
         $items = $query->get(['id', 'code', 'name', 'item_type']);
 
         $results = $items->map(function ($item) {
+            $name = $item->name ?? 'Unnamed Item';
+            $code = $item->code ? '[' . $item->code . '] ' : '';
             return [
                 'id' => $item->id,
-                'text' => ($item->code ? '[' . $item->code . '] ' : '') . $item->name,
-                'name' => $item->name,
-                'item_type' => strtolower($item->item_type) === 'fabrics' ? 'fabrics' : 'trim'
+                'text' => $code . $name,
+                'name' => $name,
+                'item_type' => strtolower($item->item_type ?? '') === 'fabrics' ? 'fabrics' : 'trim'
             ];
         });
 
