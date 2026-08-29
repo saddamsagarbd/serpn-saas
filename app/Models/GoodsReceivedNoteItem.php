@@ -18,4 +18,9 @@ class GoodsReceivedNoteItem extends Model
     {
         return $this->belongsTo(ItemMaster::class, 'item_id');
     }
+
+    public function stock(): BelongsTo
+    {
+        return $this->belongsTo(Stock::class, 'item_id', 'item_id');
+    }
 }
