@@ -35,7 +35,8 @@ use App\Http\Controllers\Tenant\{
     PurchaseRequisitionController,
     SeasonController,
     SizeChartController,
-    SupplierController
+    SupplierController,
+    SupplierInvoiceController
 };
 
 /*
@@ -194,6 +195,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
 
                 Route::get('/grn', [GrnController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [GrnController::class, 'saveGRNTransaction'])->name('grn.store');
+                Route::get('/grn/{id}/items', [GrnController::class, 'getGrnItems'])->name('grn.items');
 
                 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
                 Route::get('/suppliers-form', [SupplierController::class, 'create'])->name('suppliers.form');
@@ -201,7 +203,15 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
+                Route::get('supplier-invoices/get-grn-data', [SupplierInvoiceController::class, 'getGrnData'])->name('suppliers.invoice.get-grn-data');
+                Route::resource('suppliers/invoice', SupplierInvoiceController::class)->names('suppliers.invoice');
+
                 Route::get('/purchase-return', [GrnController::class, 'purchaseReturn'])->name('return');
+                Route::get('/purchase-return/{id}/details', [GrnController::class, 'purchaseReturnDetails'])->name('return.details');
+                Route::get('/purchase-return-create', [GrnController::class, 'purchaseReturnCreate'])->name('return.create');
+                Route::post('/purchase-return-store', [GrnController::class, 'purchaseReturnStore'])->name('return.store');
+
+
                 Route::get('/fabric-booking', [GrnController::class, 'fabricBooking'])->name('fabric-booking');
             });
 

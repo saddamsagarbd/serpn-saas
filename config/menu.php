@@ -176,6 +176,7 @@ return [
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn.index',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers.index',   'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Supplier Invoice',  'route' => 'tenant.purchase.suppliers.invoice.index',      'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['merchandising']],
             ],
         ],

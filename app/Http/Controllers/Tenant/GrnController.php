@@ -10,6 +10,8 @@ use App\Models\Item;
 use App\Models\LedgerEntry;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseReturn;
+use App\Models\PurchaseReturnItem;
 use App\Models\Stock;
 use App\Models\Voucher;
 use App\Models\Warehouse;
@@ -153,6 +155,7 @@ class GrnController extends Controller
 
                 // Inventory Asset (Debit)
                 LedgerEntry::create([
+                    'tenant_id'           => tenant('id'),
                     'voucher_id'          => $voucher->id,
                     'chart_of_account_id' => $inventoryHead->id,
                     'debit'               => $totalReceivedValue,
@@ -161,6 +164,7 @@ class GrnController extends Controller
 
                 // Accounts Payable (Credit)
                 LedgerEntry::create([
+                    'tenant_id'           => tenant('id'),
                     'voucher_id'          => $voucher->id,
                     'chart_of_account_id' => $payableHead->id,
                     'debit'               => 0,
@@ -175,7 +179,10 @@ class GrnController extends Controller
                 ->whereRaw('order_qty > received_qty')
                 ->exists();
 
-            $poStatus = $isPartiallyPending ? 'partially_received' : 'completed';
+            $poStatus = $isPartiallyPending ? 'partially_received' : 'received';
+
+            // 'draft','pending','approved','partially_received','received','cancelled'
+            // 'received','partially_received','returned'
 
             $po->update(['status' => $poStatus]);
             $grn->update(['status' => $poStatus]);
@@ -184,4 +191,159 @@ class GrnController extends Controller
                 ->with('success', 'GRN Verified. Inventory Stock In & Accounting Ledger Successfully Balanced!');
         });
     }
+
+    public function purchaseReturn(Request $request){
+        $returns = PurchaseReturn::with([
+            'supplier',
+            'warehouse',
+            'goodsReceivedNote',
+        ])->get();
+
+        return view('tenant.purchase.return.index', compact('returns'));
+    }
+
+    public function purchaseReturnDetails($tenant, String $id){
+        $return = PurchaseReturn::with([
+            'supplier',
+            'warehouse',
+            'goodsReceivedNote',
+            'items.itemMaster', 
+            'items.stock.itemVariant'
+        ])->where('tenant_id', tenant('id'))->findOrFail($id);
+
+        return view('tenant.purchase.return.details', compact('return'));
+    }
+
+    public function getGrnItems($tenant, String $id)
+    {
+        $grn = GoodsReceivedNote::with(['items.itemMaster', 'supplier', 'warehouse'])
+            ->where('tenant_id', tenant('id'))
+            ->findOrFail($id);
+
+        return response()->json([
+            'warehouse_id'  => $grn->warehouse_id,
+            'supplier_name' => $grn->supplier->name ?? 'N/A',
+            'items'         => $grn->items->map(function ($item) {
+                return [
+                    'item_id' => $item->item_id, // আপনার DB অনুযায়ী item_id-কে পাস করা হচ্ছে
+                    'item_name'       => $item->itemMaster->name ?? 'Item #' . $item->item_id,
+                    'received_qty'    => $item->quantity_received,
+                    'rejected_qty'    => $item->rejected_qty,
+                    'unit_price'      => $item->unit_price,
+                    'qa_status'       => $item->qa_status,
+                    'batch_no'        => $item->batch_no,
+                ];
+            })
+        ]);
+    }
+
+    public function purchaseReturnCreate($tenant, Request $request){
+        $grns = GoodsReceivedNote::with(['purchaseOrder'])->where('tenant_id', tenant('id'))->get();
+        $warehouses = Warehouse::where('tenant_id', tenant('id'))->get();
+        return view('tenant.purchase.return.create', compact('grns', 'warehouses'));
+    }  
+
+    public function purchaseReturnStore(Request $request){
+        $request->validate([
+            'grn_id'        => 'required|exists:goods_received_notes,id',
+            'warehouse_id'  => 'required|exists:warehouses,id',
+            'return_date'   => 'required|date',
+            'items'         => 'required|array|min:1',
+            'items.*.item_id' => 'required',
+            'items.*.return_qty'      => 'required|numeric|min:0.01',
+            'items.*.unit_price'      => 'required|numeric|min:0',
+        ]);
+        return DB::transaction(function () use ($request) {
+            $grn = GoodsReceivedNote::where('tenant_id', tenant('id'))->findOrFail($request->grn_id);
+
+            // ১. Return Header তৈরি
+            $returnHeader = PurchaseReturn::create([
+                'tenant_id'              => tenant('id'),
+                'return_no'              => 'PR-' . date('Ymd') . '-' . rand(1000, 9999),
+                'goods_received_note_id' => $grn->id,
+                'supplier_id'            => $grn->supplier_id,
+                'warehouse_id'           => $request->warehouse_id,
+                'return_date'            => $request->return_date,
+                'reason'                 => $request->reason ?? 'Damaged/Rejected Material Return',
+                'created_by'             => auth()->id(),
+                'total_amount'           => 0, // পরে আপডেট হবে
+            ]);
+
+            $totalReturnAmount = 0;
+
+            // ২. Item Loop & Stock Reduction
+            foreach ($request->items as $itemData) {
+                $returnQty = (float) $itemData['return_qty'];
+                $unitPrice = (float) $itemData['unit_price'];
+                $lineTotal = $returnQty * $unitPrice;
+
+                // Return Line Item Create
+                PurchaseReturnItem::create([
+                    'purchase_return_id' => $returnHeader->id,
+                    'item_id'            => $itemData['item_id'],
+                    'return_qty'         => $returnQty,
+                    'unit_price'         => $unitPrice,
+                    'total_amount'       => $lineTotal,
+                    'remarks'            => $itemData['remarks'] ?? null,
+                ]);
+
+                // Stock থেকে Qty কমানো
+                $stock = Stock::where('tenant_id', tenant('id'))
+                    ->where('warehouse_id', $request->warehouse_id)
+                    ->where('item_id', $itemData['item_id'])
+                    ->first();
+
+                if (!$stock || $stock->available_qty < $returnQty) {
+                    throw new \Exception("Insufficient stock in warehouse for Item ID: {$itemData['item_id']}");
+                }
+
+                $stock->decrement('available_qty', $returnQty);
+
+                $totalReturnAmount += $lineTotal;
+            }
+
+            // Header Amount Update
+            $returnHeader->update(['total_amount' => $totalReturnAmount]);
+
+            // ৩. Accounts Double Entry Voucher Generation (Debit Note)
+            if ($totalReturnAmount > 0) {
+                $inventoryHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                    ->where(fn($q) => $q->where('code', '1002')->orWhere('name', 'like', '%Raw Materials%'))
+                    ->first();
+
+                $payableHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                    ->where(fn($q) => $q->where('code', 'AP')->orWhere('name', 'like', '%Accounts Payable%'))
+                    ->first();
+
+                // Accounting Voucher Create
+                $voucher = Voucher::create([
+                    'tenant_id'    => tenant('id'),
+                    'voucher_no'   => 'DN-' . date('Ymd') . '-' . rand(10, 99), // Debit Note Voucher
+                    'date'         => $request->return_date,
+                    'total_amount' => $totalReturnAmount,
+                    'narration'    => "Debit Note issued against GRN Return: " . $returnHeader->return_no,
+                ]);
+
+                // Accounts Payable DEBIT (সাপ্লায়ারের দেনা কমবে)
+                LedgerEntry::create([
+                    'tenant_id'           => tenant('id'),
+                    'voucher_id'          => $voucher->id,
+                    'chart_of_account_id' => $payableHead->id,
+                    'debit'               => $totalReturnAmount,
+                    'credit'              => 0,
+                ]);
+
+                // Inventory Asset CREDIT (স্টকের এসেট ভ্যালু কমবে)
+                LedgerEntry::create([
+                    'tenant_id'           => tenant('id'),
+                    'voucher_id'          => $voucher->id,
+                    'chart_of_account_id' => $inventoryHead->id,
+                    'debit'               => 0,
+                    'credit'              => $totalReturnAmount,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Debit Note created, Stock reduced & Ledger adjusted successfully!');
+        });
+    }   
 }
