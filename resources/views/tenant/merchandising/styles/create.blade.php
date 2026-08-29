@@ -189,7 +189,7 @@
                             </tr>
                         </thead>
                         <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
-                            <template x-for="(item, index) in items" :key="index">
+                            <template x-for="(item, index) in items" :key="item._uid">
                                 <tr class="hover:bg-slate-50/50 transition-all">
                                     <td class="p-2 pl-4">
                                         <select 
@@ -418,6 +418,12 @@ function styleCreationApp(initialData) {
                     return;
                 }
 
+                const existingData = $el.data('select2');
+                if (existingData && existingData.dataAdapter && existingData.dataAdapter._request) {
+                    existingData.dataAdapter._request.abort();
+                }
+
+
                 // 1. Destroy previous instance and clear listeners to avoid state corruption
                 if ($el.hasClass('select2-hidden-accessible')) {
                     $el.select2('destroy');
@@ -435,6 +441,14 @@ function styleCreationApp(initialData) {
                         delay: 250,
                         data: function (params) {
                             return { q: params.term || '' };
+                        },
+                        transport: function (params, success, failure) {
+                            // Keep a handle so we can abort it if destroyed mid-flight
+                            const $request = $.ajax(params);
+                            this._request = $request;
+                            $request.then(success);
+                            $request.fail(failure);
+                            return $request;
                         },
                         processResults: function (data) {
                             return { results: data.results };
@@ -471,7 +485,16 @@ function styleCreationApp(initialData) {
         },
 
         addItem() {
-            this.items.push({ item_id: '', item_name: '', item_type: 'fabric', color_id: '', size_id: '', qty: '', cost: '' });
+            this.items.push({ 
+                _uid: crypto.randomUUID(),
+                item_id: '', 
+                item_name: '', 
+                item_type: 'fabrics', 
+                color_id: '', 
+                size_id: '', 
+                qty: '', 
+                cost: '' 
+            });
         },
 
         removeItem(index) {
