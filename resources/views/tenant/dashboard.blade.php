@@ -13,7 +13,7 @@
             <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
             <div class="text-xs">
                 <p class="font-bold">Enterprise Plan</p>
-                <p class="text-[10px] text-indigo-200">Renews on: <span class="font-mono">Dec 31, 2026</span></p>
+                <p class="text-[10px] text-indigo-200">Activate on: <span class="font-mono">{{ Carbon\Carbon::now()->format('d F, Y') }}</span></p>
             </div>
         </div>
     </div>

@@ -1,7 +1,11 @@
 <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
     <div class="p-5 border-b border-gray-100 flex items-center gap-3 bg-white">
-        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
-        <span class="text-lg font-extrabold text-slate-800 tracking-tight">SERPN <span class="text-blue-600 font-semibold text-sm">SAAS</span></span>
+        @if(!empty(tenant('id')))
+            <span class="text-lg font-extrabold text-slate-800 tracking-tight">{{ tenant('company_name') }}</span>
+        @else
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">S</div>
+            <span class="text-lg font-extrabold text-slate-800 tracking-tight">SERPN <span class="text-blue-600 font-semibold text-sm">SAAS</span></span>
+        @endif
     </div>
 
     @php
