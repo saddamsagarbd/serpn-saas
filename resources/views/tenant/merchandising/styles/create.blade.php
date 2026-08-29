@@ -413,15 +413,18 @@ function styleCreationApp(initialData) {
             this.$nextTick(() => {
                 const $el = $(el);
 
-                if (typeof $el.select2 !== 'function') {
+                if (typeof $.fn.select2 !== 'function') {
                     console.error('Select2 is not loaded on jQuery object.');
                     return;
                 }
 
+                // 1. Destroy previous instance and clear listeners to avoid state corruption
                 if ($el.hasClass('select2-hidden-accessible')) {
                     $el.select2('destroy');
                 }
+                $el.off('select2:select select2:unselect select2:clear change');
 
+                // 2. Initialize Select2
                 $el.select2({
                     placeholder: "Search Item...",
                     allowClear: true,
@@ -440,23 +443,27 @@ function styleCreationApp(initialData) {
                     },
                 });
 
+                // 3. Pre-populate initial item if available
                 if (item.item_id && item.item_name) {
-                    let option = new Option(item.item_name, item.item_id, true, true);
-                    $el.append(option).trigger('change');
+                    if (!$el.find("option[value='" + item.item_id + "']").length) {
+                        let option = new Option(item.item_name, item.item_id, true, true);
+                        $el.append(option).trigger('change');
+                    }
                 }
 
-                $el.off('select2:select select2:unselect select2:clear');
-
+                // 4. Safe event handling (Fixes "Cannot read properties of undefined (reading 'container')")
                 $el.on('select2:select', (e) => {
-                    const selectedData = e.params.data;
-                    item.item_id = selectedData.id;
-                    item.item_name = selectedData.name || selectedData.text;
+                    const selectedData = e?.params?.data;
+                    if (!selectedData) return;
+
+                    item.item_id = selectedData.id || '';
+                    item.item_name = selectedData.name || selectedData.text || '';
                     if (selectedData.item_type) {
                         item.item_type = selectedData.item_type;
                     }
                 });
 
-                $el.on('select2:unselect', () => {
+                $el.on('select2:unselect select2:clear', () => {
                     item.item_id = '';
                     item.item_name = '';
                 });
@@ -468,11 +475,18 @@ function styleCreationApp(initialData) {
         },
 
         removeItem(index) {
-            if (this.items.length > 1) this.items.splice(index, 1);
+            if (this.items.length > 1) {
+                // Destroy Select2 on row element before removing from DOM
+                const $tableRows = $(this.$el).find('tbody tr');
+                const $targetSelect = $tableRows.eq(index).find('select').first();
+                if ($targetSelect.hasClass('select2-hidden-accessible')) {
+                    $targetSelect.select2('destroy');
+                }
+                this.items.splice(index, 1);
+            }
         },
 
         get grandTotal() {
-
             const total = this.items.reduce((sum, item) => {
                 const qty = parseFloat(item.qty) || 0;
                 const cost = parseFloat(item.cost) || 0;
