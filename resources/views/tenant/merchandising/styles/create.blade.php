@@ -175,7 +175,7 @@
                     </button>
                 </div>
 
-                <div class="border border-slate-200/80 rounded-2xl overflow-x-auto shadow-xs">
+                <div class="border border-slate-200/80 rounded-2xl overflow-visible shadow-xs">
                     <table class="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
@@ -192,12 +192,33 @@
                         <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
                             <template x-for="(item, index) in items" :key="item.id">
                                 <tr class="hover:bg-slate-50/50 transition-all">
-                                    <td class="p-2 pl-4" wire:ignore>
-                                        <select 
-                                            x-init="initSelect2($el, item)" 
-                                            class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
-                                            <option value="">Search Item...</option>
-                                        </select>
+                                    <td class="p-2 pl-4" x-data="itemSearchBox(item)" @click.outside="open = false">
+                                        <div class="relative">
+                                            <input type="text"
+                                                x-model="query"
+                                                @input="search()"
+                                                @focus="if (results.length) open = true"
+                                                @keydown.escape="open = false"
+                                                placeholder="Search Item..."
+                                                autocomplete="off"
+                                                class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
+
+                                            <div x-show="open" x-cloak
+                                                class="absolute left-0 top-full mt-1 w-72 max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-xl text-xs z-50">
+                                                <template x-if="loading">
+                                                    <div class="p-2 text-slate-400">Searching...</div>
+                                                </template>
+                                                <template x-if="!loading && results.length === 0 && query.length > 0">
+                                                    <div class="p-2 text-slate-400">No matches</div>
+                                                </template>
+                                                <template x-for="r in results" :key="r.id">
+                                                    <div @click="select(r)"
+                                                        class="p-2 hover:bg-indigo-50 cursor-pointer text-slate-700">
+                                                        <span x-text="r.text"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="p-2">
                                         <select x-model="item.color_id" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
@@ -409,79 +430,8 @@ function styleCreationApp(initialData) {
                 this.$refs.fileInput.value = '';
             }
         },
-        
-        initSelect2(el, item) {
-            // Retry initialization once jQuery & Select2 are loaded
-            const checkAndInit = () => {
-                const $ = window.$ || window.jQuery;
-                if (!$ || typeof $.fn.select2 !== 'function') {
-                    setTimeout(checkAndInit, 50); // Poll every 50ms until JS bundle loads
-                    return;
-                }
 
-                const $el = $(el);
 
-                // Prevent double binding
-                if ($el.hasClass('select2-hidden-accessible')) {
-                    return;
-                }
-
-                $el.select2({
-                    placeholder: "Search Item...",
-                    allowClear: true,
-                    width: '100%',
-                    ajax: {
-                        url: "{{ route('tenant.api.item_masters.search') }}",
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            return { q: params.term || '' };
-                        },
-                        processResults: function (data) {
-                            const rawResults = data?.results || [];
-                            return {
-                                results: rawResults.map(i => ({
-                                    id: i.id,
-                                    text: i.text,
-                                    name: i.name || '',
-                                    item_type: i.item_type || 'trim'
-                                }))
-                            };
-                        },
-                        cache: true
-                    }
-                });
-
-                // Set initial option safely
-                if (item.item_id && item.item_name) {
-                    if (!$el.find("option[value='" + item.item_id + "']").length) {
-                        const option = new Option(item.item_name, item.item_id, true, true);
-                        $el.append(option).trigger('change.select2');
-                    }
-                }
-
-                // Clean event handling
-                $el.off('select2:select select2:unselect select2:clear');
-
-                $el.on('select2:select', (e) => {
-                    const selectedData = e?.params?.data;
-                    if (!selectedData) return;
-
-                    item.item_id = selectedData.id;
-                    item.item_name = selectedData.name || selectedData.text;
-                    if (selectedData.item_type) {
-                        item.item_type = selectedData.item_type;
-                    }
-                });
-
-                $el.on('select2:unselect select2:clear', () => {
-                    item.item_id = '';
-                    item.item_name = '';
-                });
-            };
-
-            this.$nextTick(checkAndInit);
-        },
 
         addItem() {
             this.items.push({ 
@@ -645,6 +595,65 @@ function styleCreationApp(initialData) {
                 console.error(error);
                 alert("A genuine network or transport layer error occurred.");
             });
+        }
+    };
+}
+
+function itemSearchBox(item) {
+    return {
+        query: item.item_name || '',
+        results: [],
+        open: false,
+        loading: false,
+        _timer: null,
+        _controller: null,
+        _seq: 0,
+
+        search() {
+            item.item_id = '';
+            item.item_name = this.query;
+
+            clearTimeout(this._timer);
+            if (!this.query.trim()) {
+                this.results = [];
+                this.open = false;
+                return;
+            }
+
+            this._timer = setTimeout(() => this.fetchResults(), 250);
+        },
+
+        async fetchResults() {
+            if (this._controller) this._controller.abort();
+            this._controller = new AbortController();
+            const seq = ++this._seq;
+
+            this.loading = true;
+            try {
+                const res = await fetch(
+                    "{{ route('tenant.api.item_masters.search') }}?q=" + encodeURIComponent(this.query),
+                    { signal: this._controller.signal, headers: { 'Accept': 'application/json' } }
+                );
+                const data = await res.json();
+
+                if (seq !== this._seq) return; // stale response, ignore
+
+                this.results = data.results || [];
+                this.open = true;
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error(e);
+            } finally {
+                if (seq === this._seq) this.loading = false;
+            }
+        },
+
+        select(r) {
+            item.item_id = r.id;
+            item.item_name = r.name || r.text;
+            if (r.item_type) item.item_type = r.item_type;
+            this.query = r.name || r.text;
+            this.results = [];
+            this.open = false;
         }
     };
 }
