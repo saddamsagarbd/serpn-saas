@@ -418,6 +418,10 @@ function styleCreationApp(initialData) {
                     return;
                 }
 
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    $el.select2('destroy');
+                }
+
                 $el.select2({
                     placeholder: "Search Item...",
                     allowClear: true,
@@ -440,6 +444,8 @@ function styleCreationApp(initialData) {
                     let option = new Option(item.item_name, item.item_id, true, true);
                     $el.append(option).trigger('change');
                 }
+
+                $el.off('select2:select select2:unselect select2:clear');
 
                 $el.on('select2:select', (e) => {
                     const selectedData = e.params.data;

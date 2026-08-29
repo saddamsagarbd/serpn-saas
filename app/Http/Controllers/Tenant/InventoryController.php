@@ -454,7 +454,7 @@ class InventoryController extends Controller
                 'id' => $item->id,
                 'text' => ($item->code ? '[' . $item->code . '] ' : '') . $item->name,
                 'name' => $item->name,
-                'item_type' => strtolower($item->item_type) === 'fabric' ? 'fabric' : 'trim'
+                'item_type' => strtolower($item->item_type) === 'fabrics' ? 'fabrics' : 'trim'
             ];
         });
 
