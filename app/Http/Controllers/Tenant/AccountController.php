@@ -235,15 +235,17 @@ class AccountController extends Controller
         if ($selectedAccount) {
             $account = ChartOfAccount::where('tenant_id', tenant('id'))->findOrFail($selectedAccount);
             $openingBalance = $account->opening_balance;
+        }       
 
-            $entries = LedgerEntry::where('tenant_id', tenant('id'))
-                ->where('chart_of_account_id', $selectedAccount)
-                ->with('voucher')
+            $query = LedgerEntry::where('ledger_entries.tenant_id', tenant('id'));
+            
+            if($selectedAccount) $query->where('chart_of_account_id', $selectedAccount);
+
+            $entries = $query->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->orderBy('vouchers.date', 'asc')
                 ->select('ledger_entries.*')
                 ->get();
-        }
         return view('tenant.account.ledger', compact('accounts', 'entries', 'selectedAccount', 'openingBalance'));
     }
 
