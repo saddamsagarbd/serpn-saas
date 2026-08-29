@@ -411,31 +411,16 @@ function styleCreationApp(initialData) {
         },
 
         initSelect2(el, item) {
+            const $el = $(el);
+
+            // Stop if the element is already bound to Select2
+            if ($el.hasClass('select2-hidden-accessible') || $el.data('select2')) {
+                return;
+            }
+
             this.$nextTick(() => {
-                const $el = $(el);
+                if (typeof $.fn.select2 !== 'function') return;
 
-                if (typeof $.fn.select2 !== 'function') {
-                    console.error('Select2 is not loaded on jQuery object.');
-                    return;
-                }
-
-                const existingData = $el.data('select2');
-                if (existingData && existingData.dataAdapter && existingData.dataAdapter._request) {
-                    existingData.dataAdapter._request.abort();
-                }
-
-                // 1. Destroy previous instance and clear listeners to avoid state corruption
-                if ($el.hasClass('select2-hidden-accessible')) {
-                    try { 
-                        $el.select2('destroy'); 
-                    } catch (e) { 
-                        /* already gone, ignore */ 
-                        console.log(e);
-                    }
-                }
-                $el.off('select2:select select2:unselect select2:clear change');
-
-                // 2. Initialize Select2
                 $el.select2({
                     placeholder: "Search Item...",
                     allowClear: true,
@@ -447,46 +432,38 @@ function styleCreationApp(initialData) {
                         data: function (params) {
                             return { q: params.term || '' };
                         },
-                        transport: function (params, success, failure) {
-                            // Keep a handle so we can abort it if destroyed mid-flight
-                            const $request = $.ajax(params);
-                            this._request = $request;
-                            $request.then(success);
-                            $request.fail(failure);
-                            return $request;
-                        },
                         processResults: function (data) {
                             const rawResults = data?.results || [];
-                            const safeResults = rawResults
-                                .filter(item => item && item.id)
-                                .map(item => ({
+                            return {
+                                results: rawResults.map(item => ({
                                     id: item.id,
-                                    text: item.text || item.name || 'Item',
+                                    text: item.text,
                                     name: item.name || '',
                                     item_type: item.item_type || 'trim'
-                                }));
-
-                            return { results: safeResults };
+                                }))
+                            };
                         },
                         cache: true
-                    },
+                    }
                 });
 
-                // 3. Pre-populate initial item if available
+                // Set initial selected option safely
                 if (item.item_id && item.item_name) {
                     if (!$el.find("option[value='" + item.item_id + "']").length) {
-                        let option = new Option(item.item_name, item.item_id, true, true);
-                        $el.append(option).trigger('change');
+                        const option = new Option(item.item_name, item.item_id, true, true);
+                        $el.append(option).trigger('change.select2');
                     }
                 }
 
-                // 4. Safe event handling (Fixes "Cannot read properties of undefined (reading 'container')")
+                // Clean event handling
+                $el.off('select2:select select2:unselect select2:clear');
+
                 $el.on('select2:select', (e) => {
                     const selectedData = e?.params?.data;
                     if (!selectedData) return;
 
-                    item.item_id = selectedData.id || '';
-                    item.item_name = selectedData.name || selectedData.text || '';
+                    item.item_id = selectedData.id;
+                    item.item_name = selectedData.name || selectedData.text;
                     if (selectedData.item_type) {
                         item.item_type = selectedData.item_type;
                     }
