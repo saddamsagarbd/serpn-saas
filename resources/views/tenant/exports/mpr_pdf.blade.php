@@ -85,7 +85,7 @@
         <tr>
             <td width="60%" style="vertical-align: top;">
                 <div class="company-title">{{ tenant()->company_name ?? 'Company Name' }}</div>
-                <div class="sub-title">MPR Order BOM Report</div>
+                <div class="sub-title">MPR Order</div>
                 <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">
                     Calculated BOM requirements grouped by SKU matrix line items.
                 </div>
@@ -112,8 +112,8 @@
         <thead>
             <tr>
                 <th width="5%" class="text-center">Sl#</th>
-                <th width="10%" class="text-center">Item</th>
-                <th width="20%" class="text-center">Details</th>
+                <th width="10%" class="text-center">Category</th>
+                <th width="20%" class="text-center">Product Details</th>
                 <th width="15%" class="text-center">Color</th>
                 <th width="12%" class="text-center">Size</th>
                 <th width="13%" class="text-right">Cons/GMT</th>
