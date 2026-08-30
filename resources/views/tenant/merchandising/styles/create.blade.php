@@ -331,32 +331,32 @@
                 <div class="space-y-3">
                     <!-- Revenue Row -->
                     <div class="space-y-1">
-                        <div class="flex justify-between text-[11px] font-bold text-slate-300 uppercase">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 uppercase">
                             <span>REVENUE (%)</span>
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + revenueAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="revenuePercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
 
                     <!-- AIT Row -->
                     <div class="space-y-1">
-                        <div class="flex justify-between text-[11px] font-bold text-slate-300 uppercase">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 uppercase">
                             <span>AIT (%)</span>
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + aitAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="aitPercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
 
                     <!-- VAT Row -->
                     <div class="space-y-1">
-                        <div class="flex justify-between text-[11px] font-bold text-slate-300 uppercase">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 uppercase">
                             <span>VAT (%)</span>
                             <span class="font-mono text-indigo-400" x-text="currencySymbol + ' ' + vatAmount.toFixed(2)"></span>
                         </div>
                         <input type="number" step="0.01" min="0" x-model.number="vatPercent" 
-                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-800 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
+                            class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono font-bold text-right focus:outline-none focus:border-indigo-500 text-xs">
                     </div>
                 </div>
 

@@ -262,28 +262,28 @@
             <tr>
                 <td class="font-bold">PRINT</td>
                 <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">1.00</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($printCost, 2) }}</td>
             </tr>
             <tr>
                 <td class="font-bold">EMB</td>
                 <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">1.00</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($embCost, 2) }}</td>
             </tr>
             <tr>
                 <td class="font-bold">WASH</td>
                 <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">1.00</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($washCost, 2) }}</td>
             </tr>
 
@@ -297,19 +297,19 @@
             <tr>
                 <td class="font-bold">CM</td>
                 <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">1.00</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($cmCost, 2) }}</td>
             </tr>
             <tr>
                 <td class="font-bold">OVERHEAD COST</td>
                 <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
-                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">1.00</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($overheadCost, 2) }}</td>
             </tr>
 
@@ -325,29 +325,38 @@
 
             <!-- 5. GRAND TOTALS & MARKUPS -->
             <tr class="bg-base-cost">
-                <td colspan="5">TTL COST (BASE)</td>
+                <td colspan="2">TTL COST (BASE)</td>
                 <td class="text-right font-mono">1.00</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlBaseCost, 2) }}</td>
             </tr>
 
             <tr class="bg-revenue">
-                <td colspan="4">REVENUE</td>
+                <td colspan="2">REVENUE</td>
                 <td class="text-right font-mono font-bold" style="color: #e11d48;">{{ number_format($revenuePercent, 2) }}%</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($revenueAmt, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono font-bold">{{ $currencySymbol }} {{ number_format($ttlWithRevenue, 2) }}</td>
             </tr>
 
             <tr>
-                <td colspan="4">AIT - {{ number_format($aitPercent, 0) }}%</td>
+                <td colspan="2">AIT - {{ number_format($aitPercent, 0) }}%</td>
                 <td class="text-right font-mono">{{ number_format($aitPercent, 2) }}%</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($aitAmt, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlWithAit, 2) }}</td>
             </tr>
 
             <tr>
-                <td colspan="4">VAT - {{ number_format($vatPercent, 0) }}%</td>
+                <td colspan="2">VAT - {{ number_format($vatPercent, 0) }}%</td>
                 <td class="text-right font-mono">{{ number_format($vatPercent, 2) }}%</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($vatAmt, 2) }}</td>
+                <td style="color: #94a3b8;">-</td>
+                <td style="color: #94a3b8;">-</td>
                 <td class="text-right font-mono">{{ $currencySymbol }} {{ number_format($ttlFob, 2) }}</td>
             </tr>
 
