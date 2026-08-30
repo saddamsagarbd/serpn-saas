@@ -55,6 +55,23 @@ class Style extends Model
         return $this->hasMany(SalesOrderItem::class, 'style_id'); 
     }
 
+    public function getTotalStockQtyAttribute()
+    {
+        // ১. Style Costing থেকে সকল BOM Item-এর item_id সংগ্রহ
+        $itemIds = $this->costing?->bomItems->pluck('item_id')->filter()->unique() ?? collect();
+
+        if ($itemIds->isEmpty()) {
+            return 0;
+        }
+
+        // ২. Stock টেবিল থেকে total quantity হিসাব
+        return floatval(
+            Stock::whereIn('item_id', $itemIds)
+                ->where('tenant_id', tenant('id'))
+                ->sum('available_qty') ?? 0
+        );
+    }
+
     // protected static function booted()
     // {
     //     static::creating(function ($model) {

@@ -52,7 +52,7 @@
                             <th class="p-4">Style Name</th>
                             <th class="p-4">Buyer</th>
                             <th class="p-4">Season</th>
-                            <th class="p-4 text-right">Target Price</th>
+                            <th class="p-4 text-right">FOB</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
@@ -81,7 +81,7 @@
                                     
                                     <td class="p-4 text-gray-500" x-text="style.buyer ? style.buyer.name : 'N/A'"></td>
                                     <td class="p-4 text-gray-500" x-text="style.season ? style.season.name : 'N/A'"></td>
-                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="style.costing ? '$' + parseFloat(style.costing.target_fob).toFixed(4) : '$0.0000'"></td>
+                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="style.costing ? '$' + parseFloat(style.costing.offered_fob).toFixed(4) : '$0.0000'"></td>
                                     
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
                                         <!-- 2. Preview Details Button -->

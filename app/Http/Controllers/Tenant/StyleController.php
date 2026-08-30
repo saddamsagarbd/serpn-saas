@@ -434,7 +434,7 @@ class StyleController extends Controller
         $style = Style::with([
             'buyer', 
             'season', 
-            'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
+            'costing.bomItems.itemMaster',
             'costing.bomItems.color',
             'costing.bomItems.size',
             'mprs' => function($q) {

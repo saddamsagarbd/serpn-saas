@@ -31,4 +31,14 @@ class BomItem extends Model
     {
         return $this->belongsTo(ItemMaster::class, 'item_id');
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(Stock::class, 'item_id', 'item_id');
+    }
+
+    public function latestStock()
+    {
+        return $this->hasOne(Stock::class, 'item_id', 'item_id')->latestOfMany();
+    }
 }

@@ -134,7 +134,8 @@
         $excessPercent = floatval($item->wastage_percent ?? 5);
         
         $totalReqQty = ($orderQuantity * $cons) * (1 + ($excessPercent / 100));
-        $inhouseQty = floatval($item->inhouse_qty ?? 0);
+        $inhouseQty = floatval($item->stocks?->sum('available_qty') ?? 0);
+        $stockEntryDate = $item->latestStock?->created_at?->format('d-m-Y') ?? '';
         $shortageQty = $inhouseQty - $totalReqQty;
         $unitPrice = floatval($item->unit_price ?? 0);
         $totalBudget = $totalReqQty * $unitPrice;
@@ -146,6 +147,7 @@
             'shortageQty' => $shortageQty,
             'unitPrice' => $unitPrice,
             'totalBudget' => $totalBudget,
+            'grn_date' => $stockEntryDate,
         ];
     };
 @endphp
@@ -234,7 +236,7 @@
                 <td class="text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
                     {{ number_format($data->shortageQty, 2) }}
                 </td>
-                <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
+                <td class="text-center font-mono">{{ $data->grn_date ? \Carbon\Carbon::parse($data->grn_date)->format('Y-m-d') : 'TBC' }}</td>
                 <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>
                 <td class="text-center">
                     @if($data->shortageQty >= 0 && $data->inhouseQty > 0)
