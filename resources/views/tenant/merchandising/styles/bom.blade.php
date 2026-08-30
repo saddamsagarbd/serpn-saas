@@ -110,17 +110,17 @@
                         </td>
                         <td class="p-2 border-r border-slate-200">{{ $item->gmt_color ?? 'All Color' }}</td>
                         <td class="p-2 border-r border-slate-200 text-slate-600">{{ $item->material_color ?? 'As per GMT' }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($orderQty) }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono text-amber-700 font-bold">{{ number_format($data->excessPercent, 2) }}%</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ number_format($orderQty) }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ number_format($item->consumption, 4) }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono text-amber-700 font-bold">{{ number_format($data->excessPercent, 2) }}%</td>
                         
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold text-indigo-700 bg-indigo-50/40">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold text-indigo-700 bg-indigo-50/40">
                             {{ number_format($data->totalReqQty, 2) }}
                         </td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold text-emerald-700 bg-emerald-50/40">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold text-emerald-700 bg-emerald-50/40">
                             {{ number_format($data->inhouseQty, 2) }}
                         </td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold {{ $data->shortageQty < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                             {{ number_format($data->shortageQty, 2) }}
                         </td>
                         <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $data->grn_date ? \Carbon\Carbon::parse($data->grn_date)->format('Y-m-d') : 'TBC' }}</td>
@@ -170,17 +170,17 @@
                         </td>
                         <td class="p-2 border-r border-slate-200">{{ $item->gmt_color ?? 'All Color' }}</td>
                         <td class="p-2 border-r border-slate-200 text-slate-600">{{ $item->material_color ?? 'DTM' }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($orderQty) }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono text-amber-700 font-bold">{{ number_format($data->excessPercent, 2) }}%</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ number_format($orderQty) }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono">{{ number_format($item->consumption, 4) }}</td>
+                        <td class="p-2 border-r border-slate-200 text-center font-mono text-amber-700 font-bold">{{ number_format($data->excessPercent, 2) }}%</td>
                         
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold text-indigo-700 bg-indigo-50/40">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold text-indigo-700 bg-indigo-50/40">
                             {{ number_format($data->totalReqQty, 2) }}
                         </td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold text-emerald-700 bg-emerald-50/40">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold text-emerald-700 bg-emerald-50/40">
                             {{ number_format($data->inhouseQty, 2) }}
                         </td>
-                        <td class="p-2 border-r border-slate-200 text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
+                        <td class="p-2 border-r border-slate-200 text-center font-mono font-bold {{ $data->shortageQty < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                             {{ number_format($data->shortageQty, 2) }}
                         </td>
                         <td class="p-2 border-r border-slate-200 text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>

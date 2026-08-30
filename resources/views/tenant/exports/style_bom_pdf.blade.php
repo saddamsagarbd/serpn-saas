@@ -228,12 +228,12 @@
                 <td class="font-bold">{{ $item->item_description ?? $item->itemMaster->name ?? 'Fabric' }}</td>
                 <td>{{ $item->gmt_color ?? 'All' }}</td>
                 <td>{{ $item->material_color ?? 'DTM' }}</td>
-                <td class="text-right font-mono">{{ number_format($orderQuantity) }}</td>
-                <td class="text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
-                <td class="text-right font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
-                <td class="text-right font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
-                <td class="text-right font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
-                <td class="text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
+                <td class="text-center font-mono">{{ number_format($orderQuantity) }}</td>
+                <td class="text-center font-mono">{{ number_format($item->consumption, 4) }}</td>
+                <td class="text-center font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
+                <td class="text-center font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
+                <td class="text-center font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
+                <td class="text-center font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
                     {{ number_format($data->shortageQty, 2) }}
                 </td>
                 <td class="text-center font-mono">{{ $data->grn_date ? \Carbon\Carbon::parse($data->grn_date)->format('Y-m-d') : 'TBC' }}</td>
@@ -279,12 +279,12 @@
                 <td class="font-bold">{{ $item->item_description ?? $item->itemMaster->name ?? 'Trim Item' }}</td>
                 <td>{{ $item->gmt_color ?? 'All' }}</td>
                 <td>{{ $item->material_color ?? 'DTM' }}</td>
-                <td class="text-right font-mono">{{ number_format($orderQuantity) }}</td>
-                <td class="text-right font-mono">{{ number_format($item->consumption, 4) }}</td>
-                <td class="text-right font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
-                <td class="text-right font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
-                <td class="text-right font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
-                <td class="text-right font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
+                <td class="text-center font-mono">{{ number_format($orderQuantity) }}</td>
+                <td class="text-center font-mono">{{ number_format($item->consumption, 4) }}</td>
+                <td class="text-center font-mono">{{ number_format($data->excessPercent, 2) }}%</td>
+                <td class="text-center font-mono font-bold" style="color: #4338ca;">{{ number_format($data->totalReqQty, 2) }}</td>
+                <td class="text-center font-mono font-bold" style="color: #047857;">{{ number_format($data->inhouseQty, 2) }}</td>
+                <td class="text-center font-mono font-bold {{ $data->shortageQty < 0 ? 'color: #dc2626;' : '' }}">
                     {{ number_format($data->shortageQty, 2) }}
                 </td>
                 <td class="text-center font-mono">{{ $item->pcd_date ? \Carbon\Carbon::parse($item->pcd_date)->format('Y-m-d') : 'TBC' }}</td>

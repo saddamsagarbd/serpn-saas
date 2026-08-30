@@ -113,7 +113,7 @@
                         <!-- TOTAL FABRIC COST -->
                         <tr class="bg-amber-100 font-bold border-y-2 border-amber-300 text-slate-900">
                             <td colspan="2" class="p-2 border-r border-slate-300 uppercase">TTL Fabric Cost</td>
-                            <td class="p-2 border-r border-slate-300 text-right font-mono">{{ number_format($fabrics->sum('consumption'), 2) }}</td>
+                            <td class="p-2 border-r border-slate-300 text-center font-mono">{{ number_format($fabrics->sum('consumption'), 2) }}</td>
                             <td class="p-2 border-r border-slate-300"></td>
                             <td class="p-2 border-r border-slate-300"></td>
                             <td class="p-2 border-r border-slate-300"></td>
