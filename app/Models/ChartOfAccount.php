@@ -26,17 +26,17 @@ class ChartOfAccount extends Model
     {
         return $this->belongsTo(ChartOfAccount::class, 'parent_id');
     }
- 
+
     public function children(): HasMany
     {
         return $this->hasMany(ChartOfAccount::class, 'parent_id');
     }
- 
+
     public function bankAccount(): HasOne
     {
         return $this->hasOne(BankAccount::class);
     }
- 
+
     public function voucherLines(): HasMany
     {
         return $this->hasMany(VoucherLine::class);

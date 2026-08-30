@@ -151,12 +151,12 @@ class AccountController extends Controller
      * Liquid Cash Flow Ledger (Cash Book)
      * Route: accounts.cash-book
      */
-    public function cashBook(Request $request)
+    public function cashBook($tenant, Request $request)
     {
         $cashAccount = ChartOfAccount::where('tenant_id', tenant('id'))->where('type', 'asset')
             ->where(function($q) {
                 $q->where('name', 'like', '%cash%')
-                ->orWhere('code', '1001'); // আমাদের তৈরি করা প্রথম অ্যাসেট কোড
+                ->orWhere('code', '1000');
             })->first();
 
         $entries = [];
@@ -170,7 +170,7 @@ class AccountController extends Controller
             $toDate = $request->get('to_date', date('Y-m-d'));
 
             // শুধুমাত্র ক্যাশ অ্যাকাউন্টের ডেবিট ও ক্রেডিট ট্রানজেকশন লোড
-            $entries = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $cashAccount->id)
+            $entries = LedgerEntry::where('ledger_entries.tenant_id', tenant('id'))->where('ledger_entries.chart_of_account_id', $cashAccount->id)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
@@ -188,13 +188,12 @@ class AccountController extends Controller
     public function bankAccounts(Request $request)
     {
         // চার্ট অফ অ্যাকাউন্টস থেকে সব ব্যাংক অ্যাকাউন্ট খুঁজে বের করা
-        $bankAccounts = ChartOfAccount::with('ledgerEntries')
-            ->where('tenant_id', tenant('id'))
+        $bankAccounts = ChartOfAccount::where('tenant_id', tenant('id'))
             ->where('type', 'asset')
             ->where(function($q) {
                 $q->where('name', 'like', '%bank%')
                 ->orWhere('name', 'like', '%A/C%')
-                ->orWhere('code', 'like', '1020%'); // ব্যাংক সিরিজের কোড
+                ->orWhere('code', 'like', '%1020%'); // ব্যাংক সিরিজের কোড
             })->get();
 
         $selectedAccountId = $request->input('account_id', $bankAccounts->first()?->id);
@@ -209,7 +208,7 @@ class AccountController extends Controller
             $fromDate = $request->input('from_date', date('Y-m-01'));
             $toDate = $request->input('to_date', date('Y-m-d'));
 
-            $entries = LedgerEntry::where('tenant_id', tenant('id'))->where('chart_of_account_id', $selectedAccountId)
+            $entries = LedgerEntry::where('ledger_entries.tenant_id', tenant('id'))->where('ledger_entries.chart_of_account_id', $selectedAccountId)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
