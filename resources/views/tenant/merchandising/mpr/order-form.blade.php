@@ -189,7 +189,7 @@
         <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
             <a href="{{ route('tenant.merch.mpr.index') }}" class="px-4 py-2 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition">Cancel</a>
             <button type="submit" :disabled="isSaving" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 rounded-xl shadow-sm transition">
-                <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update MRMPRP' : 'Confirm & Generate MPR')"></span>
+                <span x-text="isSaving ? 'Saving...' : (isEdit ? 'Update MPR' : 'Generate MPR')"></span>
             </button>
         </div>
     </form>
@@ -206,7 +206,7 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
         colorsList: colorsData || [],
         sizesList: sizesData || [],
         
-        selectedStyleId: editData ? (editData.items[0]?.style_id || '') : '',
+        selectedStyleId: editData ? (editData.style_id || '') : '',
         buyerName: editData && editData.buyer ? editData.buyer.name : '',
         buyerId: editData ? editData.buyer_id : '',
         
@@ -306,7 +306,6 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
             this.isSaving = true;
 
             const formattedItems = this.items.map(item => ({
-                style_id: this.selectedStyleId,
                 sku: this.getCalculatedSku(item),
                 color: item.color,
                 size: item.size,
@@ -339,6 +338,7 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
                     job_mode: this.jobMode,
                     division: this.division,
                     buyer_id: this.buyerId,
+                    style_id: this.selectedStyleId,
                     ship_to_party: this.shipToParty,
                     buyer_po_number: this.buyerPoNumber,
                     po_received_date: this.poReceivedDate,

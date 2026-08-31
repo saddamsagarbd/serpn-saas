@@ -20,40 +20,61 @@ class MPRController extends Controller
 {
     public function index(Request $request) {
         if($request->ajax()){
-            $data = SalesOrder::with(['buyer', 'items'])->where('tenant_id', tenant('id'))->latest();
+            $data = SalesOrder::with(['buyer', 'items', 'style.costing'])
+                ->where('tenant_id', tenant('id'))
+                ->withSum('items as total_order_qty', 'quantity')
+                ->latest();
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('buyer_po', function($row){
-                    return $row->buyer_po_number ? $row->buyer_po_number : 'N/A';
-                })
-                ->addColumn('buyer_name', function($row){
+                ->addColumn('buyer_name', function ($row) {
                     if (!$row->buyer) {
                         return 'N/A';
                     }
-                    
+
                     return html_entity_decode(
-                        html_entity_decode($row->buyer->name, ENT_QUOTES, 'UTF-8'), 
-                        ENT_QUOTES, 
+                        html_entity_decode($row->buyer->name, ENT_QUOTES, 'UTF-8'),
+                        ENT_QUOTES,
                         'UTF-8'
                     );
                 })
-                ->editColumn('po_date', function($row){
+                ->addColumn('style_no', function ($row) {
+                    return $row->style ? $row->style->style_number : 'N/A';
+                })
+                ->addColumn('po_no', function ($row) {
+                    return $row->buyer_po_number ?: 'N/A';
+                })
+                ->addColumn('fob', function ($row) {
+                    return $row->style && $row->style->costing 
+                        ? number_format($row->style->costing->offered_fob ?? 0, 2) 
+                        : 'N/A';
+                })
+                ->addColumn('order_qty', function ($row) {
+                    // Calculated cleanly via SQL withSum
+                    return $row->total_order_qty ?? 0;
+                })
+                ->editColumn('po_date', function ($row) {
                     return $row->po_received_date ?? $row->created_at;
                 })
-                ->editColumn('delivery_date', function($row){
+                ->editColumn('delivery_date', function ($row) {
                     return $row->requested_delivery_date ?? 'N/A';
                 })
-                ->editColumn('job_mode', function($row){
-                    return $row->job_mode ? ($row->distribution_channel ?? '' )."/".$row->job_mode: 'N/A';
+                ->editColumn('job_mode', function ($row) {
+                    return $row->job_mode 
+                        ? ($row->distribution_channel ?? '') . "/" . $row->job_mode 
+                        : 'N/A';
                 })
-                ->editColumn('currency', function($row){
+                ->editColumn('currency', function ($row) {
                     return $row->currency ?? 'USD';
                 })
-                ->editColumn('total_amount', function($row){
-                    return $row->total_amount ?? 0.00;
+                ->editColumn('total_amount', function ($row) {
+                    // Optional: Auto-calculate (Quantity * FOB) if total_amount column isn't populated
+                    $fob = $row->style->costing->offered_fob ?? 0;
+                    $calculatedTotal = $row->total_amount ?? ($row->total_order_qty * $fob);
+
+                    return number_format($calculatedTotal, 2);
                 })
-                ->editColumn('status', function($row){
+                ->editColumn('status', function ($row) {
                     return $row->status ?? 'Draft';
                 })
                 ->rawColumns(['action', 'status', 'currency', 'buyer_name'])
@@ -97,6 +118,7 @@ class MPRController extends Controller
             'job_mode'                => 'required|string', // FOB / CMPTW / CM
             'division'                => 'required|string', // Merchant Team
             'buyer_id'                => 'required|exists:buyers,id',
+            'style_id'                => 'required|exists:styles,id',
             'ship_to_party'           => 'required|string',
             'buyer_po_number'         => 'required|string',
             'po_received_date'        => 'required|date',
@@ -108,7 +130,6 @@ class MPRController extends Controller
 
             // Item Matrix Validation
             'items'                   => 'required|array|min:1',
-            'items.*.style_id'        => 'required|exists:styles,id',
             'items.*.sku'             => 'required|string',
             'items.*.color'           => 'required|string',
             'items.*.size'            => 'required|string',
@@ -127,6 +148,7 @@ class MPRController extends Controller
                 'job_mode'                => $request->job_mode,
                 'division'                => $request->division,
                 'buyer_id'                => $request->buyer_id,
+                'style_id'                => $request->style_id,
                 'ship_to_party'           => $request->ship_to_party,
                 'buyer_po_number'         => $request->buyer_po_number,
                 'po_received_date'        => $request->po_received_date,
@@ -146,7 +168,7 @@ class MPRController extends Controller
             foreach ($request->items as $item) {
                 $orderItemsData[] = [
                     'sales_order_id' => $salesOrder->id,
-                    'style_id'       => $item['style_id'],
+                    // 'style_id'       => $item['style_id'],
                     'sku'            => $item['sku'],
                     'color'          => $item['color'],
                     'size'           => $item['size'],
@@ -234,10 +256,10 @@ class MPRController extends Controller
 
                     if (!isset($bomConsolidated[$key])) {
                         $bomConsolidated[$key] = [
-                            'category'      => $bom->itemMaster->category->name ?? $bom->itemMaster->category->name ?? 'N/A',
-                            'item_name'     => $bom->item_description ?? $bom->item?->name ?? 'N/A',
-                            'color_name'    => $bom->color?->name ?? 'N/A',
-                            'size_name'     => $bom->size?->short_name ?? $bom->size?->name ?? 'N/A',
+                            'category'      => $bom->itemMaster->category ? $bom->itemMaster->category->name : 'Annonymous',
+                            'item_name'     => $bom->item_description ?? $bom->item?->name ?? 'Annonymous',
+                            'color_name'    => $bom->color?->name ?? 'Annonymous',
+                            'size_name'     => $bom->size?->short_name ?? $bom->size?->name ?? 'Annonymous',
                             'consumption'   => $consumption,
                             'unit'          => $bom->item_unit ?? $bom->itemMaster->unit->short_name ?? 'Pcs',
                             'required_qty'  => 0,
@@ -320,28 +342,28 @@ class MPRController extends Controller
     public function update(Request $request, $tenant, String $id)
     {
         $request->validate([
-            'sales_org'               => 'nullable|string',
-            'distribution_channel'    => 'required|string', // Export / Domestic
-            'job_mode'                => 'required|string', // FOB / CMPTW / CM
-            'division'                => 'required|string', // Merchant Team
-            'buyer_id'                => 'required|exists:buyers,id',
-            'ship_to_party'           => 'required|string',
-            'buyer_po_number'         => 'required|string',
-            'po_received_date'        => 'required|date',
-            'advance_receive_date'    => 'nullable|date',
-            'requested_delivery_date' => 'required|date|after_or_equal:po_received_date',
-            'currency'                => 'nullable|string',
+            'sales_org'                 => 'nullable|string',
+            'distribution_channel'      => 'required|string', // Export / Domestic
+            'job_mode'                  => 'required|string', // FOB / CMPTW / CM
+            'division'                  => 'required|string', // Merchant Team
+            'buyer_id'                  => 'required|exists:buyers,id',
+            'style_id'                  => 'required|exists:styles,id',
+            'ship_to_party'             => 'required|string',
+            'buyer_po_number'           => 'required|string',
+            'po_received_date'          => 'required|date',
+            'advance_receive_date'      => 'nullable|date',
+            'requested_delivery_date'   => 'required|date|after_or_equal:po_received_date',
+            'currency'                  => 'nullable|string',
+            'plant'                     => 'required|string',
+            'shipping_point'            => 'required|string',
 
             // Item Matrix Validation
             'items'                   => 'required|array|min:1',
-            'items.*.style_id'        => 'required|exists:styles,id',
             'items.*.sku'             => 'required|string',
             'items.*.color'           => 'required|string',
             'items.*.size'            => 'required|string',
             'items.*.quantity'        => 'required|integer|min:1',
             'items.*.unit_price'      => 'required|numeric|min:0',
-            'items.*.plant'           => 'required|string',
-            'items.*.shipping_point'  => 'required|string',
         ]);
 
         try {
@@ -349,17 +371,22 @@ class MPRController extends Controller
 
             // Header Update
             $salesOrder->update([
-                'sales_org'             => $request->sales_org,
-                'distribution_channel'  => $request->distribution_channel,
-                'job_mode'              => $request->job_mode,
-                'division'              => $request->division,
-                'buyer_id'              => $request->buyer_id,
-                'ship_to_party'         => $request->ship_to_party,
-                'buyer_po_number'       => $request->buyer_po_number,
-                'po_received_date'      => $request->po_received_date,
-                'advance_receive_date'  => $request->advance_receive_date,
+                'sales_org'               => $request->sales_org,
+                'distribution_channel'    => $request->distribution_channel,
+                'job_mode'                => $request->job_mode,
+                'division'                => $request->division,
+                'buyer_id'                => $request->buyer_id,
+                'style_id'                => $request->style_id,
+                'ship_to_party'           => $request->ship_to_party,
+                'buyer_po_number'         => $request->buyer_po_number,
+                'po_received_date'        => $request->po_received_date,
+                'advance_receive_date'    => $request->advance_receive_date,
                 'requested_delivery_date' => $request->requested_delivery_date,
-                'currency'              => $request->currency,
+                'currency'                => $request->currency,
+                'plant'                   => $request->plant ?? null,
+                'shipping_point'          => $request->shipping_point ?? null,
+                'updated_at'              => now(),
+                'updated_by'              => auth()->id(),
             ]);
 
             // Items Re-syncing (পুরনো আইটেম ডিলিট করে নতুন আইটেম সেট করা)
@@ -367,12 +394,12 @@ class MPRController extends Controller
 
             foreach ($request->items as $item) {
                 $salesOrder->items()->create([
-                    'style_id'       => $item['style_id'],
+                    // 'style_id'       => $item['style_id'],
                     'sku'            => $item['sku'],
                     'color'          => $item['color'],
                     'size'           => $item['size'],
-                    'plant'          => $item['plant'],
-                    'shipping_point' => $item['shipping_point'],
+                    // 'plant'          => $item['plant'],
+                    // 'shipping_point' => $item['shipping_point'],
                     'unit_price'     => $item['unit_price'],
                     'quantity'       => $item['quantity'],
                 ]);

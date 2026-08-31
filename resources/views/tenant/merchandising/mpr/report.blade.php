@@ -35,7 +35,7 @@
         <!-- SKU Group Cards -->
         <div class="bg-white rounded-xl p-5 border border-slate-200">
             <div class="flex justify-between items-center mb-4">
-                <h5 class="font-bold text-slate-800">Consolidated Order BOM</h5>
+                <h5 class="font-bold text-slate-800">MPR Order</h5>
                 <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg text-xs font-bold">
                     Total Order Qty: {{ $consolidatedMrpDetails['total_order_qty'] }} Pcs
                 </span>

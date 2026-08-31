@@ -48,43 +48,48 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-[11px] font-bold uppercase tracking-wider">
-                            <th class="p-4">Buyer PO No</th>
-                            <th class="p-4">Buyer Name</th>
-                            <th class="p-4">PO Date</th>
-                            <th class="p-4">Del. Date</th>
-                            <th class="p-4">Job Mode</th>
+                            <th class="p-4">Buyer</th>
+                            <th class="p-4">Style No</th>
+                            <th class="p-4">PO No</th>
+                            <th class="p-4">PO RCV DATE</th>
+                            <th class="p-4">REQ DLV DATE</th>
+                            <th class="p-4">ORDER QNTY</th>
                             <th class="p-4">Currency</th>
+                            <th class="p-4 text-right">FOB/PC</th>
                             <th class="p-4 text-right">Amount</th>
-                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-center">JOB MODE</th>
+                            <th class="p-4 text-center">SHIPMENT STATUS</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody class="text-xs text-gray-700 divide-y divide-gray-100">
                         <template x-if="loading">
-                            <tr><td colspan="9" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching MPR order...</td></tr>
+                            <tr><td colspan="11" class="p-4 text-center text-indigo-600 font-semibold animate-pulse">Fetching MPR order...</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length === 0">
-                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No matching MPR order found.</td></tr>
+                            <tr><td colspan="11" class="p-4 text-center text-gray-400">No matching MPR order found.</td></tr>
                         </template>
 
                         <template x-if="!loading && orders.length > 0">
                             <template x-for="(order, index) in orders" :key="order.id || index">
                                 <tr class="hover:bg-gray-50/80 transition">
+                                    <td class="p-4 font-medium text-gray-900" x-text="order.buyer_name"></td>
+                                    <td class="p-4 font-medium text-gray-900" x-text="order.style_no"></td>
                                     <td class="p-4 font-mono">
                                         <a :href="'/merchandising/mpr-order-details/' + order.id" 
                                         class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
-                                        x-text="order.buyer_po">
+                                        x-text="order.po_no">
                                         </a>
                                     </td>
-                                    
-                                    <td class="p-4 font-medium text-gray-900" x-text="order.buyer_name"></td>
                                     <td class="p-4 font-medium text-gray-900" x-text="order.po_date"></td>
                                     <td class="p-4 font-medium text-gray-900" x-text="order.delivery_date"></td>
-                                    <td class="p-4 font-medium text-gray-900" x-text="order.job_mode"></td>
+                                    <td class="p-4 font-medium text-gray-900" x-text="order.order_qty"></td>
                                     <td class="p-4 font-medium text-gray-900" x-text="order.currency"></td>
-                                    <td class="p-4 font-medium text-gray-900" x-text="order.total_amount"></td>
-                                    <td class="p-4 font-medium text-gray-900" x-text="order.status"></td>
+                                    <td class="p-4 font-medium text-gray-900 text-right" x-text="order.fob"></td>
+                                    <td class="p-4 font-medium text-gray-900 text-right" x-text="order.total_amount"></td>
+                                    <td class="p-4 font-medium text-gray-900 text-center" x-text="order.job_mode"></td>
+                                    <td class="p-4 font-medium text-gray-900 text-center" x-text="order.status"></td>
                                     
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
                                         <a :href="'/merchandising/mpr-order/' + order.id + '/export-pdf'" 

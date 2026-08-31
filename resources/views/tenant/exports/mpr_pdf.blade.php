@@ -116,7 +116,7 @@
                 <th width="20%" class="text-center">Product Details</th>
                 <th width="15%" class="text-center">Color</th>
                 <th width="12%" class="text-center">Size</th>
-                <th width="13%" class="text-right">Cons/GMT</th>
+                <th width="13%" class="text-center">Cons/GMT</th>
                 <th width="8%" class="text-center">Unit</th>
                 <th width="17%" class="text-right">Total Req Qty</th>
             </tr>
@@ -125,11 +125,11 @@
             @forelse($consolidatedMrpDetails['bom_items'] as $index => $item)
                 <tr>
                     <td class="font-bold text-center" style="color: #0f172a;">{{ ++$index }}</td>
-                    <td class="font-bold text-center" style="color: #0f172a;">{{ $item['category'] }}</td>
-                    <td class="font-bold text-center" style="color: #0f172a;">{{ $item['item_name'] }}</td>
+                    <td class="font-bold text-left" style="color: #0f172a;">{{ $item['category'] }}</td>
+                    <td class="font-bold text-left" style="color: #0f172a;">{{ $item['item_name'] }}</td>
                     <td class="text-center">{{ $item['color_name'] ?? 'N/A' }}</td>
                     <td class="text-center">{{ $item['size_name'] ? ucfirst($item['size_name']) : 'N/A' }}</td>
-                    <td class="text-right">{{ number_format($item['consumption'], 4) }}</td>
+                    <td class="text-center">{{ number_format($item['consumption'], 4) }}</td>
                     <td class="text-center">{{ $item['unit'] }}</td>
                     <td class="text-right font-bold" style="color: #4338ca;">
                         {{ number_format($item['required_qty'], 2) }}

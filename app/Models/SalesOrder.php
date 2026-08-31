@@ -14,6 +14,10 @@ class SalesOrder extends Model
         return $this->belongsTo(Buyer::class);
     }
 
+    public function style(): BelongsTo {
+        return $this->belongsTo(Style::class);
+    }
+
     public function items(): HasMany {
         return $this->hasMany(SalesOrderItem::class, 'sales_order_id');
     }
