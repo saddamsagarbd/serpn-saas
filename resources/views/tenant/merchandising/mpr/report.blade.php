@@ -9,8 +9,8 @@
         <!-- Top Header & Search Bar -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h2 class="text-xl font-bold text-gray-800">MPR Order BOM</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Calculated BOM requirements grouped by SKU matrix line items.</p>
+                <h2 class="text-xl font-bold text-gray-800">MPR Order</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Calculated requirements grouped by SKU matrix line items.</p>
             </div>
 
             <!-- Client-side Quick Search -->
@@ -44,7 +44,8 @@
             <table class="w-full text-xs text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 uppercase font-bold text-slate-500">
-                        <th class="p-3">Component Item</th>
+                        <th class="p-3">Category</th>
+                        <th class="p-3">Item Details</th>
                         <th class="p-3">Color Context</th>
                         <th class="p-3">Size Chart</th>
                         <th class="p-3 text-right">Consumption</th>
@@ -55,6 +56,7 @@
                 <tbody class="divide-y divide-slate-100 font-medium">
                     @foreach($consolidatedMrpDetails['bom_items'] as $item)
                         <tr>
+                            <td class="p-3 font-bold text-slate-800">{{ $item['category'] }}</td>
                             <td class="p-3 font-bold text-slate-800">{{ $item['item_name'] }}</td>
                             <td class="p-3">{{ $item['color_name'] }}</td>
                             <td class="p-3">{{ $item['size_name'] }}</td>

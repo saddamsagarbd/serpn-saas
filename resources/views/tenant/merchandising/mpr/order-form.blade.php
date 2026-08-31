@@ -97,6 +97,16 @@
                 </div>
 
                 <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Plant (Factory)</label>
+                    <input type="text" x-model="plant" placeholder="Plant Name" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Shipping Point</label>
+                    <input type="text" x-model="shipping_point" placeholder="Port / Depot" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="space-y-1.5">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Currency</label>
                     <select x-model="currency" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-500">
                         <option value="USD">USD ($)</option>
@@ -123,8 +133,6 @@
                             <th class="p-3 pl-4 w-2/12">Generated SKU</th>
                             <th class="p-3 w-2/12">Color</th>
                             <th class="p-3 w-2/12">Size</th>
-                            <th class="p-3 w-2/12">Plant (Factory)</th>
-                            <th class="p-3 w-2/12">Shipping Point</th>
                             <th class="p-3 w-2/12 text-right">Unit Price</th>
                             <th class="p-3 w-2/12 text-right">Quantity (Pcs)</th>
                             <th class="p-3 w-1/12 text-center">Action</th>
@@ -154,12 +162,6 @@
                                     </select>
                                 </td>
                                 <td class="p-2.5">
-                                    <input type="text" x-model="row.plant" placeholder="Plant Name" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
-                                </td>
-                                <td class="p-2.5">
-                                    <input type="text" x-model="row.shipping_point" placeholder="Port / Depot" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
-                                </td>
-                                <td class="p-2.5">
                                     <input type="number" step="0.001" x-model.number="row.unit_price" placeholder="0.00" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2.5">
@@ -173,7 +175,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-slate-50 border-t border-slate-200 font-bold text-slate-700 text-xs">
-                            <td colspan="5" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Order Volume & Calculated Value</td>
+                            <td colspan="3" class="p-3 pl-4 text-right text-[10px] uppercase tracking-wider text-slate-400">Total Order Volume & Calculated Value</td>
                             <td class="p-3 text-right font-mono text-slate-800 font-bold text-sm" x-text="currency + ' ' + grandTotalAmount.toFixed(2)"></td>
                             <td class="p-3 text-right font-mono text-indigo-600 font-bold text-sm" x-text="totalOrderQty.toLocaleString() + ' Pcs'"></td>
                             <td></td>
@@ -217,7 +219,9 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
         shipToParty: editData ? editData.ship_to_party : '',
         poReceivedDate: editData ? editData.po_received_date : new Date().toISOString().slice(0, 10),
         requestedDeliveryDate: editData ? editData.requested_delivery_date : '',
-        advanceReceiveDate: editData ? editData.advance_receive_date : '',
+        advanceReceiveDate: editData ? editData.advance_receive_date : '',        
+        plant: editData ? editData.plant : 'Main Factory Unit 1',
+        shipping_point: editData ? editData.shipping_point : 'Chittagong Port',
         currency: editData ? editData.currency : 'USD',
         
         isSaving: false,
@@ -227,16 +231,12 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
             ? editData.items.map(item => ({
                 color: item.color || item.color_id || '',
                 size: item.size || item.size_id || '',
-                plant: item.plant || 'Main Factory Unit 1',
-                shipping_point: item.shipping_point || 'Chittagong Port',
                 unit_price: parseFloat(item.unit_price) || 0,
                 quantity: parseInt(item.quantity) || ''
             }))
             : [{ 
                 color: '', 
-                size: '', 
-                plant: 'Main Factory Unit 1', 
-                shipping_point: 'Chittagong Port', 
+                size: '',
                 unit_price: 0, 
                 quantity: '' 
             }],
@@ -310,8 +310,6 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
                 sku: this.getCalculatedSku(item),
                 color: item.color,
                 size: item.size,
-                plant: item.plant,
-                shipping_point: item.shipping_point,
                 unit_price: item.unit_price,
                 quantity: item.quantity
             }));
@@ -346,6 +344,8 @@ function salesOrderApp(stylesData, colorsData, sizesData, editData = null) {
                     po_received_date: this.poReceivedDate,
                     advance_receive_date: this.advanceReceiveDate || null,
                     requested_delivery_date: this.requestedDeliveryDate,
+                    plant: this.plant,
+                    shipping_point: this.shipping_point,
                     currency: this.currency,
                     items: formattedItems
                 })

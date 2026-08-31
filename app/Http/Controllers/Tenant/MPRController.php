@@ -90,8 +90,6 @@ class MPRController extends Controller
     }
 
     public function mrpOrderCreate(Request $request) {
-
-        // dd($request->all());
         
         $request->validate([
             'sales_org'               => 'nullable|string',
@@ -105,6 +103,8 @@ class MPRController extends Controller
             'advance_receive_date'    => 'nullable|date',
             'requested_delivery_date' => 'required|date|after_or_equal:po_received_date',
             'currency'                => 'nullable|string',
+            'plant'                   => 'required|string',
+            'shipping_point'          => 'required|string',
 
             // Item Matrix Validation
             'items'                   => 'required|array|min:1',
@@ -114,8 +114,6 @@ class MPRController extends Controller
             'items.*.size'            => 'required|string',
             'items.*.quantity'        => 'required|integer|min:1',
             'items.*.unit_price'      => 'required|numeric|min:0',
-            'items.*.plant'           => 'required|string',
-            'items.*.shipping_point'  => 'required|string',
         ]);
 
         DB::beginTransaction();
@@ -135,6 +133,8 @@ class MPRController extends Controller
                 'advance_receive_date'    => $request->advance_receive_date,
                 'requested_delivery_date' => $request->requested_delivery_date,
                 'currency'                => $request->currency ?? 'USD',
+                'plant'                   => $request->plant ?? null,
+                'shipping_point'          => $request->shipping_point ?? null,
                 'status'                  => 'Draft',
                 'created_by'              => auth()->id(),
             ]);
@@ -152,8 +152,8 @@ class MPRController extends Controller
                     'size'           => $item['size'],
                     'quantity'       => $item['quantity'],
                     'unit_price'     => $item['unit_price'],
-                    'plant'          => $item['plant'],
-                    'shipping_point' => $item['shipping_point'],
+                    // 'plant'          => $item['plant'],
+                    // 'shipping_point' => $item['shipping_point'],
                     'created_at'     => $now,
                     'updated_at'     => $now,
                 ];
@@ -267,8 +267,8 @@ class MPRController extends Controller
     public function mrpOrderDetails(Request $request, $tenant, String $id){
 
         $salesOrder = SalesOrder::with([
-            'buyer',                     // Line item-এর Size relation
-            'items.style.bomItems.itemMaster', // Style -> bomItems
+            'buyer',
+            'items.style.bomItems.itemMaster',
             'items.style.bomItems.color',
             'items.style.bomItems.size',
         ])->where('tenant_id', tenant('id'))->findOrFail($id);
@@ -282,7 +282,6 @@ class MPRController extends Controller
 
             if ($line->style && $line->style->bomItems) {
                 foreach ($line->style->bomItems as $bom) {
-                    // ইউনিক কি তৈরি করা হচ্ছে (যেন একই আইটেম, কালার ও সাইজ বার বার না এসে যোগ হয়)
                     $itemId   = $bom->item_master_id ?? $bom->id;
                     $colorId  = $bom->color_id ?? 'default';
                     $sizeId   = $bom->size_id ?? 'default';
@@ -291,18 +290,17 @@ class MPRController extends Controller
                     $requiredQtyForThisLine = ($bom->consumption ?? 0) * $orderQty;
 
                     if ($aggregatedBomItems->has($uniqueKey)) {
-                        // একই আইটেম আগে পাওয়া গেলে Required Qty যোগ হবে
                         $existing = $aggregatedBomItems->get($uniqueKey);
                         $existing['required_qty'] += $requiredQtyForThisLine;
                         $aggregatedBomItems->put($uniqueKey, $existing);
                     } else {
-                        // নতুন আইটেম যুক্ত করা
                         $aggregatedBomItems->put($uniqueKey, [
-                            'item_name'    => $bom->itemMaster->name ?? $bom->item_description ?? 'N/A',
-                            'color_name'   => $bom->color->name ?? 'N/A',
-                            'size_name'    => $bom->size->name ?? 'N/A',
+                            'category'     => $bom->itemMaster->category ? $bom->itemMaster->category->name : 'Annonymous',
+                            'item_name'    => $bom->itemMaster->name ?? $bom->item_description ?? 'Annonymous',
+                            'color_name'   => $bom->color->name ?? 'Annonymous',
+                            'size_name'    => $bom->size->name ?? 'Annonymous',
                             'consumption'  => $bom->consumption ?? 0,
-                            'unit'         => $bom->itemMaster->unit->short_name ?? 'N/A',
+                            'unit'         => $bom->itemMaster->unit->short_name ?? 'Annonymous',
                             'unit_price'   => $bom->unit_price ?? 0,
                             'required_qty' => $requiredQtyForThisLine,
                         ]);
@@ -313,7 +311,7 @@ class MPRController extends Controller
 
         $consolidatedMrpDetails = [
             'total_order_qty' => $totalOrderQty,
-            'bom_items'       => $aggregatedBomItems->values() // রি-ইনডেক্সিং
+            'bom_items'       => $aggregatedBomItems->values()
         ];
 
         return view('tenant.merchandising.mpr.report', compact('salesOrder', 'consolidatedMrpDetails'));
