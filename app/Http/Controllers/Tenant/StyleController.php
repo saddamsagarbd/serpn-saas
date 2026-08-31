@@ -70,11 +70,16 @@ class StyleController extends Controller
             'image'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
 
             'services'               => 'required|array',
-            'services.print_cost'    => 'nullable|numeric|min:0',
-            'services.emb_cost'      => 'nullable|numeric|min:0',
-            'services.wash_cost'     => 'nullable|numeric|min:0',
-            'services.cm_cost'       => 'nullable|numeric|min:0',
-            'services.overhead_cost' => 'nullable|numeric|min:0',
+            'services.print_cost'      => 'nullable|numeric|min:0',
+            'services.print_wastage'   => 'nullable|numeric|min:0',
+            'services.emb_cost'        => 'nullable|numeric|min:0',
+            'services.emb_wastage'     => 'nullable|numeric|min:0',
+            'services.wash_cost'       => 'nullable|numeric|min:0',
+            'services.wash_wastage'    => 'nullable|numeric|min:0',
+            'services.cm_cost'         => 'nullable|numeric|min:0',
+            'services.cm_wastage'      => 'nullable|numeric|min:0',
+            'services.overhead_cost'   => 'nullable|numeric|min:0',
+            'services.overhead_wastage' => 'nullable|numeric|min:0',
         
             'revenue_percent' => 'nullable|numeric|min:0|max:100',
             'ait_percent'     => 'nullable|numeric|min:0|max:100',
@@ -82,10 +87,12 @@ class StyleController extends Controller
             
             // Ensure the Alpine array payload is present and structured safely
             'items'        => 'required|array|min:1',
-            'items.*.item_name' => 'required|string|max:255',
+            'items.*.cat_id'  => 'required|exists:categories,id',
+            'items.*.cat_name' => 'required|string|max:255',
             'items.*.item_id'  => 'required|exists:item_masters,id',
-            'items.*.color_id'  => 'required|exists:color_contexts,id',
-            'items.*.size_id'   => 'required|exists:size_charts,id',
+            'items.*.item_name' => 'required|string|max:255',
+            'items.*.color_id'  => 'nullable|exists:color_contexts,id',
+            'items.*.size_id'   => 'nullable|exists:size_charts,id',
             'items.*.qty'   => 'required|numeric',
             'items.*.cost'   => 'required',
         ]);
@@ -122,13 +129,22 @@ class StyleController extends Controller
             // 2. Save the initial BOM costing sheet instance
             $services = $request->input('services', []);
 
-            $printCost    = (float) ($services['print_cost'] ?? 0);
-            $embCost      = (float) ($services['emb_cost'] ?? 0);
-            $washCost     = (float) ($services['wash_cost'] ?? 0);
-            $cmCost       = (float) ($services['cm_cost'] ?? 0);
-            $overheadCost = (float) ($services['overhead_cost'] ?? 0);
+            $printCost       = (float) ($services['print_cost'] ?? 0);
+            $printWastage    = (float) ($services['print_wastage'] ?? 0);
+            $embCost         = (float) ($services['emb_cost'] ?? 0);
+            $embWastage      = (float) ($services['emb_wastage'] ?? 0);
+            $washCost        = (float) ($services['wash_cost'] ?? 0);
+            $washWastage     = (float) ($services['wash_wastage'] ?? 0);
+            $cmCost          = (float) ($services['cm_cost'] ?? 0);
+            $cmWastage       = (float) ($services['cm_wastage'] ?? 0);
+            $overheadCost    = (float) ($services['overhead_cost'] ?? 0);
+            $overheadWastage = (float) ($services['overhead_wastage'] ?? 0);
 
-            $totalServiceCost = $printCost + $embCost + $washCost + $cmCost + $overheadCost;            
+            $totalServiceCost = ($printCost * (1 + $printWastage / 100))
+                + ($embCost * (1 + $embWastage / 100))
+                + ($washCost * (1 + $washWastage / 100))
+                + ($cmCost * (1 + $cmWastage / 100))
+                + ($overheadCost * (1 + $overheadWastage / 100));            
             
             $costing = $style->costing()->create([
                 'tenant_id'          => tenant('id'),
@@ -138,11 +154,17 @@ class StyleController extends Controller
                 'revenue_percent'    => $request->revenue_percent ?? 0.00,
                 'ait_percent'        => $request->ait_percent ?? 0.00,
                 'vat_percent'        => $request->vat_percent ?? 0.00,
+
                 'print_cost'         => $printCost,
+                'print_wastage'      => $printWastage,
                 'emb_cost'           => $embCost,
+                'emb_wastage'        => $embWastage,
                 'wash_cost'          => $washCost,
+                'wash_wastage'       => $washWastage,
                 'cm_cost'            => $cmCost,
+                'cm_wastage'         => $cmWastage,
                 'overhead_cost'      => $overheadCost,
+                'overhead_wastage'   => $overheadWastage,
                 'total_service_cost' => $totalServiceCost,
                 
                 'status'             => 'draft',
@@ -156,11 +178,13 @@ class StyleController extends Controller
 
                 $costing->bomItems()->create([
                     'tenant_id'        => tenant('id'),
+                    'category_id'      => $item['cat_id'],
+                    'category_name'    => trim($item['cat_name']),
                     'item_id'          => $itemId,
                     'item_description' => $item['item_name'],
                     'consumption'      => $qty,
-                    'color_id'         => $item['color_id'],
-                    'size_id'          => $item['size_id'],
+                    'color_id'         => $item['color_id'] ?? null,
+                    'size_id'          => $item['size_id'] ?? null,
                     'unit_price'       => $cost,
                     'total_cost'       => $qty * $cost
                 ]);
@@ -238,11 +262,16 @@ class StyleController extends Controller
 
             // Services validation
             'services'               => 'nullable|array',
-            'services.print_cost'    => 'nullable|numeric|min:0',
-            'services.emb_cost'      => 'nullable|numeric|min:0',
-            'services.wash_cost'     => 'nullable|numeric|min:0',
-            'services.cm_cost'       => 'nullable|numeric|min:0',
-            'services.overhead_cost' => 'nullable|numeric|min:0',
+            'services.print_cost'      => 'nullable|numeric|min:0',
+            'services.print_wastage'   => 'nullable|numeric|min:0',
+            'services.emb_cost'        => 'nullable|numeric|min:0',
+            'services.emb_wastage'     => 'nullable|numeric|min:0',
+            'services.wash_cost'       => 'nullable|numeric|min:0',
+            'services.wash_wastage'    => 'nullable|numeric|min:0',
+            'services.cm_cost'         => 'nullable|numeric|min:0',
+            'services.cm_wastage'      => 'nullable|numeric|min:0',
+            'services.overhead_cost'   => 'nullable|numeric|min:0',
+            'services.overhead_wastage' => 'nullable|numeric|min:0',
 
             // Markups validation
             'revenue_percent' => 'nullable|numeric|min:0|max:100',
@@ -251,9 +280,12 @@ class StyleController extends Controller
 
             // Alpine BOM items validation
             'items'             => 'required|array|min:1',
+            'items.*.cat_id'    => 'required|exists:categories,id',
+            'items.*.cat_name'  => 'required|string|max:255',
+            'items.*.item_id'   => 'required|exists:item_masters,id',
             'items.*.item_name' => 'required|string|max:255',
-            'items.*.color_id'  => 'required|exists:color_contexts,id',
-            'items.*.size_id'   => 'required|exists:size_charts,id',
+            'items.*.color_id'  => 'nullable|exists:color_contexts,id',
+            'items.*.size_id'   => 'nullable|exists:size_charts,id',
             'items.*.qty'       => 'required|numeric|min:0',
             'items.*.cost'      => 'required|numeric|min:0',
             'items.*.wastage'   => 'nullable|numeric|min:0',
@@ -290,13 +322,22 @@ class StyleController extends Controller
             // 3. Process Services & Calculate Total Service Cost
             $services = $request->input('services', []);
 
-            $printCost    = (float) ($services['print_cost'] ?? 0);
-            $embCost      = (float) ($services['emb_cost'] ?? 0);
-            $washCost     = (float) ($services['wash_cost'] ?? 0);
-            $cmCost       = (float) ($services['cm_cost'] ?? 0);
-            $overheadCost = (float) ($services['overhead_cost'] ?? 0);
+            $printCost       = (float) ($services['print_cost'] ?? 0);
+            $printWastage    = (float) ($services['print_wastage'] ?? 0);
+            $embCost         = (float) ($services['emb_cost'] ?? 0);
+            $embWastage      = (float) ($services['emb_wastage'] ?? 0);
+            $washCost        = (float) ($services['wash_cost'] ?? 0);
+            $washWastage     = (float) ($services['wash_wastage'] ?? 0);
+            $cmCost          = (float) ($services['cm_cost'] ?? 0);
+            $cmWastage       = (float) ($services['cm_wastage'] ?? 0);
+            $overheadCost    = (float) ($services['overhead_cost'] ?? 0);
+            $overheadWastage = (float) ($services['overhead_wastage'] ?? 0);
 
-            $totalServiceCost = $printCost + $embCost + $washCost + $cmCost + $overheadCost;
+            $totalServiceCost = ($printCost * (1 + $printWastage / 100))
+                + ($embCost * (1 + $embWastage / 100))
+                + ($washCost * (1 + $washWastage / 100))
+                + ($cmCost * (1 + $cmWastage / 100))
+                + ($overheadCost * (1 + $overheadWastage / 100));
 
             // 4. Update Costing Info & Markups
             $costing = $style->costing;
@@ -311,10 +352,15 @@ class StyleController extends Controller
 
                     // Service Charges Update
                     'print_cost'         => $printCost,
+                    'print_wastage'      => $printWastage,
                     'emb_cost'           => $embCost,
+                    'emb_wastage'        => $embWastage,
                     'wash_cost'          => $washCost,
+                    'wash_wastage'       => $washWastage,
                     'cm_cost'            => $cmCost,
+                    'cm_wastage'         => $cmWastage,
                     'overhead_cost'      => $overheadCost,
+                    'overhead_wastage'   => $overheadWastage,
                     'total_service_cost' => $totalServiceCost,
                 ]);
             }
@@ -329,13 +375,15 @@ class StyleController extends Controller
                 $itemId   = $item['item_id'] ?? null;
 
                 $costing->bomItems()->create([
-                    'tenant_id'        => tenant('id'),
+                    'tenant_id'        => tenant('id'),                    
+                    'category_id'      => $item['cat_id'],
+                    'category_name'    => trim($item['cat_name']),
                     'item_id'          => $itemId,
-                    'item_description' => $item['item_name'],
+                    'item_description' => trim($item['item_name']),
                     'consumption'      => $qty,
                     'wastage_percent'  => $item['wastage'],
-                    'color_id'         => $item['color_id'],
-                    'size_id'          => $item['size_id'],
+                    'color_id'         => $item['color_id'] ?? null,
+                    'size_id'          => $item['size_id'] ?? null,
                     'unit_price'       => $cost,
                     'total_cost'       => $totalcost,
                 ]);

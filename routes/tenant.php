@@ -80,6 +80,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
             Route::get('designation', [SettingController::class, 'designation'])->name('designation.index');
 
             Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
+            Route::get('/api/category-masters/search', [InventoryController::class, 'searchCategoryApi'])->name('api.category_masters.search');
             Route::get('/api/get-mpr-items/{style_id}/{supplier_id}', [MPRController::class, 'getMprItems'])->name('api.get-mpr-items');
             Route::get('/api/get-parent-categories', [CategoryController::class, 'getParentCategories'])->name('api.get-parent-categories');
 

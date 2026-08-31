@@ -438,7 +438,8 @@ class InventoryController extends Controller
 
     public function searchApi(Request $request)
     {
-        $search = $request->get('q');
+        $search = $request->input('q');
+        $cat_id = $request->input('cat_id');
 
         $query = ItemMaster::where('tenant_id', tenant('id'));
         if(!empty($search)){
@@ -447,6 +448,13 @@ class InventoryController extends Controller
                             ->orWhere('code', 'LIKE', "%{$search}%");
             });            
         }
+
+        if(!empty($cat_id)){
+            $query->when($search, function ($query, $cat_id) {
+                return $query->where('category_id', 'LIKE', "%{$cat_id}%");
+            });            
+        }
+
         $items = $query->get(['id', 'code', 'name', 'item_type']);
 
         $results = $items->map(function ($item) {
@@ -457,6 +465,31 @@ class InventoryController extends Controller
                 'text' => $code . $name,
                 'name' => $name,
                 'item_type' => strtolower($item->item_type ?? '') === 'fabrics' ? 'fabrics' : 'trim'
+            ];
+        });
+
+        return response()->json(['results' => $results]);
+    }
+    public function searchCategoryApi(Request $request)
+    {
+        $search = $request->input('q');
+
+        $query = Category::where('tenant_id', tenant('id'));
+        if(!empty($search)){
+            $query->when($search, function ($query, $search) {
+                return $query->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+            });            
+        }
+        $categories = $query->get(['id', 'code', 'name']);
+
+        $results = $categories->map(function ($cat) {
+            $name = $cat->name ?? 'Unnamed Item';
+            $code = $cat->code ? '[' . $cat->code . '] ' : '';
+            return [
+                'id'    => $cat->id,
+                'text'  => $code . $name,
+                'name'  => $name,
             ];
         });
 
