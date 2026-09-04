@@ -8,12 +8,15 @@ use App\Models\ColorContext;
 use App\Models\Season;
 use App\Models\SizeChart;
 use App\Models\Style;
+use App\Models\StyleCosting;
 use App\Models\Unit;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -428,6 +431,52 @@ class StyleController extends Controller
         }
     }
 
+    public function updateStatus(Request $request, $tenant, String $id){
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string|in:draft,running,completed,rejected,cancelled',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status provided.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+        
+        return DB::transaction(function () use ($request, $id) {
+            $now = Carbon::now();
+
+            // Style খুঁজে বের করা
+            $style = Style::where('tenant_id', tenant('id'))->findOrFail($id);
+
+            $style->update([
+                'status'     => $request->status,
+                'updated_by' => auth()->id(),
+                'updated_at' => $now,
+            ]);
+
+            // StyleCosting যদি থাকে তবেই আপডেট করবে (Optional chaining/firstQuery)
+            StyleCosting::where('tenant_id', tenant('id'))
+                ->where('style_id', $id)
+                ->update([
+                    'status'      => $request->status,
+                    'approved_by' => auth()->id(),
+                    'updated_at'  => $now,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'data'    => [
+                    'style_id' => $style->id,
+                    'status'   => $style->status,
+                ]
+            ], 200);
+        });
+        
+    }
+
     public function show($tenant, String $id)
     {
         $style = Style::with([
@@ -448,7 +497,7 @@ class StyleController extends Controller
         $style = Style::with([
             'buyer', 
             'season', 
-            'costing.bomItems.itemMaster',  // Item Details & Unit পাওয়ার জন্য
+            'costing.bomItems.itemMaster',
             'costing.bomItems.color',
             'costing.bomItems.size',
             'mprs' => function($q) {

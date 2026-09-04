@@ -11,8 +11,10 @@ use App\Models\SizeChart;
 use App\Models\Style;
 use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
 
@@ -40,6 +42,11 @@ class MPRController extends Controller
                 })
                 ->addColumn('style_no', function ($row) {
                     return $row->style ? $row->style->style_number : 'N/A';
+                })
+                ->addColumn('image', function($row) {
+                    return $row->style 
+                    ? tenant_asset($row->style->product_image) 
+                    : asset('images/default-placeholder.png');
                 })
                 ->addColumn('po_no', function ($row) {
                     return $row->buyer_po_number ?: 'N/A';
@@ -212,68 +219,74 @@ class MPRController extends Controller
 
     public function exportPdf(String $tenant, String $id)
     {
-        $salesOrder = SalesOrder::with([
-            'buyer',                     // Line item-এর Size relation
-            'items.style.bomItems.itemMaster', // Style -> bomItems
-            'items.style.bomItems.color',
-            'items.style.bomItems.size',
-        ])->where('tenant_id', tenant('id'))->findOrFail($id);
-
+        $salesOrder = $this->getSalesOrderWithRelations($id);
         $consolidatedMrpDetails = $this->calculateMrpDetails($salesOrder);
 
-        // Render the view to raw HTML then feed it to DomPDF engine
         $pdf = Pdf::loadView('tenant.exports.mpr_pdf', compact('salesOrder', 'consolidatedMrpDetails'))
-        ->setPaper('a4', 'portrait')
-        ->setOption([
-            'isRemoteEnabled'      => true,
-            'isHtml5ParserEnabled' => true,
-            'defaultFont'          => 'sans-serif'
-        ]);
+            ->setPaper('a4', 'portrait')
+            ->setOption([
+                'isRemoteEnabled'      => true,
+                'isHtml5ParserEnabled' => true,
+                'defaultFont'          => 'sans-serif'
+            ]);
 
         $poNumber    = $salesOrder->buyer_po_number ? Str::slug($salesOrder->buyer_po_number) : $id;
         $pdfFileName = 'MPR_SO_' . $poNumber . '.pdf';
-        
-        // Use stream() to preview in-browser, download() to force save file
+
         return $pdf->stream($pdfFileName);
     }
 
-    private function calculateMrpDetails($salesOrder): array
+    private function getSalesOrderWithRelations(String $id): SalesOrder
     {
-        $bomConsolidated = [];
-        $totalOrderQty   = $salesOrder->items->sum('quantity') ?? $salesOrder->items->sum('qty') ?? 0;
+        return SalesOrder::with([
+            'buyer',
+            'items',
+            'style.costing.bomItems.itemMaster.category',
+            'style.costing.bomItems.itemMaster.unit',
+            'style.costing.bomItems.color',
+            'style.costing.bomItems.size',
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+    }
 
-        foreach ($salesOrder->items as $soItem) {
-            $orderQty = floatval($soItem->quantity ?? $soItem->qty ?? 0);
-            $costing  = $soItem->style?->costing;
+    private function calculateMrpDetails(SalesOrder $salesOrder): array
+    {
+        // মোট অর্ডারের পরিমাণ হিসাব (0 হলে ১ ধরা হবে যাতে ডিভিজাইন বা ক্যালকুলেশন ফেইল না করে)
+        $totalOrderQty = $salesOrder->items->sum('quantity') ?: 1;
 
-            if ($costing && $costing->bomItems) {
-                foreach ($costing->bomItems as $bom) {
-                    // Unique Grouping Key (Item + Color + Size)
-                    $key = $bom->item_id . '_' . $bom->color_id . '_' . $bom->size_id;
+        $aggregatedBomItems = collect();
+        $bomItems = $salesOrder->style?->costing?->bomItems ?? collect();
 
-                    $consumption = floatval($bom->consumption ?? 0);
-                    $requiredQty = $orderQty * $consumption;
+        foreach ($bomItems as $bom) {
+            $itemId    = $bom->item_master_id ?? $bom->id;
+            $colorId   = $bom->color_id ?? 'default';
+            $sizeId    = $bom->size_id ?? 'default';
+            $uniqueKey = "{$itemId}_{$colorId}_{$sizeId}";
 
-                    if (!isset($bomConsolidated[$key])) {
-                        $bomConsolidated[$key] = [
-                            'category'      => $bom->itemMaster->category ? $bom->itemMaster->category->name : 'Annonymous',
-                            'item_name'     => $bom->item_description ?? $bom->item?->name ?? 'Annonymous',
-                            'color_name'    => $bom->color?->name ?? 'Annonymous',
-                            'size_name'     => $bom->size?->short_name ?? $bom->size?->name ?? 'Annonymous',
-                            'consumption'   => $consumption,
-                            'unit'          => $bom->item_unit ?? $bom->itemMaster->unit->short_name ?? 'Pcs',
-                            'required_qty'  => 0,
-                        ];
-                    }
+            $requiredQtyForThisLine = ($bom->consumption ?? 0) * $totalOrderQty;
 
-                    $bomConsolidated[$key]['required_qty'] += $requiredQty;
-                }
+            if ($aggregatedBomItems->has($uniqueKey)) {
+                $existing = $aggregatedBomItems->get($uniqueKey);
+                $existing['required_qty'] += $requiredQtyForThisLine;
+                $aggregatedBomItems->put($uniqueKey, $existing);
+            } else {
+                $aggregatedBomItems->put($uniqueKey, [
+                    'category'     => $bom->itemMaster?->category?->name ?? 'N/A',
+                    'item_name'    => $bom->itemMaster?->name ?? $bom->item_description ?? 'N/A',
+                    'color_name'   => $bom->color?->name ?? 'All Colors',
+                    'size_name'    => $bom->size?->name ?? 'All Sizes',
+                    'consumption'  => $bom->consumption ?? 0,
+                    'unit'         => $bom->itemMaster?->unit?->short_name ?? $bom->itemMaster?->unit ?? 'Pcs',
+                    'unit_price'   => $bom->unit_price ?? 0,
+                    'required_qty' => $requiredQtyForThisLine,
+                ]);
             }
         }
 
         return [
             'total_order_qty' => $totalOrderQty,
-            'bom_items'       => array_values($bomConsolidated),
+            'bom_items'       => $aggregatedBomItems->values()->toArray(),
         ];
     }
 
@@ -287,54 +300,8 @@ class MPRController extends Controller
     }
 
     public function mrpOrderDetails(Request $request, $tenant, String $id){
-
-        $salesOrder = SalesOrder::with([
-            'buyer',
-            'items.style.bomItems.itemMaster',
-            'items.style.bomItems.color',
-            'items.style.bomItems.size',
-        ])->where('tenant_id', tenant('id'))->findOrFail($id);
-
-        $totalOrderQty = $salesOrder->items->sum('quantity');
-
-        $aggregatedBomItems = collect();
-
-        foreach ($salesOrder->items as $line) {
-            $orderQty = $line->quantity ?? 0;
-
-            if ($line->style && $line->style->bomItems) {
-                foreach ($line->style->bomItems as $bom) {
-                    $itemId   = $bom->item_master_id ?? $bom->id;
-                    $colorId  = $bom->color_id ?? 'default';
-                    $sizeId   = $bom->size_id ?? 'default';
-                    $uniqueKey = "{$itemId}_{$colorId}_{$sizeId}";
-
-                    $requiredQtyForThisLine = ($bom->consumption ?? 0) * $orderQty;
-
-                    if ($aggregatedBomItems->has($uniqueKey)) {
-                        $existing = $aggregatedBomItems->get($uniqueKey);
-                        $existing['required_qty'] += $requiredQtyForThisLine;
-                        $aggregatedBomItems->put($uniqueKey, $existing);
-                    } else {
-                        $aggregatedBomItems->put($uniqueKey, [
-                            'category'     => $bom->itemMaster->category ? $bom->itemMaster->category->name : 'Annonymous',
-                            'item_name'    => $bom->itemMaster->name ?? $bom->item_description ?? 'Annonymous',
-                            'color_name'   => $bom->color->name ?? 'Annonymous',
-                            'size_name'    => $bom->size->name ?? 'Annonymous',
-                            'consumption'  => $bom->consumption ?? 0,
-                            'unit'         => $bom->itemMaster->unit->short_name ?? 'Annonymous',
-                            'unit_price'   => $bom->unit_price ?? 0,
-                            'required_qty' => $requiredQtyForThisLine,
-                        ]);
-                    }
-                }
-            }
-        }
-
-        $consolidatedMrpDetails = [
-            'total_order_qty' => $totalOrderQty,
-            'bom_items'       => $aggregatedBomItems->values()
-        ];
+        $salesOrder = $this->getSalesOrderWithRelations($id);
+        $consolidatedMrpDetails = $this->calculateMrpDetails($salesOrder);
 
         return view('tenant.merchandising.mpr.report', compact('salesOrder', 'consolidatedMrpDetails'));
     }
@@ -409,6 +376,44 @@ class MPRController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function updateStatus(Request $request, $tenant, String $id){
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string|in:draft,running,completed,rejected,cancelled',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status provided.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+        
+        return DB::transaction(function () use ($request, $id) {
+            $now = Carbon::now();
+
+            // Style খুঁজে বের করা
+            $order = SalesOrder::where('tenant_id', tenant('id'))->findOrFail($id);
+
+            $order->update([
+                'status'     => $request->status,
+                'updated_by' => auth()->id(),
+                'updated_at' => $now,
+            ]);
+            
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'data'    => [
+                    'mpr_id' => $order->id,
+                    'status'   => $order->status,
+                ]
+            ], 200);
+        });
+        
     }
 
     public function getMprItems($tenant, String $style_id, String $supplier_id){

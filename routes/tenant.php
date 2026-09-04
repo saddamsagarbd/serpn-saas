@@ -170,6 +170,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::post('styles/store', [StyleController::class, 'styleStore'])->name('styles.store');
                 Route::get('styles/{id}/edit', [StyleController::class, 'edit'])->name('styles.edit');
                 Route::put('styles/update/{id}', [StyleController::class, 'update'])->name('styles.update');
+                Route::post('styles/{id}/status', [StyleController::class, 'updateStatus'])->name('styles.status');
                 Route::get('styles/{id}/details', [StyleController::class, 'show'])->name('styles.show');
                 Route::get('styles/{id}/bom', [StyleController::class, 'bom'])->name('styles.bom');
                 Route::get('styles/{id}/export-pdf', [StyleController::class, 'exportPdf'])->name('styles.export-pdf');
@@ -178,6 +179,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/mpr-order', [MPRController::class, 'index'])->name('mpr.index');
                 Route::get('/mpr-order-create', [MPRController::class, 'createMrpOrder'])->name('mpr.order-create');
                 Route::post('/mpr-order-post', [MPRController::class, 'mrpOrderCreate'])->name('mpr.order-store');
+                Route::post('/mpr-order/{id}/status', [MPRController::class, 'updateStatus'])->name('mpr.status');
                 Route::get('/mpr-order-details/{id}', [MPRController::class, 'mrpOrderDetails'])->name('mpr.order-details');
                 Route::get('/mpr-order/{id}/export-pdf', [MPRController::class, 'exportPdf'])->name('mpr-order-export-pdf');
                 Route::get('/mpr-order-edit/{id}', [MPRController::class, 'mrpOrderEdit'])->name('mpr.order-edit');

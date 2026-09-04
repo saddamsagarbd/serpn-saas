@@ -52,7 +52,14 @@ class Style extends Model
     public function mprs()
     {
         // আপনার MPR বা Order মডেলে style_id ফরেইন কি (Foreign Key) থাকলে
-        return $this->hasMany(SalesOrderItem::class, 'style_id'); 
+        return $this->hasManyThrough(
+            SalesOrderItem::class, // Target Model
+            SalesOrder::class,     // Intermediate (Middle) Model
+            'style_id',            // Foreign key on sales_orders table
+            'sales_order_id',      // Foreign key on sales_order_items table
+            'id',                  // Local key on styles table
+            'id'                   // Local key on sales_orders table
+        );
     }
 
     public function getTotalStockQtyAttribute()
