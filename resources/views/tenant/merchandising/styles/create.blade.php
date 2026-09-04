@@ -39,7 +39,7 @@
     'buyer_id' => isset($style) ? $style->buyer_id : '',
     'season_id' => isset($style) ? $style->season_id : '',
     'target_price' => isset($style) && $style->costing ? $style->costing->target_fob : '',
-    'product_image' => isset($style) && $style->product_image ? $style->product_image : '',
+    'product_image' => $style->product_image ? tenant_asset($style->product_image) : asset('images/default-placeholder.png'),
     'currency' => isset($style) && $style->costing ? $style->costing->currency : 'USD',
     'revenue_percent' => isset($style) && $style->costing ? $style->costing->revenue_percent : 6.00,
     'ait_percent' => isset($style) && $style->costing ? $style->costing->ait_percent : 5.00,
@@ -299,13 +299,13 @@
                                         </select>
                                     </td> -->
                                     <td class="p-2">
-                                        <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.00" x-model.number="item.qty" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-indigo-600 focus:outline-none focus:border-indigo-500">
+                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="0.00" x-model.number="item.qty" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-indigo-600 focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
-                                        <input type="number" onkeydown="preventInvalidNumberInput(event)"  step="0.01" placeholder="5" x-model.number="item.wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="5" x-model.number="item.wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
-                                        <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
+                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
                                         <input type="text" :value="((item.qty || 0) * (item.cost || 0) * (1 + ((item.wastage || 0) / 100))).toFixed(2)" readonly class="w-full p-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800">
@@ -563,7 +563,7 @@ function styleCreationApp(initialData) {
         buyerId: initialData.buyer_id,
         seasonId: initialData.season_id,
         targetPrice: initialData.target_price,
-        imagePreview: initialData.product_image ? '/storage/' + initialData.product_image : null,
+        imagePreview: initialData.product_image || null,
         imageFile: null,
         currency: initialData.currency,
         // currencySymbol: (initialData.currency === 'TAKA' || initialData.currency === 'BDT') ? '৳' : '$',
@@ -701,15 +701,25 @@ function styleCreationApp(initialData) {
 
         get formattedImage() {
             if (!this.imagePreview) return '';
-            
-            // Blob/Data URL হলে সরাসরি দেখাবে
-            if (this.imagePreview.startsWith('blob:') || this.imagePreview.startsWith('data:')) {
+
+            if (
+                this.imagePreview.startsWith('blob:') || 
+                this.imagePreview.startsWith('data:') || 
+                this.imagePreview.startsWith('http://') || 
+                this.imagePreview.startsWith('https://')
+            ) {
                 return this.imagePreview;
             }
             
             // পাথ যদি /storage/ দিয়ে শুরু না হয়, তবে যোগ করবে
             const cleanPath = this.imagePreview.replace(/^\/+/, '');
-            return cleanPath.startsWith('storage/') ? '/' + cleanPath : '/storage/' + cleanPath;
+            if (cleanPath.startsWith('storage/')) {
+                return '/' + cleanPath;
+            }
+            
+            return cleanPath.startsWith('tenant-assets/') 
+                ? '/' + cleanPath 
+                : '/tenant-assets/' + cleanPath;
         },
 
         submitForm() {
@@ -773,10 +783,12 @@ function styleCreationApp(initialData) {
             .then(async response => {
                 const data = await response.json();
                 if (!response.ok) {
+                    this.isSaving = false;
                     if (response.status === 422) {
                         let errorMessages = Object.values(data.errors).flat().join("\n");
                         alert("Validation Failed:\n" + errorMessages);
                     } else {
+
                         alert("Server Error: " + (data.message || "Something went wrong."));
                     }
                     return null;

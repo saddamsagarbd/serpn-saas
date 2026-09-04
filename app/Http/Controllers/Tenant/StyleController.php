@@ -29,6 +29,11 @@ class StyleController extends Controller
                 ->addColumn('buyer_name', function($row){
                     return $row->buyer ? $row->buyer->name : 'N/A';
                 })
+                ->addColumn('image', function($row) {
+                    return $row->product_image 
+                    ? tenant_asset($row->product_image) 
+                    : asset('images/default-placeholder.png');
+                })
                 ->addColumn('season_name', function($row){
                     return $row->season ? $row->season->name : 'N/A';
                 })
@@ -38,7 +43,10 @@ class StyleController extends Controller
                 ->editColumn('style_code', function($row){
                     return $row->style_code ?: 'N/A';
                 })
-                ->rawColumns(['action'])
+                ->editColumn('status', function($row) {
+                    return $row->status ?: 'N/A';
+                })
+                ->rawColumns(['action', 'status'])
                 ->make(true);
         }
         return view('tenant.merchandising.styles.index');

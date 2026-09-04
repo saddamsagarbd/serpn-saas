@@ -48,11 +48,13 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-[11px] font-bold uppercase tracking-wider">
+                            <th class="p-4">Picture</th>
                             <th class="p-4">Style Code</th>
                             <th class="p-4">Style Name</th>
                             <th class="p-4">Buyer</th>
                             <th class="p-4">Season</th>
                             <th class="p-4 text-right">FOB</th>
+                            <th class="p-4">Status</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
@@ -68,34 +70,56 @@
                         <template x-if="!loading && styles.length > 0">
                             <template x-for="(style, index) in styles" :key="style.id || index">
                                 <tr class="hover:bg-gray-50/80 transition">
-                                    <!-- 1. Clickable Style Code Link to go directly to details preview -->
+                                    <!-- Image Column -->
+                                    <td class="p-4">
+                                        <img :src="style.image || style.product_image || '/images/default-placeholder.png'" 
+                                            :alt="style.product_name"
+                                            class="h-16 w-16 object-cover rounded-xl border border-slate-300 shadow-sm">
+                                    </td>
+
+                                    <!-- Style Code Link -->
                                     <td class="p-4 font-mono">
                                         <a :href="'/merchandising/styles/' + style.id + '/details'" 
                                         class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
-                                        x-text="style.style_number">
+                                        x-text="style.style_code || style.style_number || 'N/A'">
                                         </a>
                                     </td>
-                                    
-                                    <!-- Fixed field mapping: style.product_name instead of style.style_name -->
-                                    <td class="p-4 font-medium text-gray-900" x-text="style.product_name"></td>
-                                    
-                                    <td class="p-4 text-gray-500" x-text="style.buyer ? style.buyer.name : 'N/A'"></td>
-                                    <td class="p-4 text-gray-500" x-text="style.season ? style.season.name : 'N/A'"></td>
-                                    <td class="p-4 text-right font-bold font-mono text-slate-800" x-text="style.costing ? '$' + parseFloat(style.costing.offered_fob).toFixed(4) : '$0.0000'"></td>
-                                    
+
+                                    <!-- Product Name -->
+                                    <td class="p-4 font-medium text-gray-900" x-text="style.product_name || 'N/A'"></td>
+
+                                    <!-- Buyer & Season -->
+                                    <td class="p-4 text-gray-500" x-text="style.buyer ? style.buyer.name : (style.buyer_name || 'N/A')"></td>
+                                    <td class="p-4 text-gray-500" x-text="style.season ? style.season.name : (style.season_name || 'N/A')"></td>
+
+                                    <!-- Costing -->
+                                    <td class="p-4 text-right font-bold font-mono text-slate-800" 
+                                        x-text="style.costing?.offered_fob ? '$' + parseFloat(style.costing.offered_fob).toFixed(4) : '$0.0000'">
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full capitalize"
+                                            :class="{
+                                                'bg-gray-100 text-gray-800': style.status === 'draft',
+                                                'bg-blue-100 text-blue-800': style.status === 'running',
+                                                'bg-green-100 text-green-800': style.status === 'completed',
+                                                'bg-red-100 text-red-800': style.status === 'cancelled'
+                                            }" 
+                                            x-text="style.status || 'N/A'">
+                                        </span>
+                                    </td>
+
+                                    <!-- Action Buttons -->
                                     <td class="p-4 text-center space-x-2 whitespace-nowrap">
-                                        <!-- 2. Preview Details Button -->
                                         <a :href="'/merchandising/styles/' + style.id + '/details'" 
                                         class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
                                             Costing
                                         </a>
-
                                         <a :href="'/merchandising/styles/' + style.id + '/bom'" 
                                         class="inline-block bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
                                             BOM
                                         </a>
-
-                                        <!-- Edit Button -->
                                         <a :href="'/merchandising/styles/' + style.id + '/edit'" 
                                         class="inline-block bg-gray-50 border border-slate-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs">
                                             Edit
