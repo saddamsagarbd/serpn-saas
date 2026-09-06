@@ -57,7 +57,7 @@ return [
          * Tenant database names are created like this:
          * prefix + tenant_id + suffix.
          */
-        'prefix' => 'erp247com_tenant',
+        'prefix' => 'erp247com_tenant_',
         'suffix' => '',
 
         /**
@@ -95,7 +95,7 @@ return [
      * You can clear cache selectively by specifying the tag.
      */
     'cache' => [
-        'tag_base' => 'erp247com_tenant', // This tag_base, followed by the tenant_id, will form a tag that will be applied on each cache call.
+        'tag_base' => 'erp247com_tenant_', // This tag_base, followed by the tenant_id, will form a tag that will be applied on each cache call.
         'tag_identifier' => 'array',
     ],
 
@@ -107,7 +107,7 @@ return [
         /**
          * Each disk listed in the 'disks' array will be suffixed by the suffix_base, followed by the tenant_id.
          */
-        'suffix_base' => 'erp247com_tenant',
+        'suffix_base' => 'erp247com_tenant_',
         'disks' => [
             'local',
             'public',
@@ -156,7 +156,7 @@ return [
      * either using the Redis facade or by injecting it as a dependency.
      */
     'redis' => [
-        'prefix_base' => 'erp247com_tenant', // Each key in Redis will be prepended by this prefix_base, followed by the tenant id.
+        'prefix_base' => 'erp247com_tenant_', // Each key in Redis will be prepended by this prefix_base, followed by the tenant id.
         'prefixed_connections' => [ // Redis connections whose keys are prefixed, to separate one tenant's keys from another.
             // 'default',
         ],
