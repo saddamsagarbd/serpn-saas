@@ -116,15 +116,15 @@
                                     <!-- Image Column -->
                                     <td class="p-4">
                                         <img :src="style.image || style.product_image || '/images/default-placeholder.png'" 
-                                             :alt="style.product_name"
-                                             class="h-16 w-16 object-cover rounded-xl border border-slate-300 shadow-sm">
+                                            :alt="style.style_code"
+                                            class="h-16 w-16 object-cover rounded-xl border border-slate-300 shadow-sm">
                                     </td>
 
                                     <!-- Style Code Link -->
                                     <td class="p-4 font-mono">
                                         <a :href="`/merchandising/styles/${style.id}/details`" 
-                                           class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
-                                           x-text="style.style_code || style.style_number || 'N/A'">
+                                            class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline"
+                                            x-text="style.style_code || style.style_number || 'N/A'">
                                         </a>
                                     </td>
 

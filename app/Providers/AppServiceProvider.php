@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
 
             // ভেন্ডরের নিজস্ব ডাটাবেজ কনটেক্সটে সুইচ করে অটোমেটিক Admin User তৈরি করা
             $tenant->run(function () use ($tenant, $defaultPassword, &$isNewUser) {
-                $user =User::updateOrCreate(
+                $user =User::firstOrCreate(
                     [
                         'email' => $tenant->owner_email
                     ],[
