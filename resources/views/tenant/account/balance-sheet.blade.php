@@ -16,18 +16,18 @@
             </div>
             <div class="space-y-1.5">
                 <p class="font-bold text-slate-400 text-[10px] uppercase tracking-tight">Current Assets</p>
-                <div class="flex justify-between text-slate-700 pl-2 font-medium">
-                    <span>Petty Cash Desk Drawer Counter</span>
-                    <span class="font-mono font-bold">78,500.00 ৳</span>
-                </div>
-                <div class="flex justify-between text-slate-700 pl-2 font-medium">
-                    <span>Dutch-Bangla Bank Corporate Clearing</span>
-                    <span class="font-mono font-bold">1,240,500.00 ৳</span>
-                </div>
+                @forelse($assetData as $asset)
+                    <div class="flex justify-between text-slate-700 pl-2 font-medium">
+                        <span>{{ $asset['name'] }} ({{ $asset['code'] }})</span>
+                        <span class="font-mono font-bold">{{ number_format($asset['balance'], 2) }} ৳</span>
+                    </div>
+                @empty
+                    <p class="text-slate-400 pl-2">No active assets found</p>
+                @endforelse
             </div>
             <div class="flex justify-between font-black text-slate-900 pt-2 border-t-2 border-dashed border-slate-200 bg-slate-50 px-2 py-1.5 rounded-lg text-xs">
                 <span>TOTAL ASSETS OWNED</span>
-                <span class="font-mono text-indigo-600">1,319,000.00 ৳</span>
+                <span class="font-mono text-indigo-600">{{ number_format($totalAssets, 2) }} ৳</span>
             </div>
         </div>
 
@@ -38,18 +38,32 @@
             </div>
             <div class="space-y-1.5">
                 <p class="font-bold text-slate-400 text-[10px] uppercase tracking-tight">Equity & Retained Holdings</p>
+                @foreach($liabilityData as $liability)
+                    <div class="flex justify-between text-slate-700 pl-2 font-medium">
+                        <span>{{ $liability['name'] }}</span>
+                        <span class="font-mono font-bold">{{ number_format($liability['balance'], 2) }} ৳</span>
+                    </div>
+                @endforeach
+            </div>
+            <!-- Equity Section -->
+            <div class="space-y-1.5">
+                <p class="font-bold text-slate-400 text-[10px] uppercase tracking-tight">Equity & Retained Holdings</p>
+                @foreach($equityData as $equity)
+                    <div class="flex justify-between text-slate-700 pl-2 font-medium">
+                        <span>{{ $equity['name'] }}</span>
+                        <span class="font-mono font-bold">{{ number_format($equity['balance'], 2) }} ৳</span>
+                    </div>
+                @endforeach
+                
+                <!-- Retained Earnings / Current Net Profit -->
                 <div class="flex justify-between text-slate-700 pl-2 font-medium">
-                    <span>Owner's Core Seed Capital Capital</span>
-                    <span class="font-mono font-bold">1,191,500.00 ৳</span>
-                </div>
-                <div class="flex justify-between text-slate-700 pl-2 font-medium">
-                    <span>Retained Earnings Net (P&L Current)</span>
-                    <span class="font-mono font-bold">127,500.00 ৳</span>
+                    <span>Retained Earnings Net (Current P&L)</span>
+                    <span class="font-mono font-bold">{{ number_format($netProfitOrLoss, 2) }} ৳</span>
                 </div>
             </div>
             <div class="flex justify-between font-black text-slate-900 pt-2 border-t-2 border-dashed border-slate-200 bg-slate-50 px-2 py-1.5 rounded-lg text-xs">
                 <span>TOTAL LIABILITIES & EQUITY MARGINS</span>
-                <span class="font-mono text-indigo-600">1,319,000.00 ৳</span>
+                <span class="font-mono text-indigo-600">{{ number_format($totalLiabilitiesAndEquity, 2) }} ৳</span>
             </div>
         </div>
 

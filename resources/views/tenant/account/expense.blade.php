@@ -3,7 +3,7 @@
 @section('content')
 
 <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6"
-     x-data="{
+    x-data="{
         formData: {
             type: 'expense',
             date: new Date().toISOString().split('T')[0],
@@ -39,7 +39,7 @@
             })
             .catch(() => { this.loading = false; alert('Server posting failed'); });
         }
-     }">
+    }">
 
     <div>
         <h2 class="text-base font-black text-slate-900 uppercase tracking-wide">🟢 Direct Expense Voucher Entry</h2>
