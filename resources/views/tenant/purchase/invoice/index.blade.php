@@ -11,11 +11,11 @@
 
     <div class="flex justify-between items-center">
         <div>
-            <h3 class="text-base font-bold text-slate-800">Purchase Returns / Debit Notes</h3>
-            <p class="text-xs text-slate-400">List of supplier returns, reduced inventory & accounts ledger debit notes.</p>
+            <h3 class="text-base font-bold text-slate-800">Supplier Invoices (Bills)</h3>
+            <p class="text-sm text-slate-500">Manage vendor bills, payment statuses, and 3-way matching records.</p>
         </div>
-        <a href="{{ route('tenant.purchase.suppliers.invoice.create') }}" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 rounded-xl hover:bg-rose-700 shadow-sm transition">
-            + Create New Purchase Return
+        <a href="{{ route('tenant.purchase.invoice.create') }}" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 rounded-xl hover:bg-rose-700 shadow-sm transition">
+            + Create New Invoice
         </a>
     </div>
 
@@ -42,7 +42,7 @@
                             {{ $invoice->supplier->name }}
                         </td>
                         <td class="p-3 font-mono text-slate-600">
-                            {{ $return->goodsReceivedNote->grn_no ?? 'N/A' }}
+                            {{ $invoice->grn->grn_no ?? 'N/A' }}
                         </td>
                         <td class="p-3 text-right font-mono font-bold text-rose-600">
                             {{ number_format($invoice->net_amount, 2) }} ৳
@@ -53,7 +53,7 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ route('tenant.supplier-invoices.edit', $invoice->id) }}" class="btn btn-sm btn-info">Edit</a>
+                            <a href="#" class="btn btn-sm btn-info">Edit</a>
                         </td>
                     </tr>
                 @empty
