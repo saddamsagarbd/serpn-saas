@@ -7,8 +7,10 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Style;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -30,6 +32,9 @@ class PurchaseOrderController extends Controller
                 ->addIndexColumn()
                 ->addColumn('po_no', function($row){
                     return $row->po_no ?? 'N/A';
+                })
+                ->addColumn('status', function($row){
+                    return $row->status ?? 'draft';
                 })
                 ->addColumn('supplier_details', function($row){
                     if (!$row->supplier) {
@@ -53,7 +58,7 @@ class PurchaseOrderController extends Controller
                         return "{$itemName}: {$qty}";
                     })->implode(', ');
                 })
-                ->rawColumns(['action', 'po_no', 'supplier_details', 'order_details'])
+                ->rawColumns(['action', 'po_no', 'supplier_details', 'order_details', 'status'])
                 ->make(true);
         }
 
@@ -101,25 +106,29 @@ class PurchaseOrderController extends Controller
 
         try {
             $poNo = 'PO-' . date('Y') . '-' . str_pad(PurchaseOrder::max('id') + 1, 4, '0', STR_PAD_LEFT);
+            $now = Carbon::now();
+            $currentUserId = auth()->id();
 
             $po = PurchaseOrder::create([
-                'tenant_id'          => tenant('id'),
-                'po_no'              => $poNo,
-                'supplier_id'        => $data['supplier_id'],
-                'style_id'           => $data['style_id'],
-                'po_date'            => $data['po_date'],
-                'delivery_date'      => $data['delivery_date'] ?? null,
-                'subtotal'           => $data['subtotal'] ?? 0,
-                'transport_cost'     => $data['transport_cost'] ?? 0,
-                'loader_bill'         => $data['loader_bill'] ?? 0,
-                'inspection_bill'     => $data['inspection_bill'] ?? 0,
-                'extra_charges'      => $data['extra_charges'] ?? 0,
-                'discount'           => $data['discount'] ?? 0,
-                'grand_total'        => $data['grand_total'],
-                'due_amount'         => $data['grand_total'], // শুরুতে পুরো টাকাই Due
-                'payment_terms_text' => $data['payment_terms_text'] ?? null,
-                'status'             => $data['status'],
-                'remarks'            => $data['remarks'] ?? null,
+                'tenant_id'             => tenant('id'),
+                'po_no'                 => $poNo,
+                'supplier_id'           => $data['supplier_id'],
+                'style_id'              => $data['style_id'],
+                'po_date'               => $data['po_date'],
+                'delivery_date'         => $data['delivery_date'] ?? null,
+                'subtotal'              => $data['subtotal'] ?? 0,
+                'transport_cost'        => $data['transport_cost'] ?? 0,
+                'loader_bill'           => $data['loader_bill'] ?? 0,
+                'inspection_bill'       => $data['inspection_bill'] ?? 0,
+                'extra_charges'         => $data['extra_charges'] ?? 0,
+                'discount'              => $data['discount'] ?? 0,
+                'grand_total'           => $data['grand_total'],
+                'due_amount'            => $data['grand_total'], // শুরুতে পুরো টাকাই Due
+                'payment_terms_text'    => $data['payment_terms_text'] ?? null,
+                'status'                => $data['status'] ?? 'pending',
+                'remarks'               => $data['remarks'] ?? null,
+                'created_at'            => $now,
+                'created_by'            => $currentUserId,
             ]);
 
             $poItems = [];
@@ -128,16 +137,18 @@ class PurchaseOrderController extends Controller
                 $totalPrice = floatval($item['order_qty']) * floatval($item['unit_price']);
 
                 $poItems[]=[
-                    'tenant_id'          => tenant('id'),
-                    'purchase_order_id' => $po->id,
-                    'item_id'           => $item['item_id'] ?? null,
-                    'color_id'          => $item['color_id'] ?? null,
-                    'size_id'           => $item['size_id'] ?? null,
-                    'unit_id'           => $item['unit_id'] ?? null,
-                    'mpr_qty'           => $item['mpr_qty'] ?? 0,
-                    'order_qty'         => $item['order_qty'],
-                    'unit_price'        => $item['unit_price'],
-                    'total_price'       => $totalPrice,
+                    'tenant_id'             => tenant('id'),
+                    'purchase_order_id'     => $po->id,
+                    'item_id'               => $item['item_id'] ?? null,
+                    'color_id'              => $item['color_id'] ?? null,
+                    'size_id'               => $item['size_id'] ?? null,
+                    'unit_id'               => $item['unit_id'] ?? null,
+                    'mpr_qty'               => $item['mpr_qty'] ?? 0,
+                    'order_qty'             => $item['order_qty'],
+                    'unit_price'            => $item['unit_price'],
+                    'total_price'           => $totalPrice,
+                    'created_at'            => $now,
+                    'created_by'            => $currentUserId,
                 ];
 
             }
@@ -223,25 +234,30 @@ class PurchaseOrderController extends Controller
         DB::beginTransaction();
 
         try {
+            $now = Carbon::now();
+            $currentUserId = auth()->id();
+
             $paidAmount = $po->paid_amount ?? 0;
             $newDueAmount = max(0, $data['grand_total'] - $paidAmount);
 
             $po->update([
-                'supplier_id'        => $data['supplier_id'],
-                'style_id'           => $data['style_id'],
-                'po_date'            => $data['po_date'],
-                'delivery_date'      => $data['delivery_date'] ?? null,
-                'subtotal'           => $data['subtotal'] ?? 0,
-                'transport_cost'     => $data['transport_cost'] ?? 0,
-                'loader_bill'         => $data['loader_bill'] ?? 0,
-                'inspection_bill'     => $data['inspection_bill'] ?? 0,
-                'extra_charges'      => $data['extra_charges'] ?? 0,
-                'discount'           => $data['discount'] ?? 0,
-                'grand_total'        => $data['grand_total'],
-                'due_amount'         => $newDueAmount,
-                'payment_terms_text' => $data['payment_terms_text'] ?? null,
-                'status'             => $data['status'],
-                'remarks'            => $data['remarks'] ?? null,
+                'supplier_id'           => $data['supplier_id'],
+                'style_id'              => $data['style_id'],
+                'po_date'               => $data['po_date'],
+                'delivery_date'         => $data['delivery_date'] ?? null,
+                'subtotal'              => $data['subtotal'] ?? 0,
+                'transport_cost'        => $data['transport_cost'] ?? 0,
+                'loader_bill'           => $data['loader_bill'] ?? 0,
+                'inspection_bill'       => $data['inspection_bill'] ?? 0,
+                'extra_charges'         => $data['extra_charges'] ?? 0,
+                'discount'              => $data['discount'] ?? 0,
+                'grand_total'           => $data['grand_total'],
+                'due_amount'            => $newDueAmount,
+                'payment_terms_text'    => $data['payment_terms_text'] ?? null,
+                'status'                => $data['status'] ?? 'pending',
+                'remarks'               => $data['remarks'] ?? null,
+                'updated_at'            => $now,
+                'updated_by'            => $currentUserId,
             ]);
 
             PurchaseOrderItem::where('purchase_order_id', $po->id)->delete();
@@ -253,18 +269,20 @@ class PurchaseOrderController extends Controller
                 $totalPrice = floatval($item['order_qty']) * floatval($item['unit_price']);
 
                 $poItems[] = [
-                    'tenant_id'         => tenant('id'),
-                    'purchase_order_id' => $po->id,
-                    'item_id'           => $item['item_id'] ?? null,
-                    'color_id'          => $item['color_id'] ?? null,
-                    'size_id'           => $item['size_id'] ?? null,
-                    'unit_id'           => $item['unit_id'] ?? null,
-                    'mpr_qty'           => $item['mpr_qty'] ?? 0,
-                    'order_qty'         => $item['order_qty'],
-                    'unit_price'        => $item['unit_price'],
-                    'total_price'       => $totalPrice,
-                    'created_at'        => $now,
-                    'updated_at'        => $now,
+                    'tenant_id'             => tenant('id'),
+                    'purchase_order_id'     => $po->id,
+                    'item_id'               => $item['item_id'] ?? null,
+                    'color_id'              => $item['color_id'] ?? null,
+                    'size_id'               => $item['size_id'] ?? null,
+                    'unit_id'               => $item['unit_id'] ?? null,
+                    'mpr_qty'               => $item['mpr_qty'] ?? 0,
+                    'order_qty'             => $item['order_qty'],
+                    'unit_price'            => $item['unit_price'],
+                    'total_price'           => $totalPrice,
+                    'created_at'            => $now,
+                    'created_by'            => $currentUserId,
+                    'updated_at'            => $now,
+                    'updated_by'            => $currentUserId,
                 ];
             }
 
@@ -290,5 +308,41 @@ class PurchaseOrderController extends Controller
                 'message' => 'Failed to update Purchase Order. ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function updateStatus(Request $request, $tenant, String $id){
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string|in:draft,pending,approved,rejected,cancelled',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status provided.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+        
+        return DB::transaction(function () use ($request, $id) {
+            $now = Carbon::now();
+
+            // PurchaseOrder খুঁজে বের করা
+            $po = PurchaseOrder::where('tenant_id', tenant('id'))->findOrFail($id);
+
+            $po->update([
+                'status'     => $request->status,
+                'updated_by' => auth()->id(),
+                'updated_at' => $now,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'data'    => [
+                    'po_id' => $po->id,
+                    'status'   => $po->status,
+                ]
+            ], 200);
+        });
     }
 }

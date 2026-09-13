@@ -30,7 +30,7 @@ class GrnController extends Controller
             'order.color',
             'order.size',
             'order.unit',
-        ])->get();
+        ])->whereIn('status', ['approved', 'partially_received'])->get();
 
         $warehouses = Warehouse::where('tenant_id', tenant('id'))->get();
         return view('tenant.purchase.goods-received-notes', compact('purchaseOrders', 'warehouses'));
@@ -83,12 +83,20 @@ class GrnController extends Controller
                 $unitPrice = $poItem ? $poItem->unit_price : 0;
                 $lineTotal = $unitPrice * $receivingQty;
 
+                $styleId = $poItem->style_id ?? $po->style_id ?? null;
+                $colorId = $poItem ? $poItem->color_id : null;
+                $sizeId  = $poItem ? $poItem->size_id  : null;
+
                 // GRN Item Entry
                 GoodsReceivedNoteItem::create([
                     'goods_received_note_id' => $grn->id,
                     'purchase_order_item_id' => $incomingItem['po_item_id'],
+                    'style_id'               => $styleId,
                     'item_id'                => $incomingItem['item_id'],
+                    'color_id'               => $colorId,
+                    'size_id'                => $sizeId,
                     'quantity_received'      => $receivingQty,
+                    'accepted_qty'           => ($incomingItem['qa_status'] ?? 'Good') !== 'Damaged' ? $receivingQty : 0,
                     'rejected_qty'           => ($incomingItem['qa_status'] ?? '') === 'Damaged' ? $receivingQty : 0,
                     'unit_price'             => $unitPrice,
                     'total_amount'           => $lineTotal,
@@ -98,18 +106,35 @@ class GrnController extends Controller
 
                 // ভালো মালামালের জন্য ফিজিক্যাল স্টক একবারই বাড়ানো হবে
                 if (($incomingItem['qa_status'] ?? 'Good') !== 'Damaged') {
-                    Stock::updateOrCreate(
-                        [
-                            'tenant_id'    => tenant('id'),
-                            'warehouse_id' => $request->warehouse_id,
-                            'item_id'      => $incomingItem['item_id'],
-                        ],
-                        [
-                            'available_qty' => DB::raw("available_qty + {$receivingQty}"),
-                            'created_by'   => auth()->id(),
-                            'updated_by'   => auth()->id(),
-                        ]
-                    );
+                    // Stock::updateOrCreate(
+                    //     [
+                    //         'tenant_id'    => tenant('id'),
+                    //         'warehouse_id' => $request->warehouse_id,
+                    //         'item_id'      => $incomingItem['item_id'],
+                    //         'style_id'     => $styleId,
+                    //         'color_id'     => $colorId,
+                    //         'size_id'      => $sizeId, 
+                    //     ],
+                    //     [
+                    //         'available_qty' => DB::raw("available_qty + {$receivingQty}"),
+                    //         'created_by'   => auth()->id(),
+                    //         'updated_by'   => auth()->id(),
+                    //     ]
+                    // );
+                    $stock = Stock::firstOrNew([
+                        'tenant_id'    => tenant('id'),
+                        'warehouse_id' => $request->warehouse_id,
+                        'item_id'      => $incomingItem['item_id'],
+                        'style_id'     => $styleId,
+                        'color_id'     => $colorId,
+                        'size_id'      => $sizeId,
+                    ]);
+
+                    $stock->available_qty   = ($stock->exists ? $stock->available_qty : 0) + $receivingQty;
+                    $stock->created_by      = $stock->exists ? $stock->created_by : auth()->id();
+                    $stock->updated_by      = auth()->id();
+                    $stock->save();
+
                     $totalReceivedValue += $lineTotal; 
                 }
 
@@ -125,32 +150,30 @@ class GrnController extends Controller
 
             // ৩. Accounts Double Entry Voucher Posting Engine
             if ($totalReceivedValue > 0) {
-                $inventoryHead = ChartOfAccount::where(function ($query) {
-                    $query->where('code', '1002')
-                        ->orWhere('name', 'like', '%Raw Material%')
-                        ->orWhere('name', 'like', '%Inventory%');
-                })
-                ->where('tenant_id', tenant('id'))
-                ->first();
+                $inventoryHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                    ->where(function ($query) {
+                        $query->where('code', '1002')
+                            ->orWhere('name', 'like', '%Raw Material%')
+                            ->orWhere('name', 'like', '%Inventory%');
+                    })->first();
 
-                $payableHead = ChartOfAccount::where(function ($query) {
-                    $query->where('code', 'AP')
-                        ->orWhere('code', '2001')
-                        ->orWhere('name', 'like', '%Accounts Payable%');
-                })
-                ->where('tenant_id', tenant('id'))
-                ->first();
+                $payableHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                    ->where(function ($query) {
+                        $query->where('code', 'AP')
+                            ->orWhere('code', '2001')
+                            ->orWhere('name', 'like', '%Accounts Payable%');
+                    })->first();
 
                 if (!$inventoryHead || !$payableHead) {
                     throw new \Exception("Accounting Head (Inventory/Payable) not found in Chart of Accounts!");
                 }
 
                 $voucher = Voucher::create([
-                    'tenant_id'  => tenant('id'),
-                    'voucher_no' => 'PV-' . $po->po_no . '-' . rand(10, 99),
-                    'date'       => $request->received_date,
+                    'tenant_id'    => tenant('id'),
+                    'voucher_no'   => 'PV-' . $po->po_no . '-' . rand(10, 99),
+                    'date'         => $request->received_date,
                     'total_amount' => $totalReceivedValue,
-                    'narration'  => "Material stock received via GRN: " . $grn->grn_no . " against PO: " . $po->po_no,
+                    'narration'    => "Material stock received via GRN: " . $grn->grn_no . " against PO: " . $po->po_no,
                 ]);
 
                 // Inventory Asset (Debit)

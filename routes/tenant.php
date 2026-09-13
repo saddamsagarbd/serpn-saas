@@ -195,6 +195,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::post('/po-store', [PurchaseOrderController::class, 'store'])->name('po.store');
                 Route::get('/orders/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
                 Route::put('/po-update/{id}', [PurchaseOrderController::class, 'update'])->name('po.update');
+                Route::post('/po/{id}/status', [PurchaseOrderController::class, 'updateStatus'])->name('po.status');
 
                 Route::get('/grn', [GrnController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [GrnController::class, 'saveGRNTransaction'])->name('grn.store');
