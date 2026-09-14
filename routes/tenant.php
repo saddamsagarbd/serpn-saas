@@ -208,6 +208,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
                 Route::get('/invoices/get-grn-data', [SupplierInvoiceController::class, 'getGrnData'])->name('invoice.get-grn-data');
+                Route::get('suppliers/invoice/{id}/print', [SupplierInvoiceController::class, 'print'])->name('invoice.print');
                 Route::resource('suppliers/invoice', SupplierInvoiceController::class)->names('invoice');
 
                 Route::get('/purchase-return', [GrnController::class, 'purchaseReturn'])->name('return');

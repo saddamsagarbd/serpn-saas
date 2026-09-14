@@ -14,19 +14,51 @@ use App\Models\SupplierInvoiceItem;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class SupplierInvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $invoices = SupplierInvoice::with(['supplier', 'purchaseOrder', 'grn', 'voucher'])
-            ->where('tenant_id', tenant('id'))
-            ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->latest()
-            ->get();
+        if ($request->ajax()) {
+            $invoices = SupplierInvoice::with(['supplier', 'purchaseOrder', 'grn', 'voucher'])
+                ->where('tenant_id', tenant('id'))
+                ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
+                ->when($request->status, fn($q) => $q->where('status', $request->status))
+                ->when($request->search, function ($q) use ($request) {
+                    $search = $request->search;
+                    $q->where(function ($sub) use ($search) {
+                        $sub->where('invoice_no', 'like', "%{$search}%")
+                            ->orWhereHas('supplier', fn($s) => $s->where('name', 'like', "%{$search}%"))
+                            ->orWhereHas('grn', fn($g) => $g->where('grn_no', 'like', "%{$search}%"));
+                    });
+                })
+                ->latest();
 
-        return view('tenant.purchase.invoice.index', compact('invoices'));
+            return DataTables::of($invoices)
+                ->addIndexColumn()
+                ->editColumn('invoice_no', function ($row) {
+                    return $row->invoice_no ?: 'N/A';
+                })
+                ->addColumn('supplier_name', function ($row) {
+                    return $row->supplier ? $row->supplier->name : 'N/A';
+                })
+                ->addColumn('grn_no', function ($row) {
+                    return $row->grn ? $row->grn->grn_no : 'N/A';
+                })
+                ->editColumn('net_amount', function ($row) {
+                    return (float) ($row->net_amount ?? $row->grand_total ?? 0);
+                })
+                ->editColumn('invoice_date', function ($row) {
+                    return $row->invoice_date;
+                })
+                ->editColumn('status', function ($row) {
+                    return $row->status ?: 'unpaid';
+                })
+                ->make(true);
+        }
+
+        return view('tenant.purchase.invoice.index');
     }
     // ১. GRN লোড করার API (3-Way Match Data Provider)
     public function getGrnData(Request $request)
@@ -124,17 +156,17 @@ class SupplierInvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'grn_id'                      => 'required|exists:goods_received_notes,id',
-            'invoice_no'                  => 'required|string|max:255',
-            'invoice_date'                => 'required|date',
-            'due_date'                    => 'required|date',
-            'tax_rate'                    => 'nullable|numeric|min:0',
-            'tax_amount'                  => 'nullable|numeric|min:0',
-            'discount_amount'             => 'nullable|numeric|min:0',
-            'debit_note_adjusted_amount'  => 'nullable|numeric|min:0',
-            'items'                       => 'required|array|min:1',
-            'items.*.grn_item_id'          => 'required|exists:goods_received_note_items,id',
-            'items.*.invoice_qty'          => 'required|numeric|min:0.01',
+            'grn_id'                        => 'required|exists:goods_received_notes,id',
+            'invoice_no'                    => 'required|string|max:255',
+            'invoice_date'                  => 'required|date',
+            'due_date'                      => 'required|date',
+            'tax_rate'                      => 'nullable|numeric|min:0',
+            'tax_amount'                    => 'nullable|numeric|min:0',
+            'discount_amount'               => 'nullable|numeric|min:0',
+            'debit_note_adjusted_amount'    => 'nullable|numeric|min:0',
+            'items'                         => 'required|array|min:1',
+            'items.*.grn_item_id'           => 'required|exists:goods_received_note_items,id',
+            'items.*.invoice_qty'           => 'required|numeric|min:0.01',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -259,6 +291,182 @@ class SupplierInvoiceController extends Controller
             return response()->json([
                 'success'      => true,
                 'message'      => 'Supplier Invoice created and posted successfully!',
+                'redirect_url' => route('tenant.purchase.invoice.index')
+            ]);
+        });
+    }
+
+    public function print($tenant, String $id)
+    {
+        $invoice = SupplierInvoice::with(['supplier', 'purchaseOrder', 'grn', 'voucher'])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+
+        return view('tenant.purchase.invoice.print', compact('invoice'));
+    }
+
+    public function show($tenant, String $id)
+    {
+        $invoice = SupplierInvoice::with(['supplier', 'purchaseOrder', 'grn', 'voucher'])
+        ->where('tenant_id', tenant('id'))
+        ->findOrFail($id);
+
+        return view('tenant.purchase.invoice.details', compact('invoice'));
+    }
+
+    public function edit($tenant, String $id)
+    {
+        $invoice    = SupplierInvoice::with(['items'])->findOrFail($id);
+        $suppliers  = Supplier::all();
+        $grns       = GoodsReceivedNote::with('purchaseOrder')->get();
+
+        return view('tenant.purchase.invoice.create', compact('invoice', 'suppliers', 'grns'));
+    }
+
+    public function update(Request $request, $tenant, $id)
+    {
+        $request->validate([
+            'grn_id'                         => 'required|exists:goods_received_notes,id',
+            'invoice_no'                     => 'required|string|max:255',
+            'invoice_date'                   => 'required|date',
+            'due_date'                       => 'required|date',
+            'tax_rate'                       => 'nullable|numeric|min:0',
+            'tax_amount'                     => 'nullable|numeric|min:0',
+            'discount_amount'                => 'nullable|numeric|min:0',
+            'debit_note_adjusted_amount'     => 'nullable|numeric|min:0',
+            'items'                          => 'required|array|min:1',
+            'items.*.grn_item_id'            => 'required|exists:goods_received_note_items,id',
+            'items.*.invoice_qty'            => 'required|numeric|min:0.01',
+        ]);
+
+        return DB::transaction(function () use ($request, $id) {
+            // ১. বিদ্যমান ইনভয়েস খুঁজে বের করা
+            $invoice = SupplierInvoice::where('tenant_id', tenant('id'))->findOrFail($id);
+            $grn     = GoodsReceivedNote::where('tenant_id', tenant('id'))->findOrFail($request->grn_id);
+
+            // ২. Line Items এর মাধ্যমে Subtotal পুনঃগণনা
+            $calculatedSubtotal = 0;
+            $itemsToStore       = [];
+
+            foreach ($request->items as $itemData) {
+                $grnItem    = GoodsReceivedNoteItem::findOrFail($itemData['grn_item_id']);
+                $invoiceQty = (float) $itemData['invoice_qty'];
+                $unitPrice  = (float) $grnItem->unit_price;
+                $lineTotal  = $invoiceQty * $unitPrice;
+
+                $itemsToStore[] = [
+                    'grnItem'    => $grnItem,
+                    'invoiceQty' => $invoiceQty,
+                    'unitPrice'  => $unitPrice,
+                    'lineTotal'  => $lineTotal,
+                ];
+
+                $calculatedSubtotal += $lineTotal;
+            }
+
+            // ৩. ফাইন্যান্সিয়াল হিসাব আপডেট
+            $taxRate         = (float) ($request->tax_rate ?? 0);
+            $taxAmount       = (float) ($request->tax_amount ?? 0);
+            $discountAmount  = (float) ($request->discount_amount ?? 0);
+            $debitNoteAmount = (float) ($request->debit_note_adjusted_amount ?? 0);
+
+            $netPayableAmount = max(0, ($calculatedSubtotal + $taxAmount) - $discountAmount - $debitNoteAmount);
+
+            // ৪. Master Supplier Invoice Update
+            $invoice->update([
+                'invoice_no'                 => $request->invoice_no,
+                'goods_received_note_id'     => $grn->id,
+                'purchase_order_id'          => $grn->purchase_order_id,
+                'supplier_id'                => $grn->supplier_id,
+                'invoice_date'               => $request->invoice_date,
+                'due_date'                   => $request->due_date,
+                'tax_rate'                   => $taxRate,
+                'tax_amount'                 => $taxAmount,
+                'discount_amount'            => $discountAmount,
+                'debit_note_adjusted_amount' => $debitNoteAmount,
+                'sub_total'                  => $calculatedSubtotal,
+                'net_amount'                 => $netPayableAmount,
+            ]);
+
+            // ৫. পুরাতন Invoice Items মুছে নতুনগুলো Re-insert করা
+            $invoice->items()->delete();
+
+            foreach ($itemsToStore as $data) {
+                SupplierInvoiceItem::create([
+                    'supplier_invoice_id' => $invoice->id,
+                    'grn_item_id'         => $data['grnItem']->id,
+                    'item_id'             => $data['grnItem']->item_id,
+                    'style_id'            => $data['grnItem']->style_id,
+                    'color_id'            => $data['grnItem']->color_id,
+                    'size_id'             => $data['grnItem']->size_id,
+                    'quantity'            => $data['invoiceQty'],
+                    'unit_price'          => $data['unitPrice'],
+                    'tax_amount'          => 0,
+                    'total_amount'        => $data['lineTotal'],
+                ]);
+            }
+
+            // ৬. Accounting Integration: Voucher & Ledger Re-sync
+            $apHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                ->where(function ($query) {
+                    $query->where('code', 'AP')
+                        ->orWhere('code', '2001')
+                        ->orWhere('name', 'like', '%Accounts Payable%');
+                })->first();
+
+            $clearingHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                ->where(function ($query) {
+                    $query->where('code', 'GRN-CLEARING')
+                        ->orWhere('name', 'like', '%Unbilled Payable%')
+                        ->orWhere('name', 'like', '%GRN Clearing%');
+                })->first();
+
+            if ($apHead) {
+                // আগের ভাউচার থাকলে সেটি আপডেট করা, না থাকলে নতুন তৈরি করা
+                $voucher = Voucher::updateOrCreate(
+                    ['id' => $invoice->voucher_id],
+                    [
+                        'tenant_id'    => tenant('id'),
+                        'voucher_no'   => 'INV-' . str_replace('/', '-', $invoice->invoice_no),
+                        'date'         => $request->invoice_date,
+                        'total_amount' => $netPayableAmount,
+                        'narration'    => "Supplier Invoice Updated: {$invoice->invoice_no} against GRN: {$grn->grn_no}",
+                    ]
+                );
+
+                // পুরাতন લેజర్ এন্ট্রি মুছে ফেলে নতুন Amounts Re-post করা
+                LedgerEntry::where('voucher_id', $voucher->id)->delete();
+
+                // Credit AP
+                LedgerEntry::create([
+                    'tenant_id'           => tenant('id'),
+                    'voucher_id'          => $voucher->id,
+                    'chart_of_account_id' => $apHead->id,
+                    'supplier_id'         => $grn->supplier_id,
+                    'debit'               => 0,
+                    'credit'              => $netPayableAmount,
+                    'narration'           => "Bill Payable Updated for Invoice: {$invoice->invoice_no}",
+                ]);
+
+                // Debit GRN Clearing
+                if ($clearingHead) {
+                    LedgerEntry::create([
+                        'tenant_id'           => tenant('id'),
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $clearingHead->id,
+                        'supplier_id'         => $grn->supplier_id,
+                        'debit'               => $netPayableAmount,
+                        'credit'              => 0,
+                        'narration'           => "GRN Clearing Adjustment Updated for: {$grn->grn_no}",
+                    ]);
+                }
+
+                $invoice->update(['voucher_id' => $voucher->id]);
+            }
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Supplier Invoice updated successfully!',
                 'redirect_url' => route('tenant.purchase.invoice.index')
             ]);
         });
