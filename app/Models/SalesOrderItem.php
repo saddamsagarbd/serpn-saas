@@ -15,6 +15,16 @@ class SalesOrderItem extends Model
         return $this->belongsTo(Style::class, 'style_id');
     }
 
+    public function colorContext(): BelongsTo 
+    {
+        return $this->belongsTo(ColorContext::class, 'color');
+    }
+
+    public function sizeChart(): BelongsTo 
+    {
+        return $this->belongsTo(SizeChart::class, 'size');
+    }
+
     public function costing(): HasMany {
         return $this->hasMany(StyleCosting::class, 'style_id', 'style_id');
     }

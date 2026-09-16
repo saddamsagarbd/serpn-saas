@@ -33,4 +33,9 @@ class SalesOrder extends Model
             return $item->quantity * $item->unit_price;
         });
     }
+
+    public function boms(): HasMany
+    {
+        return $this->hasMany(ProductionBom::class);
+    }
 }

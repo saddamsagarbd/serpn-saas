@@ -31,6 +31,7 @@ use App\Http\Controllers\Tenant\{
     GrnController,
     MPRController,
     OrderController,
+    ProductionBomController,
     PurchaseOrderController,
     PurchaseRequisitionController,
     SeasonController,
@@ -184,6 +185,13 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/mpr-order/{id}/export-pdf', [MPRController::class, 'exportPdf'])->name('mpr-order-export-pdf');
                 Route::get('/mpr-order-edit/{id}', [MPRController::class, 'mrpOrderEdit'])->name('mpr.order-edit');
                 Route::put('/mpr-orders-update/{id}', [MPRController::class, 'update'])->name('mpr.orders-update');
+                Route::get('/mpr-order/get-by-style/{style_id}', [MPRController::class, 'getOrderByStyleId'])->name('mpr.get-by-style');
+
+                // BOM
+                Route::get('/bom', [ProductionBomController::class, 'index'])->name('bom.index');
+                Route::get('/bom/create', [ProductionBomController::class, 'create'])->name('bom.create');
+                Route::get('/bom/get-mprs-by-style/{styleId}', [ProductionBomController::class, 'getMprsByStyle'])->name('bom.get-mprs');
+                Route::post('/bom/store', [ProductionBomController::class, 'store'])->name('bom.store');
                 
             });
             

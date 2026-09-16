@@ -303,6 +303,8 @@ class MPRController extends Controller
         $salesOrder = $this->getSalesOrderWithRelations($id);
         $consolidatedMrpDetails = $this->calculateMrpDetails($salesOrder);
 
+        // dd($salesOrder);
+
         return view('tenant.merchandising.mpr.report', compact('salesOrder', 'consolidatedMrpDetails'));
     }
 
@@ -494,8 +496,66 @@ class MPRController extends Controller
         }
 
         return response()->json($mprItems);
-        
-        
+    }
+
+    public function getOrderByStyleId($tenant, string $style_id)
+    {
+        // ১. Style-এর আন্ডারে থাকা Costing এবং BOM Items লোড করা
+        $style = Style::with([
+            'buyer',
+            'costing.bomItems.itemMaster',
+            'costing.bomItems.color',
+            'costing.bomItems.size'
+        ])->where('tenant_id', tenant('id'))->find($style_id);
+
+        if (!$style) {
+            return response()->json(['success' => false, 'message' => 'Style not found'], 444);
+        }
+
+        // BOM Items প্রসেস করা (Unit cost সহ)
+        $bomItems = optional($style->costing)->bomItems ? $style->costing->bomItems->map(function ($bom) {
+            return [
+                'id' => $bom->id,
+                'item_id' => $bom->item_id,
+                'item_name' => optional($bom->itemMaster)->name ?? $bom->item_name ?? 'Material Item',
+                'unit_cost' => floatval($bom->unit_price ?? $bom->unit_cost ?? 0),
+                'consumption' => floatval($bom->consumption ?? 0),
+            ];
+        }) : [];
+
+        // ২. Style-এর আন্ডারে থাকা Sales Orders (MPR) এবং তাদের Color/Size Matrix লোড করা
+        $salesOrders = SalesOrder::with([
+            'items.colorContext',
+            'items.sizeChart'
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->where('style_id', $style_id)
+        ->get();
+
+        $mprOrders = $salesOrders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'buyer_po_number' => $order->buyer_po_number,
+                'total_quantity' => $order->items->sum('quantity'),
+                'matrix_items' => $order->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'color_id' => $item->color,
+                        'color_name' => optional($item->colorContext)->name ?? 'N/A',
+                        'size_id' => $item->size,
+                        'size_name' => optional($item->sizeChart)->name ?? 'N/A',
+                        'quantity' => $item->quantity,
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'buyer_name' => optional($style->buyer)->name ?? 'N/A',
+            'bom_items' => $bomItems,
+            'mpr_orders' => $mprOrders
+        ]);
     }
 
 }

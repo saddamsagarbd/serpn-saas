@@ -74,7 +74,6 @@ return [
 
                         // Manufacturing-only setup items
                         ['label' => 'Raw Materials',    'route' => 'tenant.inventory.raw-materials',     'enabled' => true, 'business_types' => ['manufacturing']],
-                        ['label' => 'Bill of Materials (BOM)', 'route' => 'tenant.inventory.bom',        'enabled' => true, 'business_types' => ['manufacturing', 'merchandising']],
                     ],
                 ]],
                 [
@@ -114,6 +113,7 @@ return [
                 // ['label' => 'Costing Approval',      'route' => 'tenant.merch.costing.approval',  'enabled' => true],
                 // ['label' => 'Order & Matrix Entry',  'route' => 'tenant.merch.orders',            'enabled' => true],
                 ['label' => 'MPR Order',   'route' => 'tenant.merch.mpr.index',               'enabled' => true],
+                ['label' => 'Bill of Materials (BOM)', 'route' => 'tenant.merch.bom.index',        'enabled' => true],
                 // ['label' => 'Booking / Sourcing',    'route' => 'tenant.merch.booking',           'enabled' => true],
                 // ['label' => 'TNA (Time & Action)',   'route' => 'tenant.merch.tna',               'enabled' => true],
                 // ['label' => 'Sample Tracking',       'route' => 'tenant.merch.samples',           'enabled' => true],
