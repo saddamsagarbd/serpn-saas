@@ -25,8 +25,9 @@ class Supplier extends Model
     /** Generates a code like SUP-9THNT, matching the design's placeholder format. */
     public static function generateCode(): string
     {
+        $nextNumber = Supplier::count() + 1;
         do {
-            $code = 'SUP-' . strtoupper(Str::random(5));
+            $code = 'SUP-' . str_pad((string) $nextNumber, 5, '0', STR_PAD_LEFT);
         } while (static::where('supplier_code', $code)->exists());
         return $code;
     }

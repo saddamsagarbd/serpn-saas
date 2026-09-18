@@ -34,7 +34,7 @@
                             <input type="text" name="supplier_code" id="supplier_code"
                                 value="{{ old('supplier_code', $supplier->supplier_code ?? $suggestedCode) }}"
                                 placeholder="SUP-9THNT"
-                                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" readonly>
                             <p class="text-xs text-slate-400 mt-1">Leave as-is to auto-generate, or type your own code.</p>
                         </div>
                         <div>
