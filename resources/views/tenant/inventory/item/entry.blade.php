@@ -10,6 +10,7 @@
         'item_type' => isset($item) ? $item->item_type : '',
         'unit_id' => isset($item) ? $item->unit_id : '',
         'category_id' => isset($item) ? $item->category_id : '',
+        'asset_coa_id' => isset($item) ? $item->asset_coa_id : '',
     ])
 }})">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
@@ -85,6 +86,17 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">COA Head *</label>
+                        <select x-model="assetCoaId" required class="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-800 font-semibold">
+                            <option value="">-- Select COA Head --</option>
+                            @foreach($assetCoaHeads as $coa)
+                                <option value="{{ $coa->id }}" {{ (old('asset_coa_id', $item->asset_coa_id ?? '') == $coa->id) ? 'selected' : '' }}>
+                                    {{ $coa->code }}-{{ $coa->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>                 
 
                 {{-- Action Buttons --}}
@@ -112,6 +124,7 @@ function itemCreationApp(initialData) {
         itemType: initialData.item_type,
         unitId: initialData.unit_id,
         categoryId: initialData.category_id,
+        assetCoaId: initialData.asset_coa_id,
         isSaving: false,
 
         submitForm() {
@@ -137,6 +150,7 @@ function itemCreationApp(initialData) {
                 item_type: this.itemType,
                 unit_id: this.unitId,
                 category_id: this.categoryId,
+                asset_coa_id: this.assetCoaId,
             };
 
             console.log(payload);

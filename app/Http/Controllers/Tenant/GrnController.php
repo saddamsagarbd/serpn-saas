@@ -7,12 +7,14 @@ use App\Models\ChartOfAccount;
 use App\Models\GoodsReceivedNote;
 use App\Models\GoodsReceivedNoteItem;
 use App\Models\Item;
+use App\Models\ItemMaster;
 use App\Models\LedgerEntry;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnItem;
 use App\Models\Stock;
+use App\Models\StockTransaction;
 use App\Models\Voucher;
 use App\Models\Warehouse;
 use Carbon\Carbon;
@@ -68,7 +70,18 @@ class GrnController extends Controller
             ]);
 
             $hasReceivedAnyItem = false;
-            $totalReceivedValue = 0; // অ্যাকাউন্টিং ভাউচারের জন্য মোট মূল্য হিসাব
+            $grnItemGlTotals = [];
+
+            $grniHead = ChartOfAccount::where('tenant_id', tenant('id'))
+                ->where(function ($q) {
+                    $q->where('code', 'like', '%GRNI%')
+                    ->orWhere('name', 'like', '%Goods Received Not Invoiced%')
+                    ->orWhere('name', 'like', '%Unbilled GRN%');
+                })->first();
+
+            if (!$grniHead) {
+                throw new \Exception("Accounting Head 'GRNI Accrual / Goods Received Not Invoiced' is not configured!");
+            }
 
             // ২. GRN Items, Stock Update & PO Item Sync (একমাত্র লুপ)
             foreach ($request->items as $incomingItem) {
@@ -84,7 +97,7 @@ class GrnController extends Controller
                 $lineTotal = $unitPrice * $receivingQty;
 
                 // GRN Item Entry
-                GoodsReceivedNoteItem::create([
+                $grnItem = GoodsReceivedNoteItem::create([
                     'goods_received_note_id' => $grn->id,
                     'purchase_order_item_id' => $incomingItem['po_item_id'],
                     'item_id'                => $incomingItem['item_id'],
@@ -98,7 +111,7 @@ class GrnController extends Controller
 
                 // ভালো মালামালের জন্য ফিজিক্যাল স্টক একবারই বাড়ানো হবে
                 if (($incomingItem['qa_status'] ?? 'Good') !== 'Damaged') {
-                    Stock::updateOrCreate(
+                    $stock =Stock::updateOrCreate(
                         [
                             'tenant_id'    => tenant('id'),
                             'warehouse_id' => $request->warehouse_id,
@@ -110,7 +123,37 @@ class GrnController extends Controller
                             'updated_by'   => auth()->id(),
                         ]
                     );
-                    $totalReceivedValue += $lineTotal; 
+
+
+                    // --- Stock Movement/Transaction Log (Traceability-র জন্য) ---
+                    StockTransaction::create([
+                        'tenant_id'      => tenant('id'),
+                        'stock_id'       => $stock->id,
+                        'item_id'        => $incomingItem['item_id'],
+                        'warehouse_id'   => $request->warehouse_id,
+                        'reference_type' => GoodsReceivedNote::class,
+                        'reference_id'   => $grn->id,
+                        'type'           => 'IN',
+                        'quantity'       => $receivingQty,
+                        'unit_price'     => $unitPrice,
+                        'total_price'    => $lineTotal,
+                        'transaction_date' => $request->received_date,
+                        'created_by'     => auth()->id(),
+                    ]);
+
+                    $itemMaster = ItemMaster::with('category')->find($incomingItem['item_id']);
+                    $inventoryCoaId = $itemMaster->asset_coa_id 
+                        ?? $itemMaster->category?->asset_coa_id;
+
+                    if (!$inventoryCoaId) {
+                        throw new \Exception("Inventory Chart of Account not linked for item: {$itemMaster->name}");
+                    }
+
+                    // CoA অনুযায়ী অ্যামাউন্ট গ্রুপ করা (Dynamic Split)
+                    if (!isset($grnItemGlTotals[$inventoryCoaId])) {
+                        $grnItemGlTotals[$inventoryCoaId] = 0;
+                    }
+                    $grnItemGlTotals[$inventoryCoaId] += $lineTotal;
                 }
 
                 // PO Item-এর Received Qty আপডেট
@@ -123,50 +166,34 @@ class GrnController extends Controller
                 throw new \Exception('Please enter valid receiving quantity for at least one item.');
             }
 
+            $totalReceivedValue = array_sum($grnItemGlTotals);
+
             // ৩. Accounts Double Entry Voucher Posting Engine
             if ($totalReceivedValue > 0) {
-                $inventoryHead = ChartOfAccount::where(function ($query) {
-                    $query->where('code', '1002')
-                        ->orWhere('name', 'like', '%Raw Material%')
-                        ->orWhere('name', 'like', '%Inventory%');
-                })
-                ->where('tenant_id', tenant('id'))
-                ->first();
+                $voucher = Voucher::create([
+                    'tenant_id'    => tenant('id'),
+                    'voucher_no'   => 'GRN-V-' . $grn->grn_no,
+                    'date'         => $request->received_date,
+                    'total_amount' => $totalReceivedValue,
+                    'narration'    => "Material inventory received via GRN: " . $grn->grn_no . " against PO: " . $po->po_no,
+                ]);
 
-                $payableHead = ChartOfAccount::where(function ($query) {
-                    $query->where('code', 'AP')
-                        ->orWhere('code', '2001')
-                        ->orWhere('name', 'like', '%Accounts Payable%');
-                })
-                ->where('tenant_id', tenant('id'))
-                ->first();
-
-                if (!$inventoryHead || !$payableHead) {
-                    throw new \Exception("Accounting Head (Inventory/Payable) not found in Chart of Accounts!");
+                // dynamic Item-wise Asset Debit entries
+                foreach ($grnItemGlTotals as $coaId => $amount) {
+                    LedgerEntry::create([
+                        'tenant_id'           => tenant('id'),
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $coaId,
+                        'debit'               => $amount,
+                        'credit'              => 0
+                    ]);
                 }
 
-                $voucher = Voucher::create([
-                    'tenant_id'  => tenant('id'),
-                    'voucher_no' => 'PV-' . $po->po_no . '-' . rand(10, 99),
-                    'date'       => $request->received_date,
-                    'total_amount' => $totalReceivedValue,
-                    'narration'  => "Material stock received via GRN: " . $grn->grn_no . " against PO: " . $po->po_no,
-                ]);
-
-                // Inventory Asset (Debit)
+                // Goods Received Not Invoiced (GRNI) Accrual Credit Entry
                 LedgerEntry::create([
                     'tenant_id'           => tenant('id'),
                     'voucher_id'          => $voucher->id,
-                    'chart_of_account_id' => $inventoryHead->id,
-                    'debit'               => $totalReceivedValue,
-                    'credit'              => 0
-                ]);
-
-                // Accounts Payable (Credit)
-                LedgerEntry::create([
-                    'tenant_id'           => tenant('id'),
-                    'voucher_id'          => $voucher->id,
-                    'chart_of_account_id' => $payableHead->id,
+                    'chart_of_account_id' => $grniHead->id,
                     'debit'               => 0,
                     'credit'              => $totalReceivedValue
                 ]);
@@ -180,9 +207,6 @@ class GrnController extends Controller
                 ->exists();
 
             $poStatus = $isPartiallyPending ? 'partially_received' : 'received';
-
-            // 'draft','pending','approved','partially_received','received','cancelled'
-            // 'received','partially_received','returned'
 
             $po->update(['status' => $poStatus]);
             $grn->update(['status' => $poStatus]);

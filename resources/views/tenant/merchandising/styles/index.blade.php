@@ -26,16 +26,20 @@
         });
     },
 
+    titleCase(str) {
+        return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+    },
+
     async handleStatusUpdate(styleId, statusType) {
-        const isApprove = statusType === 'completed';
+        const isApprove = statusType === 'approved';
         
         const result = await Swal.fire({
-            title: isApprove ? 'Approve Style?' : 'Reject Style?',
+            title: this.titleCase(statusType)+` Style?`,
             text: `Are you sure you want to mark this style as ${statusType}?`,
             icon: isApprove ? 'question' : 'warning',
             showCancelButton: true,
             confirmButtonColor: isApprove ? '#10B981' : '#EF4444',
-            confirmButtonText: isApprove ? 'Yes, Approve' : 'Yes, Reject',
+            confirmButtonText: 'Proceed',
             cancelButtonText: 'Cancel'
         });
 
@@ -146,7 +150,8 @@
                                             :class="{
                                                 'bg-gray-100 text-gray-800': style.status === 'draft',
                                                 'bg-blue-100 text-blue-800': style.status === 'running',
-                                                'bg-green-100 text-green-800': style.status === 'completed',
+                                                'bg-green-100 text-green-800': style.status === 'approved',
+                                                'bg-green-100 text-green-800': style.status === 'inhoused',
                                                 'bg-red-100 text-red-800': style.status === 'cancelled',
                                                 'bg-red-100 text-red-800': style.status === 'rejected'
                                             }" 
@@ -188,13 +193,17 @@
                                                        class="block px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
                                                         Edit
                                                     </a>
-                                                    <button @click="open = false; handleStatusUpdate(style.id, 'completed')" 
+                                                    <button @click="open = false; handleStatusUpdate(style.id, 'approved')" 
                                                             class="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 font-medium">
                                                         Approve
                                                     </button>
                                                     <button @click="open = false; handleStatusUpdate(style.id, 'rejected')" 
                                                             class="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-medium">
                                                         Reject
+                                                    </button>
+                                                    <button @click="open = false; handleStatusUpdate(style.id, 'inhoused')" 
+                                                            class="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 font-medium">
+                                                        In-housed
                                                     </button>
                                                 </div>
                                             </div>

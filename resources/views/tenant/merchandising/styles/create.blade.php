@@ -216,9 +216,9 @@
                                 <!-- <th class="p-3 w-2/12">Color</th>
                                 <th class="p-3 w-2/12">Size</th> -->
                                 <th class="p-3 w-1.5/12 text-right">Consumption</th>
+                                <th class="p-3 w-2/12 text-right">Unit Cost (<span x-text="currencySymbol"></span>)</th>
                                 <th class="p-3 w-1.5/12 text-center">Wastage %</th>
-                                <th class="p-3 w-1.5/12 text-right">Unit Cost (<span x-text="currencySymbol"></span>)</th>
-                                <th class="p-3 w-2/12 text-right">Total Cost (<span x-text="currencySymbol"></span>)</th>
+                                <th class="p-3 w-3/12 text-right">Total Cost (<span x-text="currencySymbol"></span>)</th>
                                 <th class="p-3 w-1/12 text-center">Action</th>
                             </tr>
                         </thead>
@@ -302,10 +302,10 @@
                                         <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="0.00" x-model.number="item.qty" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-indigo-600 focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
-                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="5" x-model.number="item.wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
-                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="0.0000" x-model.number="item.cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold focus:outline-none focus:border-indigo-500">
+                                        <input type="number" onkeydown="preventInvalidNumberInput(event)" step="0.01" placeholder="5" x-model.number="item.wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                     </td>
                                     <td class="p-2">
                                         <input type="text" :value="((item.qty || 0) * (item.cost || 0) * (1 + ((item.wastage || 0) / 100))).toFixed(2)" readonly class="w-full p-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800">
@@ -376,8 +376,8 @@
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
                                 <th class="p-3 pl-4 w-4/12">Service</th>
-                                <th class="p-3 w-2/12 text-center">Wastage %</th>
                                 <th class="p-3 w-3/12 text-right">Unit Cost (<span x-text="currencySymbol"></span>)</th>
+                                <th class="p-3 w-1.5/12 text-center">Wastage %</th>
                                 <th class="p-3 w-3/12 text-right pr-4">Total Cost (<span x-text="currencySymbol"></span>)</th>
                             </tr>
                         </thead>
@@ -388,10 +388,10 @@
                                     <label class="text-[11px] font-bold text-slate-600 uppercase">Print</label>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.print_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)" placeholder="0.0000" x-model.number="services.print_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.print_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)" placeholder="0" x-model.number="services.print_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2 pr-4 text-right font-mono font-bold text-slate-800">
                                     <span x-text="((parseFloat(services.print_cost) || 0) * (1 + ((parseFloat(services.print_wastage) || 0) / 100))).toFixed(2)"></span>
@@ -404,10 +404,10 @@
                                     <label class="text-[11px] font-bold text-slate-600 uppercase">Embroidery</label>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.emb_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.emb_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.emb_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.emb_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2 pr-4 text-right font-mono font-bold text-slate-800">
                                     <span x-text="((parseFloat(services.emb_cost) || 0) * (1 + ((parseFloat(services.emb_wastage) || 0) / 100))).toFixed(2)"></span>
@@ -420,10 +420,10 @@
                                     <label class="text-[11px] font-bold text-slate-600 uppercase">Wash</label>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.wash_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.wash_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.wash_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.wash_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2 pr-4 text-right font-mono font-bold text-slate-800">
                                     <span x-text="((parseFloat(services.wash_cost) || 0) * (1 + ((parseFloat(services.wash_wastage) || 0) / 100))).toFixed(2)"></span>
@@ -436,10 +436,10 @@
                                     <label class="text-[11px] font-bold text-slate-600 uppercase">CM</label>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.cm_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.cm_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.cm_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.cm_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2 pr-4 text-right font-mono font-bold text-slate-800">
                                     <span x-text="((parseFloat(services.cm_cost) || 0) * (1 + ((parseFloat(services.cm_wastage) || 0) / 100))).toFixed(2)"></span>
@@ -452,10 +452,10 @@
                                     <label class="text-[11px] font-bold text-slate-600 uppercase">Overhead</label>
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.overhead_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.overhead_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2">
-                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0.0000" x-model.number="services.overhead_cost" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-right font-mono font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                    <input type="number" onkeydown="preventInvalidNumberInput(event)"  placeholder="0" x-model.number="services.overhead_wastage" class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg text-center font-mono focus:outline-none focus:border-indigo-500">
                                 </td>
                                 <td class="p-2 pr-4 text-right font-mono font-bold text-slate-800">
                                     <span x-text="((parseFloat(services.overhead_cost) || 0) * (1 + ((parseFloat(services.overhead_wastage) || 0) / 100))).toFixed(2)"></span>

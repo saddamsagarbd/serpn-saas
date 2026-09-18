@@ -435,7 +435,7 @@ class StyleController extends Controller
 
     public function updateStatus(Request $request, $tenant, String $id){
         $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:draft,running,completed,rejected,cancelled',
+            'status' => 'required|string',
         ]);
 
         if ($validator->fails()) {

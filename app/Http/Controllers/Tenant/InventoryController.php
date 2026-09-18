@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\ChartOfAccount;
 use App\Models\ColorContext;
 use App\Models\FabricSpec;
 use App\Models\ItemMaster;
@@ -106,7 +107,9 @@ class InventoryController extends Controller
         
         // যেমন: ITM-2026-0005
         $nextSkuPreview = 'ITM-' . $currentYear . '-' . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-        return view('tenant.inventory.item.entry', compact('units', 'nextSkuPreview', 'categories'));
+
+        $assetCoaHeads = ChartOfAccount::where('type', 'asset')->select('id', 'name', 'code')->get();
+        return view('tenant.inventory.item.entry', compact('units', 'nextSkuPreview', 'categories', 'assetCoaHeads'));
     }
 
     // ৩. ডাটাবেজে আইটেম মাস্টার সেভ করা
@@ -115,6 +118,7 @@ class InventoryController extends Controller
         $request->validate([            
             'item_name' => 'required|string|max:255',
             'item_type' => 'required|string',
+            'asset_coa_id'   => 'required|integer|exists:chart_of_accounts,id',
         ]);
 
         $tenantId = tenant('id');
@@ -148,6 +152,7 @@ class InventoryController extends Controller
 
             ItemMaster::create([
                 'tenant_id'   => $tenantId,
+                'asset_coa_id'     => $request->asset_coa_id,
                 'code'        => $itemCode,
                 'name'        => $request->item_name,
                 'item_type'   =>  $typeLower,
@@ -177,9 +182,11 @@ class InventoryController extends Controller
 
         $categories    = Category::where('is_active', 1)->get();
 
+        $assetCoaHeads = ChartOfAccount::where('type', 'asset')->select('id', 'name', 'code')->get();
+
         // ভিউ ফাইলে ডাটা পাস করা (ধরে নিচ্ছি আপনার ব্লেড ফাইলটি edit.blade.php নামে আছে)
         return view('tenant.inventory.item.entry', compact(
-            'units', 'item', 'categories'
+            'units', 'item', 'categories', 'assetCoaHeads'
         ));
     }
 
@@ -190,6 +197,7 @@ class InventoryController extends Controller
             'item_type' => 'required|string',
             'unit_id'   => 'required|integer|exists:units,id',
             'category_id'   => 'required|integer|exists:categories,id',
+            'asset_coa_id'   => 'required|integer|exists:chart_of_accounts,id',
         ]);
 
         $now = Carbon::now();        
@@ -202,6 +210,7 @@ class InventoryController extends Controller
         try {
 
             $item->update([
+                'asset_coa_id'   => $validated['asset_coa_id'],
                 'name'      => $validated['item_name'],
                 'item_type' => $typeLower,
                 'unit_id'   => $validated['unit_id'],
