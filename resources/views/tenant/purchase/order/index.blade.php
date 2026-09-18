@@ -29,6 +29,48 @@
                 this.loading = false;
             }
         },
+        async handleStatusUpdate(poId, statusType) {
+            const isApprove = statusType === 'approved';
+            
+            const result = await Swal.fire({
+                title: (statusType?.toUpperCase() || 'Update') + ' PO?',
+                text: `Are you sure you want to mark this PO as ${statusType}?`,
+                icon: isApprove ? 'question' : 'warning',
+                showCancelButton: true,
+                confirmButtonColor: isApprove ? '#10B981' : '#EF4444',
+                confirmButtonText: 'Proceed',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/purchase/po/${poId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ status: statusType })
+                    });
+
+                    if (response.ok) {
+                        Swal.fire({
+                            title: 'Updated!',
+                            text: `PO status updated to ${statusType}.`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        this.fetchPurchaseOrders(); // Refresh table data
+                    } else {
+                        throw new Error('Network response was not ok');
+                    }
+                } catch (error) {
+                    Swal.fire('Error', 'Failed to update PO status.', 'error');
+                }
+            }
+        },
         nextPage() { if (this.page < this.lastPage) { this.page++; this.fetchPurchaseOrders(); } },
         prevPage() { if (this.page > 1) { this.page--; this.fetchPurchaseOrders(); } }
     }"
@@ -48,12 +90,13 @@
                     <input type="text" placeholder="Search orders..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
                 </div>
                 
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse overflow-visible">
                     <thead>
                         <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs font-bold uppercase">
                             <th class="p-4">PO Number</th>
                             <th class="p-4">Supplier Info</th>
                             <th class="p-4">Order Details</th>
+                            <th class="p-4">Status</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
@@ -63,11 +106,56 @@
                                 <td class="p-4 font-semibold text-slate-800" x-text="order.po_no"></td>
                                 <td class="p-4 font-semibold text-slate-800" x-text="order.supplier_details"></td>
                                 <td class="p-4 font-semibold text-slate-800" x-text="order.order_details"></td>
+                                <!-- Status Badge -->
+                                <td class="p-4">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full capitalize"
+                                        :class="{
+                                            'bg-gray-100 text-gray-800': order.status === 'draft',
+                                            'bg-blue-100 text-blue-800': order.status === 'pending',
+                                            'bg-green-100 text-green-800': order.status === 'approved',
+                                            'bg-red-100 text-red-800': order.status === 'rejected'
+                                        }" 
+                                        x-text="order.status || 'N/A'">
+                                    </span>
+                                </td>
                                 
-                                <td class="p-4 text-center">
-                                    <a :href="`{{ route('tenant.purchase.po.index') }}/${order.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
-                                        Edit
-                                    </a>
+                                <td class="px-4 py-3 text-center overflow-visible">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <a :href="`{{ route('tenant.purchase.po.index') }}/${order.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
+                                            Edit
+                                        </a>
+
+                                        <!-- Alpine Action Dropdown -->
+                                        <div class="relative inline-block text-left" x-data="{ open: false }" @click.outside="open = false">
+                                            <button @click="open = !open" 
+                                                    type="button" 
+                                                    class="bg-gray-50 border border-gray-200 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 font-semibold transition text-xs inline-flex items-center gap-1">
+                                                More
+                                                <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            <!-- Dropup menu (Opens upward) -->
+                                            <div x-show="open" 
+                                                x-transition
+                                                class="absolute right-0 bottom-full mb-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 text-left text-xs"
+                                                style="display: none;">
+                                                <button @click="open = false; handleStatusUpdate(order.id, 'pending')" 
+                                                        class="w-full text-left px-3 py-1.5 text-blue-600 hover:bg-blue-50 font-medium">
+                                                    Pending
+                                                </button>
+                                                <button @click="open = false; handleStatusUpdate(order.id, 'approved')" 
+                                                        class="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 font-medium">
+                                                    Approve
+                                                </button>
+                                                <button @click="open = false; handleStatusUpdate(order.id, 'rejected')" 
+                                                        class="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-medium">
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </template>

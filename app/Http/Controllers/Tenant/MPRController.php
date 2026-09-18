@@ -303,6 +303,8 @@ class MPRController extends Controller
         $salesOrder = $this->getSalesOrderWithRelations($id);
         $consolidatedMrpDetails = $this->calculateMrpDetails($salesOrder);
 
+        // dd($salesOrder);
+
         return view('tenant.merchandising.mpr.report', compact('salesOrder', 'consolidatedMrpDetails'));
     }
 
@@ -420,67 +422,140 @@ class MPRController extends Controller
 
         $supplier = Supplier::where('tenant_id', tenant('id'))->findOrFail($supplier_id);
 
-        $totalSalesOrderQty = DB::table('sales_order_items')
-                            ->join('sales_orders', 'sales_order_items.sales_order_id', '=', 'sales_orders.id')
-                            ->where('sales_orders.tenant_id', tenant('id'))
-                            ->where('sales_order_items.style_id', $style_id)
-                            ->sum('sales_order_items.quantity');
-
-
-        $mprItems = DB::table('bom_items')
-            ->join('style_costings', 'bom_items.style_costing_id', '=', 'style_costings.id')
-            ->join('styles', 'style_costings.style_id', '=', 'styles.id')
-            ->join('item_masters', 'bom_items.item_id', '=', 'item_masters.id')
-            ->leftJoin('color_contexts', 'bom_items.color_id', '=', 'color_contexts.id') // যদি Color টেবিল থাকে
-            ->leftJoin('size_charts', 'bom_items.size_id', '=', 'size_charts.id')
-            ->leftJoin('units', 'item_masters.unit_id', '=', 'units.id')
-            ->where('bom_items.tenant_id', tenant('id'))
-            ->where('style_costings.style_id', $style_id)
-            ->when($supplier->supplier_type, function ($query, $type) {
-                if($type == "trims" || $type == "packaging"){
-                    return $query->whereIn('item_masters.item_type', ['trims', 'accessories']);                    
-                }
-                return $query->where('item_masters.item_type', $type);
-            })
-            ->select([
-                'bom_items.id as bom_item_id',
-                'item_masters.id as item_master_id',
-                'item_masters.name as item_name',
-                'units.id as unit_id',
-                'units.short_name as unit_name',
-                'color_contexts.id as color_id',
+        $soQtyByColorSize = DB::table('sales_order_items')
+            ->join('sales_orders', 'sales_order_items.sales_order_id', '=', 'sales_orders.id')
+            ->leftJoin('color_contexts', 'sales_order_items.color', '=', 'color_contexts.id')
+            ->leftJoin('size_charts', 'sales_order_items.size', '=', 'size_charts.id')
+            ->where('sales_orders.tenant_id', tenant('id'))
+            ->where('sales_orders.style_id', $style_id)
+            ->select(
+                'sales_order_items.color',
                 'color_contexts.name as color_name',
-                'size_charts.id as size_id',
+                'sales_order_items.size',
                 'size_charts.short_name as size_name',
-                'bom_items.consumption',        // ১ পিস জামায় কতটুকু মালামাল লাগে
-                'bom_items.wastage_percent',    // ওয়েস্টেজ পার্সেন্টেজ (যদি থাকে)
-                'bom_items.unit_price as estimated_rate'
-            ])
-            ->get()
-            ->map(function ($item) use ($totalSalesOrderQty) {
-                // হিসাব: (Total SO Qty * Unit Consumption) + Wastage %
-                $baseQty = $totalSalesOrderQty * $item->consumption;
+                DB::raw('SUM(sales_order_items.quantity) as total_qty')
+            )
+            ->groupBy(
+                'sales_order_items.color',
+                'color_contexts.name',
+                'sales_order_items.size',
+                'size_charts.short_name'
+            )
+            ->get();
+
+        if ($soQtyByColorSize->isEmpty()) {
+            return response()->json([]); // কোনো SO নাই তাহলে MPR ও শূন্য
+        }
+
+        $bomItems = DB::table('bom_items')
+        ->join('style_costings', 'bom_items.style_costing_id', '=', 'style_costings.id')
+        ->join('item_masters', 'bom_items.item_id', '=', 'item_masters.id')
+        ->leftJoin('units', 'item_masters.unit_id', '=', 'units.id')
+        ->where('bom_items.tenant_id', tenant('id'))
+        ->where('style_costings.style_id', $style_id)
+        ->when($supplier->supplier_type, function ($query, $type) {
+            if ($type == "trims" || $type == "packaging") {
+                return $query->whereIn('item_masters.item_type', ['trims', 'accessories']);
+            }
+            return $query->where('item_masters.item_type', $type);
+        })
+        ->select([
+            'bom_items.id as bom_item_id',
+            'item_masters.id as item_master_id',
+            'item_masters.name as item_name',
+            'units.id as unit_id',
+            'units.short_name as unit_name',
+            'bom_items.consumption',
+            'bom_items.wastage_percent',
+            'bom_items.unit_price as estimated_rate',
+        ])
+        ->get();
+
+        $mprItems = [];
+
+        foreach ($bomItems as $item) {
+            foreach ($soQtyByColorSize as $so) {
+                $baseQty = $so->total_qty * $item->consumption;
                 $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
                 $totalRequiredQty = $baseQty + $wastageQty;
 
-                return [
-                    'item_id'     => $item->item_master_id,
-                    'name'        => $item->item_name,
-                    'color_id'    => $item->color_id ?? 1,
-                    'color'       => $item->color_name ?? 'N/A',
-                    'size_id'     => $item->size_id ?? 1,
-                    'size'        => $item->size_name ?? 'All',
-                    'mpr_qty'     => round($totalRequiredQty, 2),  // মোট রিকোয়ার্ড পরিমাণ
-                    'order_qty'   => round($totalRequiredQty, 2),  // বাই-ডিফল্ট এটাই Booking Qty
-                    'unit'        => $item->unit_name ?? 'Pcs',
-                    'unit_id'     => $item->unit_id ?? 1,
-                    'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
+                $mprItems[] = [
+                    'item_id'    => $item->item_master_id,
+                    'name'       => $item->item_name,
+                    'color_id'   => $so->color ?? 1,
+                    'color'      => $so->color_name ?? 'N/A',
+                    'size_id'    => $so->size ?? 1,
+                    'size'       => $so->size_name ? strtoupper($so->size_name) : 'All',
+                    'mpr_qty'    => round($totalRequiredQty, 2),
+                    'order_qty'  => round($totalRequiredQty, 2),
+                    'unit'       => $item->unit_name ?? 'Pcs',
+                    'unit_id'    => $item->unit_id ?? 1,
+                    'unit_price' => (float) ($item->estimated_rate ?? 0.00),
                 ];
-            });
+            }
+        }
 
         return response()->json($mprItems);
-        
-        
+    }
+
+    public function getOrderByStyleId($tenant, string $style_id)
+    {
+        // ১. Style-এর আন্ডারে থাকা Costing এবং BOM Items লোড করা
+        $style = Style::with([
+            'buyer',
+            'costing.bomItems.itemMaster',
+            'costing.bomItems.color',
+            'costing.bomItems.size'
+        ])->where('tenant_id', tenant('id'))->find($style_id);
+
+        if (!$style) {
+            return response()->json(['success' => false, 'message' => 'Style not found'], 444);
+        }
+
+        // BOM Items প্রসেস করা (Unit cost সহ)
+        $bomItems = optional($style->costing)->bomItems ? $style->costing->bomItems->map(function ($bom) {
+            return [
+                'id' => $bom->id,
+                'item_id' => $bom->item_id,
+                'item_name' => optional($bom->itemMaster)->name ?? $bom->item_name ?? 'Material Item',
+                'unit_cost' => floatval($bom->unit_price ?? $bom->unit_cost ?? 0),
+                'consumption' => floatval($bom->consumption ?? 0),
+            ];
+        }) : [];
+
+        // ২. Style-এর আন্ডারে থাকা Sales Orders (MPR) এবং তাদের Color/Size Matrix লোড করা
+        $salesOrders = SalesOrder::with([
+            'items.colorContext',
+            'items.sizeChart'
+        ])
+        ->where('tenant_id', tenant('id'))
+        ->where('style_id', $style_id)
+        ->get();
+
+        $mprOrders = $salesOrders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'buyer_po_number' => $order->buyer_po_number,
+                'total_quantity' => $order->items->sum('quantity'),
+                'matrix_items' => $order->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'color_id' => $item->color,
+                        'color_name' => optional($item->colorContext)->name ?? 'N/A',
+                        'size_id' => $item->size,
+                        'size_name' => optional($item->sizeChart)->name ?? 'N/A',
+                        'quantity' => $item->quantity,
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'buyer_name' => optional($style->buyer)->name ?? 'N/A',
+            'bom_items' => $bomItems,
+            'mpr_orders' => $mprOrders
+        ]);
     }
 
 }

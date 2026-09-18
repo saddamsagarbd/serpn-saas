@@ -31,6 +31,7 @@ use App\Http\Controllers\Tenant\{
     GrnController,
     MPRController,
     OrderController,
+    ProductionBomController,
     PurchaseOrderController,
     PurchaseRequisitionController,
     SeasonController,
@@ -184,6 +185,13 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/mpr-order/{id}/export-pdf', [MPRController::class, 'exportPdf'])->name('mpr-order-export-pdf');
                 Route::get('/mpr-order-edit/{id}', [MPRController::class, 'mrpOrderEdit'])->name('mpr.order-edit');
                 Route::put('/mpr-orders-update/{id}', [MPRController::class, 'update'])->name('mpr.orders-update');
+                Route::get('/mpr-order/get-by-style/{style_id}', [MPRController::class, 'getOrderByStyleId'])->name('mpr.get-by-style');
+
+                // BOM
+                Route::get('/bom', [ProductionBomController::class, 'index'])->name('bom.index');
+                Route::get('/bom/create', [ProductionBomController::class, 'create'])->name('bom.create');
+                Route::get('/bom/get-mprs-by-style/{styleId}', [ProductionBomController::class, 'getMprsByStyle'])->name('bom.get-mprs');
+                Route::post('/bom/store', [ProductionBomController::class, 'store'])->name('bom.store');
                 
             });
             
@@ -195,6 +203,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::post('/po-store', [PurchaseOrderController::class, 'store'])->name('po.store');
                 Route::get('/orders/{id}/edit', [PurchaseOrderController::class, 'edit'])->name('po.edit');
                 Route::put('/po-update/{id}', [PurchaseOrderController::class, 'update'])->name('po.update');
+                Route::post('/po/{id}/status', [PurchaseOrderController::class, 'updateStatus'])->name('po.status');
 
                 Route::get('/grn', [GrnController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [GrnController::class, 'saveGRNTransaction'])->name('grn.store');
@@ -206,8 +215,9 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 
-                Route::get('supplier-invoices/get-grn-data', [SupplierInvoiceController::class, 'getGrnData'])->name('suppliers.invoice.get-grn-data');
-                Route::resource('suppliers/invoice', SupplierInvoiceController::class)->names('suppliers.invoice');
+                Route::get('/invoices/get-grn-data', [SupplierInvoiceController::class, 'getGrnData'])->name('invoice.get-grn-data');
+                Route::get('suppliers/invoice/{id}/print', [SupplierInvoiceController::class, 'print'])->name('invoice.print');
+                Route::resource('suppliers/invoice', SupplierInvoiceController::class)->names('invoice');
 
                 Route::get('/purchase-return', [GrnController::class, 'purchaseReturn'])->name('return');
                 Route::get('/purchase-return/{id}/details', [GrnController::class, 'purchaseReturnDetails'])->name('return.details');

@@ -59,7 +59,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <!-- Style Selection -->
-                <div>
+                <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Select Style / Order <span class="text-red-500">*</span></label>
                     <select x-ref="styleSelect" name="style_id" required class="w-full text-xs" x-init="$nextTick(() => initStyleSelect2())">
                         <option value=""></option>
@@ -72,7 +72,7 @@
                 </div>
 
                 <!-- Supplier Selection -->
-                <div>
+                <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Select Supplier <span class="text-red-500">*</span></label>
                     <select x-ref="supplierSelect" name="supplier_id" required class="w-full text-xs" x-init="$nextTick(() => initSupplierSelect2())">
                         <option value="">-- Choose Supplier --</option>
@@ -82,18 +82,26 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
+                </div class="space-y-1.5">
 
                 <!-- PO Date -->
-                <div>
+                <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">PO Date <span class="text-red-500">*</span></label>
                     <input type="date" name="po_date" x-model="poDate" class="w-full border border-gray-300 rounded-lg text-xs p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 </div>
 
                 <!-- Delivery Date -->
-                <div>
+                <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Expected Delivery Date</label>
                     <input type="date" name="delivery_date" x-model="deliveryDate" class="w-full border border-gray-300 rounded-lg text-xs p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Currency</label>
+                    <select x-model="currency" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-500">
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="BDT">BDT (৳)</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -114,8 +122,8 @@
                             <th class="p-3 text-right">GMT Req.</th>
                             <th class="p-3 text-right w-28">Booking Qty</th>
                             <th class="p-3 text-center w-20">Unit</th>
-                            <th class="p-3 text-right w-28">Unit Price ($)</th>
-                            <th class="p-3 text-right w-32">Total ($)</th>
+                            <th class="p-3 text-right w-28">Unit Price (<span x-text="currencySymbol"></span>)</th>
+                            <th class="p-3 text-right w-32">Total (<span x-text="currencySymbol"></span>)</th>
                             <th class="p-3 text-center w-12">Action</th>
                         </tr>
                     </thead>
@@ -141,7 +149,7 @@
                                 <td class="p-2">
                                     <input type="number" step="0.0001" x-model.number="item.unit_price" class="w-full border border-gray-300 rounded p-1.5 text-right font-mono focus:ring-1 focus:ring-indigo-500">
                                 </td>
-                                <td class="p-2 text-right font-mono font-bold text-slate-800" x-text="'$' + ((item.order_qty || 0) * (item.unit_price || 0)).toFixed(2)"></td>
+                                <td class="p-2 text-right font-mono font-bold text-slate-800" x-text="currencySymbol + ((item.order_qty || 0) * (item.unit_price || 0)).toFixed(2)"></td>
                                 <td class="p-2 text-center">
                                     <button type="button" @click="removeItem(index)" class="text-red-400 hover:text-red-600 font-bold text-base">&times;</button>
                                 </td>
@@ -203,19 +211,19 @@
                 <div class="space-y-2 text-xs">
                     <div class="flex justify-between border-b border-slate-800 pb-1">
                         <span class="text-slate-400">Items Subtotal:</span>
-                        <span class="font-mono font-bold text-slate-200" x-text="'$' + subtotal().toFixed(2)"></span>
+                        <span class="font-mono font-bold text-slate-200" x-text="currencySymbol + ' ' + subtotal().toFixed(2)"></span>
                     </div>
                     <div class="flex justify-between border-b border-slate-800 pb-1">
                         <span class="text-slate-400">Extra Charges:</span>
-                        <span class="font-mono text-slate-300" x-text="'+$' + additionalCosts().toFixed(2)"></span>
+                        <span class="font-mono text-slate-300" x-text="currencySymbol + ' ' + additionalCosts().toFixed(2)"></span>
                     </div>
                     <div class="flex justify-between border-b border-slate-800 pb-1 text-red-400">
                         <span>Discount:</span>
-                        <span class="font-mono" x-text="'-$' + (discount || 0).toFixed(2)"></span>
+                        <span class="font-mono" x-text="'-' + currencySymbol + ' ' + (discount || 0).toFixed(2)"></span>
                     </div>
                     <div class="pt-2">
                         <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">Grand Total Value</span>
-                        <div class="text-3xl font-extrabold font-mono text-emerald-400" x-text="'$' + grandTotal().toFixed(2)"></div>
+                        <div class="text-3xl font-extrabold font-mono text-emerald-400" x-text="currencySymbol + ' ' + grandTotal().toFixed(2)"></div>
                     </div>
                 </div>
 
@@ -266,8 +274,6 @@
             }));
         };
 
-        console.log(initialPo.po_date);
-
         return {
             isEdit: !!initialPo,
             poId: initialPo ? initialPo.id : null,
@@ -291,6 +297,16 @@
             isSaving: false,
             pendingStatus: null,
             hydrating: !!initialPo,
+            currency: (initialPo?.currency || 'USD').toUpperCase(),
+            
+            get currencySymbol() {
+                const symbols = { BDT: '৳', TAKA: '৳', EUR: '€', USD: '$', GBP: '£' };
+                return symbols[this.currency] || '$';
+            },
+
+            payloadCurrency() {
+                return this.currency;
+            },
 
             initStyleSelect2() {
                 let el = $(this.$refs.styleSelect);
@@ -328,12 +344,13 @@
             },
 
             fetchMprItems() {
+                console.log('event fire');
                 // Skip AJAX call when page loads in Edit mode so populated items aren't lost
                 if (this.hydrating || !this.selectedStyleId || !this.selectedSupplierId) return;
 
                 this.loading = true;
                 let url = "{{ route('tenant.api.get-mpr-items', ['style_id' => '__sid', 'supplier_id' => '__supid']) }}"
-                          .replace('__sid', this.selectedStyleId).replace('__supid', this.selectedSupplierId);
+                        .replace('__sid', this.selectedStyleId).replace('__supid', this.selectedSupplierId);
 
                 fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
                     .then(res => res.json())

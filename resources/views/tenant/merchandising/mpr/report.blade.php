@@ -32,6 +32,85 @@
             </div>
         </div>
 
+        <!-- 1. Order Header Information -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+            <div class="border-b border-slate-100 pb-3">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">1. Order Header Information</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Style</span>
+                    <span class="font-bold text-slate-800 text-sm mt-0.5 block">{{ $salesOrder->style->name ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Buyer Name (Sold-to Party)</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->buyer->name ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Buyer PO Number</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->buyer_po_number ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Ship To Party</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->ship_to_party ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Sales Org</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->sales_org ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Distribution Channel</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->distribution_channel ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Job Mode</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->job_mode ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Division / Merchant Team</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->merchant_team ?? 'N/A'}}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">PO Received Date</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->po_received_date ? \Carbon\Carbon::parse($salesOrder->po_received_date)->format('m / d / Y') : 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Requested Delivery Date</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->requested_delivery_date ? \Carbon\Carbon::parse($salesOrder->requested_delivery_date)->format('m / d / Y') : 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Advance Receive Date</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->advance_receive_date ? \Carbon\Carbon::parse($salesOrder->advance_receive_date)->format('m / d / Y') : 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Plant (Factory)</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->plant ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Shipping Point</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->shipping_point ?? 'N/A' }}</span>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Currency</span>
+                    <span class="font-semibold text-slate-700 mt-0.5 block">{{ $salesOrder->currency ?? 'USD ($)' }}</span>
+                </div>
+            </div>
+        </div>
+
         <!-- SKU Group Cards -->
         <div class="bg-white rounded-xl p-5 border border-slate-200">
             <div class="flex justify-between items-center mb-4">
@@ -41,7 +120,7 @@
                 </span>
             </div>
 
-            <table class="w-full text-xs text-left border-collapse">
+            <!-- <table class="w-full text-xs text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 uppercase font-bold text-slate-500">
                         <th class="p-3">Category</th>
@@ -65,6 +144,28 @@
                             <td class="p-3 text-right font-mono font-bold text-indigo-600">
                                 {{ number_format($item['required_qty'], 2) }}
                             </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table> -->
+            <table class="w-full text-xs text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 uppercase font-bold text-slate-500">
+                        <th class="p-3">SKU</th>
+                        <th class="p-3">Color</th>
+                        <th class="p-3">Size</th>
+                        <th class="p-3">Ordered Qty</th>
+                        <th class="p-3">Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    @foreach($salesOrder->items as $item)
+                        <tr>
+                            <td class="p-3 font-bold text-slate-800">{{ $item->sku ?? "N/A" }}</td>
+                            <td class="p-3">{{ $item->colorContext->name }}</td>
+                            <td class="p-3">{{ $item->sizeChart->name }}</td>
+                            <td class="p-3 text-right font-mono">{{ $item->quantity }}</td>
+                            <td class="p-3 text-right font-mono">{{ number_format($item->unit_price, 4) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

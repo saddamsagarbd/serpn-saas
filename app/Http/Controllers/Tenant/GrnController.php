@@ -32,7 +32,7 @@ class GrnController extends Controller
             'order.color',
             'order.size',
             'order.unit',
-        ])->get();
+        ])->whereIn('status', ['approved', 'partially_received'])->get();
 
         $warehouses = Warehouse::where('tenant_id', tenant('id'))->get();
         return view('tenant.purchase.goods-received-notes', compact('purchaseOrders', 'warehouses'));
@@ -96,12 +96,20 @@ class GrnController extends Controller
                 $unitPrice = $poItem ? $poItem->unit_price : 0;
                 $lineTotal = $unitPrice * $receivingQty;
 
+                $styleId = $poItem->style_id ?? $po->style_id ?? null;
+                $colorId = $poItem ? $poItem->color_id : null;
+                $sizeId  = $poItem ? $poItem->size_id  : null;
+
                 // GRN Item Entry
                 $grnItem = GoodsReceivedNoteItem::create([
                     'goods_received_note_id' => $grn->id,
                     'purchase_order_item_id' => $incomingItem['po_item_id'],
+                    'style_id'               => $styleId,
                     'item_id'                => $incomingItem['item_id'],
+                    'color_id'               => $colorId,
+                    'size_id'                => $sizeId,
                     'quantity_received'      => $receivingQty,
+                    'accepted_qty'           => ($incomingItem['qa_status'] ?? 'Good') !== 'Damaged' ? $receivingQty : 0,
                     'rejected_qty'           => ($incomingItem['qa_status'] ?? '') === 'Damaged' ? $receivingQty : 0,
                     'unit_price'             => $unitPrice,
                     'total_amount'           => $lineTotal,

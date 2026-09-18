@@ -164,11 +164,11 @@
                                         <div class="flex items-center justify-center gap-1.5">
                                             <!-- Direct Links -->
                                             <a :href="`/merchandising/styles/${style.id}/details`" 
-                                               class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
+                                            class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
                                                 Costing
                                             </a>
                                             <a :href="`/merchandising/styles/${style.id}/bom`" 
-                                               class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
+                                            class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
                                                 BOM
                                             </a>
 
@@ -185,12 +185,12 @@
 
                                                 <!-- Dropup menu (Opens upward) -->
                                                 <div x-show="open" 
-                                                     x-transition
-                                                     class="absolute right-0 bottom-full mb-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 text-left text-xs"
-                                                     style="display: none;">
+                                                    x-transition
+                                                    class="absolute right-0 bottom-full mb-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 text-left text-xs"
+                                                    style="display: none;">
                                                     
                                                     <a :href="`/merchandising/styles/${style.id}/edit`" 
-                                                       class="block px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
+                                                    class="block px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
                                                         Edit
                                                     </a>
                                                     <button @click="open = false; handleStatusUpdate(style.id, 'approved')" 
