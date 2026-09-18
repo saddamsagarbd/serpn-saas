@@ -32,6 +32,7 @@ return [
         ['label' => 'Company',  'icon' => 'building', 'route' => 'tenant.company.index'],
         ['label' => 'Department',  'icon' => 'folder', 'route' => 'tenant.department.index'],
         ['label' => 'Designation',  'icon' => 'tag', 'route' => 'tenant.designation.index'],
+        ['label' => 'User',  'icon' => 'tag', 'route' => 'tenant.user.index'],
     ],
 
     'menus' => [

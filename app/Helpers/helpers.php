@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ItemMaster;
+use App\Models\Permission;
 use App\Models\Tenant;
 
 if (! function_exists('hasFeature')) {
@@ -59,5 +60,29 @@ if (! function_exists('getItemUnit')) {
     {
         $item = ItemMaster::findOrFail($item_id);
         return $item->unit_id ?? null;
+    }
+}
+if (!function_exists('canAccess')) {
+
+    function canAccess(String $routeOrModuleId, $action = 'read')
+    {
+        $user = auth()->user();
+
+        // If user is not logged in
+        if (!$user) {
+            return false;
+        }
+
+        // Super Admin bypass (Optional: change logic based on your system)
+        if ($user->role_id == 1) {
+            return true;
+        }
+
+        // Fetch user permission from Database or Cache
+        $permission = Permission::where('user_id', $user->id)
+            ->where('module', $routeOrModuleId)
+            ->first();
+
+        return $permission ? (bool) $permission->{$action} : false;
     }
 }

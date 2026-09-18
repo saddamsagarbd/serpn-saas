@@ -79,6 +79,11 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
 
             Route::get('department', [SettingController::class, 'department'])->name('department.index');
             Route::get('designation', [SettingController::class, 'designation'])->name('designation.index');
+            Route::get('user', [SettingController::class, 'user'])->name('user.index');
+            Route::get('user/create-form', [SettingController::class, 'userCreate'])->name('user.create');
+            Route::post('user/store', [SettingController::class, 'userSave'])->name('user.store');
+            Route::get('user/{id}/permission', [SettingController::class, 'userPermission'])->name('user.permission');
+            Route::put('user/permission/save', [SettingController::class, 'userPermissionSave'])->name('user.permission.save');
 
             Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
             Route::get('/api/category-masters/search', [InventoryController::class, 'searchCategoryApi'])->name('api.category_masters.search');
@@ -211,7 +216,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
 
                 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
                 Route::get('/suppliers-form', [SupplierController::class, 'create'])->name('suppliers.form');
-                Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+                Route::post('/suppliers/save', [SupplierController::class, 'store'])->name('suppliers.store');
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
 

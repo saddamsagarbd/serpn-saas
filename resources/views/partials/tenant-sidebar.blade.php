@@ -30,30 +30,35 @@
         <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">User Management</p>
             <nav class="space-y-1 px-2">
+                {{-- Default Items --}}
                 @foreach(config('menu.default_features') as $link)
-                    <a href="{{ route($link['route']) }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($link['route']) ? 'bg-blue-50 text-blue-600' : '' }}">
-                        <i data-lucide="{{ $link['icon'] }}" class="w-4 h-4"></i>
-                        <span>{{ $link['label'] }}</span>
-                    </a>
+                    @if(canAccess($link['route'] ?? '', 'read'))
+                        <a href="{{ route($link['route']) }}"
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($link['route']) ? 'bg-blue-50 text-blue-600' : '' }}">
+                            <i data-lucide="{{ $link['icon'] }}" class="w-4 h-4"></i>
+                            <span>{{ $link['label'] }}</span>
+                        </a>
+                    @endif
                 @endforeach
 
                 <div class="pt-2 mt-2 border-t border-gray-100"></div>
 
-                {{-- Feature-wise dropdown menus --}}
+                {{-- Dynamic Multi-Level Features --}}
                 @foreach(config('menu.menus') as $key => $menu)
                     @php
-                        // 1. Gate Level 1 Main Menu Group
                         $menuTypes = $menu['business_types'] ?? ['*'];
                         $isMenuAllowed = in_array('*', $menuTypes) || in_array($currentBusinessType, $menuTypes);
                         $isMenuEnabled = !isset($menu['enabled']) || $menu['enabled'] !== false;
+                        
+                        // Permission Gate Check for Menu Level
+                        $hasMenuPermission = canAccess($menu['route'] ?? '', 'read');
                     @endphp
-                    @if(hasFeature($key) && $isMenuAllowed && $isMenuEnabled)
-                        <div x-data="{ open: {{ request()->is($key.'/*') || request()->is($key) ? 'true' : 'false' }} }" class="select-none">
+
+                    @if(hasFeature($key) && $isMenuAllowed && $isMenuEnabled && $hasMenuPermission)
+                        <div x-data="{ open: {{ request()->is($key.'*') ? 'true' : 'false' }} }" class="select-none">
                             
-                            <!-- 📂 Level 1: Main Menu Button (e.g., Inventory) -->
-                            <button @click="open = !open"
-                                    type="button"
+                            <!-- Level 1 Button -->
+                            <button @click="open = !open" type="button"
                                     class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                                 <span class="flex items-center gap-3">
                                     <i data-lucide="{{ $menu['icon'] }}" class="w-4 h-4"></i>
@@ -62,29 +67,26 @@
                                 <i data-lucide="chevron-down" class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                             </button>
 
-                            <!-- Level 1 Wrapper -->
+                            <!-- Level 1 Items -->
                             <div x-show="open" x-collapse class="pl-4 mt-1 space-y-1">
                                 @foreach($menu['items'] as $item)
                                     @php
-                                        // 2. Gate Level 2 Standard Items / Sub-Groups
                                         $itemTypes = $item['business_types'] ?? ($item['sub']['business_types'] ?? ['*']);
                                         $isItemAllowed = in_array('*', $itemTypes) || in_array($currentBusinessType, $itemTypes);
+                                        $itemKey = $item['key'] ?? $key;
                                     @endphp
-                                    @if((isset($item['enabled']) && $item['enabled'] === false) || !$isItemAllowed)
+
+                                    @if((isset($item['enabled']) && $item['enabled'] === false) || !$isItemAllowed || !canAccess($item['route'] ?? '', 'read'))
                                         @continue
                                     @endif
-                                    
+
                                     @if(isset($item['sub'])) 
-                                        @if(isset($item['sub']['enabled']) && $item['sub']['enabled'] === false)
-                                            @continue
-                                        @endif
-                                        <!-- 🛠️ Level 2: Nested Sub-Group (e.g., Item Master) -->
-                                        <div x-data="{ subOpen: {{ request()->is($key.'/categories*') || request()->is($key.'/units*') || request()->is($key.'/products*') ? 'true' : 'false' }} }" class="space-y-1">
-                                            <button @click="subOpen = !subOpen" 
-                                                    type="button"
+                                        <!-- Level 2: Sub-Group Dropdown -->
+                                        <div x-data="{ subOpen: false }" class="space-y-1">
+                                            <button @click="subOpen = !subOpen" type="button"
                                                     class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                                                 <span class="flex items-center gap-3">
-                                                    <i data-lucide="{{ !empty($item['sub']['icon']) ? $item['sub']['icon'] : 'circle' }}" class="w-4 h-4 text-slate-400"></i>
+                                                    <i data-lucide="{{ $item['sub']['icon'] ?? 'circle' }}" class="w-4 h-4 text-slate-400"></i>
                                                     <span>{{ $item['sub']['label'] }}</span>
                                                 </span>
                                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform" :class="subOpen ? 'rotate-180' : ''"></i>
@@ -92,23 +94,17 @@
                                             
                                             <div x-show="subOpen" x-collapse class="border-l-2 border-slate-100 pl-4 space-y-1">
                                                 @foreach($item['sub']['items'] as $subItem)
-                                                    @php
-                                                        // 3. Gate Level 3 Deeply Nested Leaf Items (e.g. Styles, Raw Materials)
-                                                        $subItemTypes = $subItem['business_types'] ?? ['*'];
-                                                        $isSubItemAllowed = in_array('*', $subItemTypes) || in_array($currentBusinessType, $subItemTypes);
-                                                    @endphp
-                                                    @if((isset($subItem['enabled']) && $subItem['enabled'] === false) || !$isSubItemAllowed)
-                                                        @continue
+                                                    @if(canAccess($subItem['route'] ?? '', 'read'))
+                                                        <a href="{{ route($subItem['route']) }}"
+                                                        class="block px-3 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
+                                                            {{ $subItem['label'] }}
+                                                        </a>
                                                     @endif
-                                                    <a href="{{ route($subItem['route']) }}"
-                                                    class="block px-3 py-1.5 ml-8 text-sm text-slate-500 hover:text-slate-900 transition-colors {{ request()->routeIs($subItem['route']) ? 'text-blue-600 font-medium' : '' }}">
-                                                        {{ $subItem['label'] }}
-                                                    </a>
                                                 @endforeach
                                             </div>
                                         </div>
                                     @else
-                                        <!-- 📄 Level 2: Standard Single Link (Suppliers, PO, GRN) -->
+                                        <!-- Level 2: Single Link -->
                                         <a href="{{ route($item['route']) }}"
                                         class="block px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900 {{ request()->routeIs($item['route']) ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
                                             <span class="flex items-center gap-3">
@@ -117,10 +113,8 @@
                                             </span>
                                         </a>
                                     @endif
-
                                 @endforeach
                             </div>
-
                         </div>
                     @endif
                 @endforeach

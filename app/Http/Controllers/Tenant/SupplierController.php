@@ -104,11 +104,25 @@ class SupplierController extends Controller
             ->where('code', 'AP')
             ->firstOrFail();
 
+        if(!$apAccount){
+            return redirect()
+                ->route('tenant.purchase.suppliers.index')
+                ->with('error', "Chart of account head not matched.");
+            
+        }
+
         $data['tenant_id']  = $tenantId;            
         $data['created_by'] = auth()->id();
         $data['coa_id'] = $apAccount->id;
 
         $supplier = Supplier::create($data);
+
+        if(!$supplier){
+            return redirect()
+            ->back()
+            ->with('error', "Supplier not created.");
+            
+        }
 
         return redirect()
             ->route('tenant.purchase.suppliers.index')
