@@ -42,7 +42,7 @@
                     <p class="text-xs text-slate-400 mt-0.5">Manage vendor bills, payment statuses, and 3-way matching records.</p>
                 </div>
                 <a href="{{ route('tenant.user.create') }}" class="bg-rose-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-rose-700 shadow-sm transition">
-                    + Create New Invoice
+                    + Create New User
                 </a>
             </div>
 
