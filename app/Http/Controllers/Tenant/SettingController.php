@@ -217,7 +217,7 @@ class SettingController extends Controller
 
                     $recipientEmail = $user->email ?? NULL;
 
-                    $recipientEmail = 'saddamsagar02@gmail.com';
+                    // $recipientEmail = 'saddamsagar02@gmail.com';
 
                     if(!empty($recipientEmail)) {
                         Log::info('before');
