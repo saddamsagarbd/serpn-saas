@@ -38,13 +38,13 @@
     'style_name' => isset($style) ? $style->product_name : '',
     'buyer_id' => isset($style) ? $style->buyer_id : '',
     'season_id' => isset($style) ? $style->season_id : '',
-    'target_price' => isset($style) && $style->costing ? $style->costing->target_fob : '',
-    'product_image' => $style->product_image ? tenant_asset($style->product_image) : asset('images/default-placeholder.png'),
-    'currency' => isset($style) && $style->costing ? $style->costing->currency : 'USD',
-    'revenue_percent' => isset($style) && $style->costing ? $style->costing->revenue_percent : 6.00,
-    'ait_percent' => isset($style) && $style->costing ? $style->costing->ait_percent : 5.00,
-    'vat_percent' => isset($style) && $style->costing ? $style->costing->vat_percent : 10.00,
-    'services' => isset($style) && $style->costing ? [
+    'target_price' => (isset($style) && $style->costing) ? $style->costing->target_fob : '',
+    'product_image' => (isset($style) && $style->product_image) ? tenant_asset($style->product_image) : asset('images/default-placeholder.png'),
+    'currency' => (isset($style) && $style->costing) ? $style->costing->currency : 'USD',
+    'revenue_percent' => (isset($style) && $style->costing) ? $style->costing->revenue_percent : 6.00,
+    'ait_percent' => (isset($style) && $style->costing) ? $style->costing->ait_percent : 5.00,
+    'vat_percent' => (isset($style) && $style->costing) ? $style->costing->vat_percent : 10.00,
+    'services' => (isset($style) && $style->costing) ? [
         'print_cost' => $style->costing->print_cost,
         'print_wastage' => $style->costing->print_wastage ?? 0,
         'emb_cost' => $style->costing->emb_cost,
@@ -67,20 +67,20 @@
         'overhead_cost' => '',
         'overhead_wastage' => '',
     ],
-    'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
+    'items' => (isset($style) && $style->costing && $style->costing->bomItems->count() > 0) 
         ? $style->costing->bomItems->map(function($item) {
             return [
                 'id' => (string) \Illuminate\Support\Str::uuid(),
                 'cat_id' => $item->category_id ?? '',
                 'cat_name' => $item->category_name ?? '',
                 'item_id' => $item->item_id ?? '',
-                'item_name' => $item->item_description,
-                'item_type' => strtolower($item->category) === 'fabrics' ? 'fabrics' : 'trim',
+                'item_name' => $item->item_description ?? '',
+                'item_type' => strtolower($item->category ?? '') === 'fabrics' ? 'fabrics' : 'trim',
                 'color_id' => $item->color_id ?? '',
                 'size_id' => $item->size_id ?? '',
-                'qty' => $item->consumption,
-                'wastage' => $item->wastage_percent,
-                'cost' => $item->unit_price
+                'qty' => $item->consumption ?? '',
+                'wastage' => $item->wastage_percent ?? '',
+                'cost' => $item->unit_price ?? ''
             ];
         }) 
         : [[
