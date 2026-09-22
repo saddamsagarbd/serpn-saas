@@ -51,7 +51,7 @@
                         $isMenuEnabled = !isset($menu['enabled']) || $menu['enabled'] !== false;
                         
                         // Permission Gate Check for Menu Level
-                        $hasMenuPermission = canAccess($menu['route'] ?? '', 'read');
+                        $hasMenuPermission = isset($menu['route']) ? canAccess($menu['route'] ?? '', 'read') : true;
                     @endphp
 
                     @if(hasFeature($key) && $isMenuAllowed && $isMenuEnabled && $hasMenuPermission)
