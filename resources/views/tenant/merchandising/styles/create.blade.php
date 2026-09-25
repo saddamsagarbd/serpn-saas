@@ -32,71 +32,71 @@
 @section('content')
 
 <div x-data="styleCreationApp({{ json_encode([
-    'isEdit' => isset($style),
-    'id' => isset($style) ? $style->id : null,
-    'style_code' => isset($style) ? $style->style_number : '',
-    'style_name' => isset($style) ? $style->product_name : '',
-    'buyer_id' => isset($style) ? $style->buyer_id : '',
-    'season_id' => isset($style) ? $style->season_id : '',
-    'target_price' => isset($style) && $style->costing ? $style->costing->target_fob : '',
-    'product_image' => $style->product_image ? tenant_asset($style->product_image) : asset('images/default-placeholder.png'),
-    'currency' => isset($style) && $style->costing ? $style->costing->currency : 'USD',
-    'revenue_percent' => isset($style) && $style->costing ? $style->costing->revenue_percent : 6.00,
-    'ait_percent' => isset($style) && $style->costing ? $style->costing->ait_percent : 5.00,
-    'vat_percent' => isset($style) && $style->costing ? $style->costing->vat_percent : 10.00,
-    'services' => isset($style) && $style->costing ? [
-        'print_cost' => $style->costing->print_cost,
-        'print_wastage' => $style->costing->print_wastage ?? 0,
-        'emb_cost' => $style->costing->emb_cost,
-        'emb_wastage' => $style->costing->emb_wastage ?? 0,
-        'wash_cost' => $style->costing->wash_cost,
-        'wash_wastage' => $style->costing->wash_wastage ?? 0,
-        'cm_cost' => $style->costing->cm_cost,
-        'cm_wastage' => $style->costing->cm_wastage ?? 0,
-        'overhead_cost' => $style->costing->overhead_cost,
-        'overhead_wastage' => $style->costing->overhead_wastage ?? 0,
-    ] : [
-        'print_cost' => '',
-        'print_wastage' => '',
-        'emb_cost' => '',
-        'emb_wastage' => '',
-        'wash_cost' => '',
-        'wash_wastage' => '',
-        'cm_cost' => '',
-        'cm_wastage' => '',
-        'overhead_cost' => '',
-        'overhead_wastage' => '',
-    ],
-    'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
-        ? $style->costing->bomItems->map(function($item) {
-            return [
+        'isEdit' => isset($style),
+        'id' => isset($style) ? $style->id : null,
+        'style_code' => isset($style) ? $style->style_number : '',
+        'style_name' => isset($style) ? $style->product_name : '',
+        'buyer_id' => isset($style) ? $style->buyer_id : '',
+        'season_id' => isset($style) ? $style->season_id : '',
+        'target_price' => isset($style) && $style->costing ? $style->costing->target_fob : '',
+        'product_image' => $style->product_image ? tenant_asset($style->product_image) : asset('images/default-placeholder.png'),
+        'currency' => isset($style) && $style->costing ? $style->costing->currency : 'USD',
+        'revenue_percent' => isset($style) && $style->costing ? $style->costing->revenue_percent : 6.00,
+        'ait_percent' => isset($style) && $style->costing ? $style->costing->ait_percent : 5.00,
+        'vat_percent' => isset($style) && $style->costing ? $style->costing->vat_percent : 10.00,
+        'services' => isset($style) && $style->costing ? [
+            'print_cost' => $style->costing->print_cost,
+            'print_wastage' => $style->costing->print_wastage ?? 0,
+            'emb_cost' => $style->costing->emb_cost,
+            'emb_wastage' => $style->costing->emb_wastage ?? 0,
+            'wash_cost' => $style->costing->wash_cost,
+            'wash_wastage' => $style->costing->wash_wastage ?? 0,
+            'cm_cost' => $style->costing->cm_cost,
+            'cm_wastage' => $style->costing->cm_wastage ?? 0,
+            'overhead_cost' => $style->costing->overhead_cost,
+            'overhead_wastage' => $style->costing->overhead_wastage ?? 0,
+        ] : [
+            'print_cost' => '',
+            'print_wastage' => '',
+            'emb_cost' => '',
+            'emb_wastage' => '',
+            'wash_cost' => '',
+            'wash_wastage' => '',
+            'cm_cost' => '',
+            'cm_wastage' => '',
+            'overhead_cost' => '',
+            'overhead_wastage' => '',
+        ],
+        'items' => isset($style) && $style->costing && $style->costing->bomItems->count() > 0 
+            ? $style->costing->bomItems->map(function($item) {
+                return [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'cat_id' => $item->category_id ?? '',
+                    'cat_name' => $item->category_name ?? '',
+                    'item_id' => $item->item_id ?? '',
+                    'item_name' => $item->item_description,
+                    'item_type' => strtolower($item->category) === 'fabrics' ? 'fabrics' : 'trim',
+                    'color_id' => $item->color_id ?? '',
+                    'size_id' => $item->size_id ?? '',
+                    'qty' => $item->consumption,
+                    'wastage' => $item->wastage_percent,
+                    'cost' => $item->unit_price
+                ];
+            }) 
+            : [[
                 'id' => (string) \Illuminate\Support\Str::uuid(),
-                'cat_id' => $item->category_id ?? '',
-                'cat_name' => $item->category_name ?? '',
-                'item_id' => $item->item_id ?? '',
-                'item_name' => $item->item_description,
-                'item_type' => strtolower($item->category) === 'fabrics' ? 'fabrics' : 'trim',
-                'color_id' => $item->color_id ?? '',
-                'size_id' => $item->size_id ?? '',
-                'qty' => $item->consumption,
-                'wastage' => $item->wastage_percent,
-                'cost' => $item->unit_price
-            ];
-        }) 
-        : [[
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'cat_id' => '', 
-            'cat_name' => '', 
-            'item_id' => '', 
-            'item_name' => '', 
-            'item_type' => 'fabrics', 
-            'color_id' => '', 
-            'size_id' => '', 
-            'qty' => '', 
-            'wastage' => '', 
-            'cost' => ''
-        ]]
-]) }})" class="bg-slate-100 min-h-screen p-2 sm:p-4 space-y-4">
+                'cat_id' => '', 
+                'cat_name' => '', 
+                'item_id' => '', 
+                'item_name' => '', 
+                'item_type' => 'fabrics', 
+                'color_id' => '', 
+                'size_id' => '', 
+                'qty' => '', 
+                'wastage' => '', 
+                'cost' => ''
+            ]]
+    ]) }})" class="bg-slate-100 min-h-screen p-2 sm:p-4 space-y-4">
 
     <!-- Top Header -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
