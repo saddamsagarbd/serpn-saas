@@ -15,22 +15,31 @@ return new class extends Migration
             $table->id();
             $table->foreignId('production_bom_id')->constrained('production_boms')->onDelete('cascade');
             
-            // Link to Pre-costing BOM Item (Style -> StyleCosting -> BomItem)
-            $table->foreignId('bom_item_id')->constrained('bom_items')->onDelete('cascade');
+            // Original Pre-costing Style BOM Item-er Reference (Nullable cause Processing Service rows won't have it)
+            $table->foreignId('item_id')->nullable()->constrained('item_masters')->onDelete('set null');
 
-            // Link to MPR Order Line (Specific Color/Size Matrix)
-            $table->foreignId('sales_order_item_id')->nullable()->constrained('sales_order_items')->onDelete('cascade');
+            // Classification
+            $table->enum('cost_type', ['Material', 'Processing'])->default('Material');
+            $table->string('cost_head')->nullable(); // Fabric, Print, Wash, CM etc.
             
-            // Procurement Execution Values
-            $table->decimal('consumption', 10, 4)->default(0.0000);
-            $table->decimal('unit_price', 10, 4)->default(0.0000);
-            $table->decimal('total_qty', 12, 2)->default(0.00);
-            $table->decimal('total_budget', 12, 2)->default(0.00);
+            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
+            $table->string('category_name')->nullable();
             
-            // Procurement & Accounting Details
-            $table->string('po_number')->nullable();
-            $table->decimal('paid_amount', 12, 2)->default(0.00);
-            
+            // Explicit Name String (Snapshot storage for fast load & PDF export)
+            $table->string('item_name')->nullable(); 
+
+            // MPR / Matrix Breakdown
+            $table->string('matrix_target')->default('ALL');
+            $table->foreignId('sales_order_item_id')->nullable()->constrained('sales_order_items')->onDelete('set null');
+            $table->string('color_name')->nullable();
+            $table->integer('garment_qty')->default(0);
+
+            // Amounts & Pricing
+            $table->decimal('consumption', 12, 4)->default(0.0000);
+            $table->decimal('req_qty', 12, 2)->default(0.00);
+            $table->decimal('unit_price', 12, 4)->default(0.0000);
+            $table->decimal('total_cost', 15, 2)->default(0.00);
+
             $table->timestamps();
         });
     }

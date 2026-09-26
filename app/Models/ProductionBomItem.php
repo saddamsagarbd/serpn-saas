@@ -11,10 +11,10 @@ class ProductionBomItem extends Model
 
     public function productionBom(): BelongsTo
     {
-        return $this->belongsTo(ProductionBom::class);
+        return $this->belongsTo(ProductionBom::class, 'production_bom_id');
     }
 
-    public function bomItem(): BelongsTo
+    public function styleBomItem(): BelongsTo
     {
         return $this->belongsTo(BomItem::class, 'bom_item_id');
     }

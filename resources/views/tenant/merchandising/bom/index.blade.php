@@ -115,7 +115,7 @@
                                     <td class="p-4 font-medium text-gray-900" x-text="bom.style_name"></td>
                                     <td class="p-4 font-medium text-gray-900" x-text="bom.buyer_name"></td>
                                     <td class="p-4 font-mono font-bold text-gray-800" x-text="bom.mpr_po_no"></td>
-                                    <td class="p-4 font-mono text-right" x-text="bom.total_qty + ' Pcs'"></td>
+                                    <td class="p-4 font-mono text-right" x-text="bom.sales_order_total + ' Pcs'"></td>
                                     <td class="p-4 font-mono text-right font-bold text-slate-900" x-text="'$' + bom.total_budget"></td>
                                     <td class="p-4 font-mono text-right font-bold text-emerald-600" x-text="'$' + bom.total_paid"></td>
                                     <td class="p-4 font-mono text-right font-bold text-rose-600" x-text="'$' + (bom.total_budget - bom.total_paid).toFixed(2)"></td>
@@ -124,7 +124,7 @@
                                     <td class="px-4 py-3 text-center overflow-visible">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <a :href="'/merchandising/bom/' + bom.id + '/export-pdf'" 
-                                                class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
+                                                class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs" target="_blank">
                                                 Export PDF
                                             </a>
 

@@ -481,6 +481,7 @@ class MPRController extends Controller
 
                 $mprItems[] = [
                     'item_id'    => $item->item_master_id,
+                    'bom_item_id'    => $item->bom_item_id,
                     'name'       => $item->item_name,
                     'color_id'   => $so->color ?? 1,
                     'color'      => $so->color_name ?? 'N/A',
@@ -500,30 +501,87 @@ class MPRController extends Controller
 
     public function getOrderByStyleId($tenant, string $style_id)
     {
-        // ১. Style-এর আন্ডারে থাকা Costing এবং BOM Items লোড করা
+        // ১. Style-এর আন্ডারে থাকা Costing, BOM Items এবং Category লোড করা
         $style = Style::with([
             'buyer',
-            'costing.bomItems.itemMaster',
+            'costing.bomItems.itemMaster.category',
             'costing.bomItems.color',
             'costing.bomItems.size'
         ])->where('tenant_id', tenant('id'))->find($style_id);
 
         if (!$style) {
-            return response()->json(['success' => false, 'message' => 'Style not found'], 444);
+            return response()->json(['success' => false, 'message' => 'Style not found'], 404);
         }
 
-        // BOM Items প্রসেস করা (Unit cost সহ)
-        $bomItems = optional($style->costing)->bomItems ? $style->costing->bomItems->map(function ($bom) {
-            return [
-                'id' => $bom->id,
-                'item_id' => $bom->item_id,
-                'item_name' => optional($bom->itemMaster)->name ?? $bom->item_name ?? 'Material Item',
-                'unit_cost' => floatval($bom->unit_price ?? $bom->unit_cost ?? 0),
-                'consumption' => floatval($bom->consumption ?? 0),
-            ];
-        }) : [];
+        // ২. Materials / BOM Items প্রসেস করা (Fabrics & Trims)
+        $materialItems = collect();
+        if (optional($style->costing)->bomItems) {
+            $materialItems = $style->costing->bomItems->map(function ($bom) {
+                return [
+                    'id'          => $bom->id,
+                    'cost_type'   => 'Material',
+                    'cat_id'      => optional(optional($bom->itemMaster)->category)->id ?? '',
+                    'cat_name'    => optional(optional($bom->itemMaster)->category)->name ?? 'Material',
+                    'item_id'     => $bom->item_id,
+                    'item_name'   => optional($bom->itemMaster)->name ?? $bom->item_name ?? 'Material Item',
+                    'unit_cost'   => floatval($bom->unit_cost ?? $bom->unit_price ?? 0),
+                    'consumption' => floatval($bom->consumption ?? 0),
+                    'wastage_pct' => floatval($bom->wastage_percent ?? 0),
+                ];
+            });
+        }
 
-        // ২. Style-এর আন্ডারে থাকা Sales Orders (MPR) এবং তাদের Color/Size Matrix লোড করা
+        // ৩. Making Charges & Services প্রসেস করা (Print, Embroidery, Wash, CM, Overhead)
+        $serviceItems = collect();
+        if ($style->costing) {
+            $costing = $style->costing;
+            
+            $calculateServiceCost = function ($baseCost, $wastagePct) {
+                $cost = floatval($baseCost);
+                $wastage = floatval($wastagePct);
+
+                if ($cost <= 0) return 0;
+
+                // Wastage jodi percentage (e.g. 5) hisebe thake
+                if ($wastage > 0) {
+                    // Wastage 1 er boro hole % dhore 100 diye divide hobe (e.g., 5% -> 0.05)
+                    $wastageMultiplier = ($wastage > 0) ? ($wastage / 100) : $wastage;
+                    
+                    return $cost * (1 + $wastageMultiplier);
+                }
+
+                return $cost;
+            };
+            $services = [
+                'Print Cost'      => ['name' => 'PRINT Service', 'cost' => $calculateServiceCost($costing->print_cost, $costing->print_wastage)],
+                'Embroidery Cost' => ['name' => 'EMBROIDERY Service', 'cost' => $calculateServiceCost($costing->emb_cost, $costing->emb_wastage)],
+                'Wash Cost'       => ['name' => 'WASH Service', 'cost' => $calculateServiceCost($costing->wash_cost, $costing->wash_wastage)],
+                'CM Cost'   => ['name' => 'CM (Making Charge)', 'cost' => $calculateServiceCost($costing->cm_cost, $costing->cm_wastage)],
+                'Overhead Cost'   => ['name' => 'OVERHEAD Cost', 'cost' => $calculateServiceCost($costing->overhead_cost, $costing->overhead_wastage)],
+            ];
+
+            foreach ($services as $costHead => $srv) {
+                if (floatval($srv['cost']) > 0) {
+                    $serviceItems->push([
+                        'id'          => null,
+                        'cost_type'   => 'Processing',
+                        'cost_head'   => $costHead,
+                        'cat_id'      => '',
+                        'cat_name'    => $costHead,
+                        'item_id'     => null,
+                        'item_name'   => $srv['name'],
+                        'unit_cost'   => floatval($srv['cost']),
+                        'consumption' => 1.0000, // Processing standard consumption per unit
+                        'wastage_pct' => 0,
+                    ]);
+                }
+            }
+        }
+
+        // ৪. Materials এবং Services মার্চ করে একক bom_items অ্যারে তৈরি
+        $allBomItems = $materialItems->concat($serviceItems)->values();
+
+        // ৫. Sales Orders (MPR) Matrix
         $salesOrders = SalesOrder::with([
             'items.colorContext',
             'items.sizeChart'
@@ -534,26 +592,27 @@ class MPRController extends Controller
 
         $mprOrders = $salesOrders->map(function ($order) {
             return [
-                'id' => $order->id,
+                'id'              => $order->id,
                 'buyer_po_number' => $order->buyer_po_number,
-                'total_quantity' => $order->items->sum('quantity'),
-                'matrix_items' => $order->items->map(function ($item) {
+                'total_quantity'  => $order->items->sum('quantity'),
+                'matrix_items'    => $order->items->map(function ($item) {
                     return [
-                        'id' => $item->id,
-                        'color_id' => $item->color,
-                        'color_name' => optional($item->colorContext)->name ?? 'N/A',
-                        'size_id' => $item->size,
-                        'size_name' => optional($item->sizeChart)->name ?? 'N/A',
-                        'quantity' => $item->quantity,
+                        'id'          => $item->id,
+                        'color_id'    => $item->color_id ?? $item->color,
+                        'color_name'  => optional($item->colorContext)->name ?? 'N/A',
+                        'size_id'     => $item->size_id ?? $item->size,
+                        'size_name'   => optional($item->sizeChart)->name ?? 'N/A',
+                        'quantity'    => (int) $item->quantity,
+                        'unit_price'  => (float) $item->unit_price,
                     ];
                 })
             ];
         });
 
         return response()->json([
-            'success' => true,
+            'success'    => true,
             'buyer_name' => optional($style->buyer)->name ?? 'N/A',
-            'bom_items' => $bomItems,
+            'bom_items'  => $allBomItems,
             'mpr_orders' => $mprOrders
         ]);
     }

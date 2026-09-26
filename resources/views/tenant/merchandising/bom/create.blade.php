@@ -118,8 +118,8 @@
                                 
                                 <!-- Cost Head / Category Selector -->
                                 <td class="p-2 pl-4" x-data="categorySearchBox(row)" @click.outside="open = false">
-    
-                                    <!-- 1. Processing Services Dropdown (Visible when row.cost_type === 'Processing') -->
+
+                                    <!-- 1. Processing Services Dropdown -->
                                     <template x-if="row.cost_type === 'Processing'">
                                         <div class="space-y-1">
                                             <select x-model="row.cost_head" 
@@ -131,13 +131,14 @@
                                                     <option value="Wash Cost">Washing Service</option>
                                                     <option value="Special Process">Special Treatment / Dyeing</option>
                                                     <option value="Testing & Inspection">Lab Testing / Inspection</option>
-                                                    <option value="CM / Overhead">CM / Operational Cost</option>
+                                                    <option value="CM Cost">CM Cost</option>
+                                                    <option value="Overhead Cost">Overhead Cost</option>
                                                 </optgroup>
                                             </select>
                                         </div>
                                     </template>
 
-                                    <!-- 2. On-the-fly Category Live Search Input (Visible for Standard Materials) -->
+                                    <!-- 2. Category Live Search for Standard Materials -->
                                     <template x-if="row.cost_type !== 'Processing'">
                                         <div class="relative">
                                             <input type="text"
@@ -172,30 +173,33 @@
 
                                 <!-- Costing Item / Service Description Search -->
                                 <td class="p-2" x-data="itemSearchBox(row, $data)" @click.outside="open = false">
-                                    <!-- 1. If Processing (Print/Embroidery/Wash), load options directly from Style Costing / Options -->
+                                    <!-- 1. Processing Dropdown -->
                                     <template x-if="row.cost_type === 'Processing'">
                                         <div class="space-y-1">
-                                            <select x-model="row.bom_item_id" 
+                                            <select x-model="row.item_id" 
                                                 @change="onProcessSelect(row)" 
                                                 class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 font-medium text-slate-800">
                                                 <option value="">-- Select Process / Work --</option>
                                                 <template x-for="proc in getStyleProcesses(row.cost_head)" :key="proc.id">
                                                     <option :value="proc.id" 
-                                                        :selected="row.bom_item_id == proc.id"
+                                                        :selected="row.item_id == proc.id"
                                                         x-text="proc.name + (proc.rate ? ' ($' + proc.rate + ')' : '')">
                                                     </option>
                                                 </template>
                                             </select>
                                         </div>
                                     </template>
+                                    
+                                    <!-- 2. Material Search -->
                                     <template x-if="row.cost_type !== 'Processing'">
                                         <div class="relative">
                                             <input type="text"
                                                 x-model="query"
+                                                x-effect="query = row.item_name || ''"
                                                 @input="search()"
                                                 @focus="if (results.length) open = true"
                                                 @keydown.escape="open = false"
-                                                :placeholder="row.cost_type === 'Processing' ? 'e.g. Chest Rubber Print, Garment Wash...' : 'Search Material...'"
+                                                placeholder="Search Material..."
                                                 autocomplete="off"
                                                 class="w-full p-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500">
 
@@ -216,7 +220,6 @@
                                                 </template>
                                             </div>
                                         </div>
-                                    
                                     </template>
                                 </td>
 
@@ -267,7 +270,7 @@
                                 </td>
 
                                 <!-- Total Cost -->
-                                <td class="p-2.5 text-right font-mono font-bold text-slate-900" x-text="'$' + (row.total_cost || 0).toFixed(2)"></td>
+                                <td class="p-2.5 text-right font-mono font-bold text-slate-900" x-text="'$' + (parseFloat(row.total_cost) || 0).toFixed(2)"></td>
 
                                 <!-- Action -->
                                 <td class="p-2.5 text-center">
@@ -325,6 +328,13 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
         availableMprMatrix: [],
         colorTotals: [],
         totalMprOrderQty: 0,
+        
+        // Controller Response Array
+        bom_items: [],
+
+        styleCosting: {
+            processes: []
+        },
 
         loadingMprs: false,
         isSaving: false,
@@ -345,7 +355,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                         cost_type: item.cost_type || (['Print Cost', 'Embroidery Cost', 'Wash Cost', 'Special Process', 'Testing & Inspection', 'CM / Overhead'].includes(item.cost_head) ? 'Processing' : 'Material'),
                         cost_head: item.cost_head || item.category_name || 'Fabric',
                         cat_id: item.cat_id || item.category_id || '',
-                        bom_item_id: item.bom_item_id || item.item_id || '',
+                        item_id: item.item_id || '',
                         item_name: item.item_name || '',
                         matrix_target: target,
                         sales_order_item_id: item.sales_order_item_id || null,
@@ -376,16 +386,6 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
             return 0;
         },
 
-        parseMprItems(mpr) {
-            if (!mpr || !mpr.matrix_items) return [];
-            return mpr.matrix_items.map(item => ({
-                id: item.id,
-                color_name: item.color_context ? (item.color_context.color_name || item.color_context.name) : (item.color_name || 'N/A'),
-                size_name: item.size_chart ? (item.size_chart.size_name || item.size_chart.name) : (item.size_name || 'N/A'),
-                quantity: parseInt(item.quantity || item.qty || 0)
-            }));
-        },
-
         onStyleChange(isInitial = false, directMpr = null) {
             if (!this.selectedStyleId) return;
 
@@ -396,6 +396,13 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                     if (res.success) {
                         this.mprOrders = res.mpr_orders || [];
                         this.buyerName = res.buyer_name || (directMpr && directMpr.buyer ? directMpr.buyer.name : 'N/A');
+                        
+                        // Sync controller array with Alpine JS
+                        this.bom_items = res.bom_items || [];
+
+                        if (res.style_costing) {
+                            this.styleCosting = res.style_costing;
+                        }
 
                         if (directMpr) {
                             const exists = this.mprOrders.some(m => String(m.id) === String(directMpr.id));
@@ -409,51 +416,105 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                             this.totalMprOrderQty = 0;
                             this.items.forEach(row => this.resetRow(row));
                         } else if (this.selectedMprId) {
-                            this.onMprChange(directMpr);
+                            this.onMprChange();
                         }
                     }
                     this.loadingMprs = false;
                 })
-                .catch(() => { this.loadingMprs = false; });
+                .catch(err => {
+                    console.error("Error fetching style details:", err);
+                    this.loadingMprs = false;
+                });
         },
 
-        onMprChange(directMpr = null) {
+        onMprChange() {
             let selectedMpr = this.mprOrders.find(m => String(m.id) === String(this.selectedMprId));
-            if (!selectedMpr && directMpr && String(directMpr.id) === String(this.selectedMprId)) {
-                selectedMpr = directMpr;
+
+            if (!selectedMpr) {
+                this.colorTotals = [];
+                this.availableMprMatrix = [];
+                this.totalMprOrderQty = 0;
+                return;
             }
 
-            if (selectedMpr) {
-                if (selectedMpr.buyer) {
-                    this.buyerName = selectedMpr.buyer.name || selectedMpr.buyer.buyer_name || this.buyerName;
-                }
+            // 1. Order Quantity & Matrix Items Setup
+            this.totalMprOrderQty = selectedMpr.total_quantity || 0;
+            this.availableMprMatrix = selectedMpr.matrix_items || [];
 
-                const parsedMatrix = this.parseMprItems(selectedMpr);
-                const totalQty = this.mprTotalQty(selectedMpr);
-
-                const colorMap = {};
-                parsedMatrix.forEach(m => {
+            // 2. Color Total Qty Calculation
+            const colorMap = {};
+            if (selectedMpr.matrix_items) {
+                selectedMpr.matrix_items.forEach(m => {
                     const cName = m.color_name || 'Unassigned';
-                    if (!colorMap[cName]) {
-                        colorMap[cName] = 0;
+                    colorMap[cName] = (colorMap[cName] || 0) + (parseInt(m.quantity) || 0);
+                });
+            }
+
+            this.colorTotals = Object.keys(colorMap).map(cName => ({
+                color_name: cName,
+                total_quantity: colorMap[cName]
+            }));
+
+            // 3. Dynamic Auto Population
+            let autoPopulatedItems = [];
+
+            if (this.bom_items && this.bom_items.length > 0) {
+                
+                this.bom_items.forEach(b => {
+                    
+                    // Materials -> Split per Color
+                    if (b.cost_type === 'Material' && this.colorTotals.length > 0) {
+                        
+                        this.colorTotals.forEach(col => {
+                            const reqQty = (col.total_quantity * b.consumption).toFixed(2);
+                            const totalCost = (parseFloat(reqQty) * b.unit_cost).toFixed(2);
+                            
+                            autoPopulatedItems.push({
+                                cost_type: 'Material',
+                                cost_head: b.cat_name || 'Material',
+                                cat_id: b.cat_id,
+                                cat_name: b.cat_name,
+                                item_id: b.item_id,
+                                item_name: b.item_name,
+                                matrix_target: `COLOR:${col.color_name}`,
+                                sales_order_item_id: null,
+                                color_name: col.color_name,
+                                garment_qty: col.total_quantity,
+                                consumption: b.consumption,
+                                req_qty: reqQty,
+                                unit_price: b.unit_cost,
+                                total_cost: parseFloat(totalCost)
+                            });
+                        });
+
+                    } 
+                    // Services -> Total Order Qty
+                    else if (b.cost_type === 'Processing') {
+                        const reqQty = (this.totalMprOrderQty * b.consumption).toFixed(2);
+                        const totalCost = (parseFloat(reqQty) * b.unit_cost).toFixed(2);
+                        
+                        autoPopulatedItems.push({
+                            cost_type: 'Processing',
+                            cost_head: b.cost_head,
+                            cat_id: '',
+                            cat_name: b.cost_head,
+                            item_id: b.id || null,
+                            item_name: b.item_name,
+                            matrix_target: 'ALL',
+                            sales_order_item_id: null,
+                            color_name: 'ALL COLORS',
+                            garment_qty: this.totalMprOrderQty,
+                            consumption: b.consumption || 1.00,
+                            req_qty: reqQty,
+                            unit_price: b.unit_cost,
+                            total_cost: parseFloat(totalCost)
+                        });
                     }
-                    colorMap[cName] += m.quantity;
                 });
 
-                const parsedColorTotals = Object.keys(colorMap).map(cName => ({
-                    color_name: cName,
-                    total_quantity: colorMap[cName]
-                }));
-
-                this.availableMprMatrix = [...parsedMatrix];
-                this.totalMprOrderQty = totalQty;
-                this.colorTotals = [...parsedColorTotals];
-
-                this.items.forEach(row => this.calculateRowQty(row));
-            } else {
-                this.availableMprMatrix = [];
-                this.colorTotals = [];
-                this.totalMprOrderQty = 0;
+                if (autoPopulatedItems.length > 0) {
+                    this.items = autoPopulatedItems;
+                }
             }
         },
 
@@ -482,13 +543,45 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
             row.total_cost = (parseFloat(row.req_qty) * (row.unit_price || 0));
         },
 
+        getStyleProcesses(costHead) {
+            if (!this.styleCosting || !this.styleCosting.processes) {
+                return [
+                    { id: 'p1', name: 'Chest Rubber Print', rate: 0.35, cost_head: 'Print Cost' },
+                    { id: 'p2', name: 'All Over Print (AOP)', rate: 0.65, cost_head: 'Print Cost' },
+                    { id: 'e1', name: 'Logo Embroidery', rate: 0.25, cost_head: 'Embroidery Cost' },
+                    { id: 'w1', name: 'Garment Enzyme Wash', rate: 0.40, cost_head: 'Wash Cost' },
+                    { id: 'w2', name: 'Softener Wash', rate: 0.20, cost_head: 'Wash Cost' },
+                    { id: 'c1', name: 'Factory CM Rate', rate: 1.20, cost_head: 'CM / Overhead' }
+                ].filter(p => !costHead || p.cost_head === costHead);
+            }
+
+            return this.styleCosting.processes.filter(p => p.cost_head === costHead);
+        },
+
+        onProcessSelect(row) {
+            const processes = this.getStyleProcesses(row.cost_head);
+            const selectedProc = processes.find(p => String(p.id) === String(row.item_id));
+
+            if (selectedProc) {
+                row.item_name = selectedProc.name;
+                row.unit_price = parseFloat(selectedProc.rate || selectedProc.unit_cost || 0);
+                if (!row.consumption || row.consumption == 0) {
+                    row.consumption = 1;
+                }
+            } else {
+                row.unit_price = 0;
+            }
+
+            this.calculateRowQty(row);
+        },
+
         addBomRow(type = 'Material') {
             const newRow = {
                 cost_type: type,
                 cost_head: type === 'Processing' ? 'Print Cost' : 'Fabric',
                 cat_id: '',
                 cat_name: '',
-                bom_item_id: '',
+                item_id: '',
                 item_name: '',
                 matrix_target: 'ALL',
                 sales_order_item_id: null,
@@ -510,7 +603,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
         resetRow(row) {
             row.cat_id = '';
             row.cat_name = '';
-            row.bom_item_id = '';
+            row.item_id = '';
             row.item_name = '';
             row.matrix_target = 'ALL';
             row.sales_order_item_id = null;
@@ -591,7 +684,6 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
     }
 }
 
-
 function categorySearchBox(item) {
     return {
         query: item.cat_name || '',
@@ -629,7 +721,7 @@ function categorySearchBox(item) {
                 );
                 const data = await res.json();
 
-                if (seq !== this._seq) return; // stale response, ignore
+                if (seq !== this._seq) return;
 
                 this.results = data.results || [];
                 this.open = true;
@@ -661,7 +753,7 @@ function itemSearchBox(row, mainApp) {
         _seq: 0,
 
         search() {
-            row.bom_item_id = '';
+            row.item_id = '';
             row.item_name = this.query;
 
             clearTimeout(this._timer);
@@ -683,7 +775,8 @@ function itemSearchBox(row, mainApp) {
 
             const params = new URLSearchParams({
                 q: this.query,
-                cost_head: row.cost_head || ''
+                cost_head: row.cost_head || '',
+                style_id: mainApp.selectedStyleId || ''
             });
 
             try {
@@ -705,10 +798,15 @@ function itemSearchBox(row, mainApp) {
         },
 
         select(r) {
-            row.bom_item_id = r.id;
+            row.item_id = r.id;
             row.item_name = r.name || r.text;
             
-            if (r.unit_cost) row.unit_price = parseFloat(r.unit_cost);
+            if (r.unit_cost || r.unit_price) {
+                row.unit_price = parseFloat(r.unit_cost || r.unit_price);
+            }
+            if (r.consumption) {
+                row.consumption = parseFloat(r.consumption);
+            }
 
             this.query = r.name || r.text;
             this.results = [];

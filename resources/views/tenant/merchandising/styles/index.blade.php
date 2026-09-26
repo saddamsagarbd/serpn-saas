@@ -164,12 +164,8 @@
                                         <div class="flex items-center justify-center gap-1.5">
                                             <!-- Direct Links -->
                                             <a :href="`/merchandising/styles/${style.id}/details`" 
-                                            class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
+                                            class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs" target="_blank">
                                                 Costing
-                                            </a>
-                                            <a :href="`/merchandising/styles/${style.id}/bom`" 
-                                            class="bg-indigo-50 border border-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition text-xs">
-                                                BOM
                                             </a>
 
                                             <!-- Alpine Action Dropdown -->

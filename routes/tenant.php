@@ -197,6 +197,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('/bom/create', [ProductionBomController::class, 'create'])->name('bom.create');
                 Route::get('/bom/get-mprs-by-style/{styleId}', [ProductionBomController::class, 'getMprsByStyle'])->name('bom.get-mprs');
                 Route::post('/bom/store', [ProductionBomController::class, 'store'])->name('bom.store');
+                Route::get('/bom/{id}/export-pdf', [ProductionBomController::class, 'exportPdf'])->name('bom.export-pdf');
                 
             });
             

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('style_id')->constrained('styles')->onDelete('cascade');
             $table->foreignId('sales_order_id')->nullable()->constrained('sales_orders')->onDelete('cascade'); // MPR Order Link
             $table->string('bom_number')->unique(); // e.g. BOM-2026-001
+            $table->decimal('grand_total', 15, 2)->default(0.00);
             $table->text('remarks')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
