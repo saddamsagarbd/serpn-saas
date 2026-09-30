@@ -83,6 +83,7 @@
         return {
             openModal: false,
             isEdit: false,
+            isSubmit: false,
             formAction: window.tenantRoutes.store,
             formErrors: [],    
             plans: [],
@@ -202,6 +203,7 @@
             },
     
             saveTenant() {
+                this.isSubmit = true;
                 this.formErrors = [];
     
                 if (!this.tenantData.business_type) {
@@ -223,6 +225,7 @@
                     body: JSON.stringify(formData)
                 })
                 .then(async response => {
+                    this.isSubmit = false;
                     const data = await response.json();
                     if (!response.ok) {
                         if (data.errors) {
@@ -235,6 +238,7 @@
                     return data;
                 })
                 .then(data => {
+                    this.isSubmit = false;
                     this.openModal = false;
                     this.fetchTenants();
                     if (typeof toastr !== 'undefined') toastr.success(data.message || 'Tenant saved');

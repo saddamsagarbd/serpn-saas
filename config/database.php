@@ -129,6 +129,23 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'sqlsrv2' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DATABASE_URL'),
+            'host' => env('ATTENDANCE_DB_HOST', '192.168.1.104'),
+            'port' => env('ATTENDANCE_DB_PORT', '1433'),
+            'database' => env('ATTENDANCE_DB_DATABASE', 'ZKTIME'),
+            'username' => env('ATTENDANCE_DB_USERNAME', 'zkreport'),
+            'password' => env('ATTENDANCE_DB_PASSWORD', 'P@ssword958'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'connection_options' => [
+                'IntegratedSecurity' => true, // বা 'Trusted_Connection' => 'yes'
+                'TrustServerCertificate' => true,
+            ],
+        ],
+
     ],
 
     /*

@@ -20,7 +20,7 @@ class TenantController extends Controller
      * Business types recognized by the menu resolver (menu.php).
      * Kept as a single source of truth for validation here.
      */
-    private const BUSINESS_TYPES = ['merchandising', 'real_estate', 'general_retail'];
+    private const BUSINESS_TYPES = ['merchandising', 'real_estate', 'general_retail', 'group_of_companies', 'manufactureing', 'export_import'];
 
     public function index(Request $request){
         $plans = Plan::where('is_active', true)->get();
@@ -66,17 +66,18 @@ class TenantController extends Controller
             'plan'      => 'required|exists:plans,id',
         ]);
 
-        DB::beginTransaction();
+        $now = Carbon::now();
+        $createdTenant = null;
 
         try {
-            $now = Carbon::now();
 
-            // ১. স্লুগ তৈরি করা
+            // 1. Slug prepare
             $baseSlug = strtolower(str_replace([" ", "-"], "", $request->company_name));
             $domainPrefix = $baseSlug;
             $counter = 1;
 
             $reserved = ['localhost', 'admin', 'superadmin', 'api', 'central', '127-0-0-1'];
+
             while (Tenant::where('id', $domainPrefix)->exists() || in_array($domainPrefix, $reserved)) {
                 $domainPrefix = $baseSlug . $counter;
                 $counter++;
@@ -96,9 +97,9 @@ class TenantController extends Controller
             // 🚀 ৩. প্যাকেজের অফিশিয়াল ইভেন্ট মেকানিজম (ফ্রেশ ও অটোমেটিক)
             // $tenant = new Tenant($tenantParams);
 
-            $dummyTenant = new Tenant(['id' => $domainPrefix]);
-            $dbName = $dummyTenant->database()->getName();
-            $dbManager = $dummyTenant->database()->manager();
+            $dummyTenant    = new Tenant(['id' => $domainPrefix]);
+            $dbName         = $dummyTenant->database()->getName();
+            $dbManager      = $dummyTenant->database()->manager();
 
             $dbExists = $dbManager->databaseExists($dbName);
 
@@ -106,6 +107,8 @@ class TenantController extends Controller
                 $tenant = Tenant::withoutEvents(function () use ($tenantParams) {
                     return Tenant::create($tenantParams);
                 });
+
+                $createdTenant = $tenant;
 
                 Artisan::call('tenants:migrate', [
                     '--tenants' => [$tenant->id],
@@ -122,7 +125,7 @@ class TenantController extends Controller
                         'name'     => $tenant->owner_name,
                         'password' => Hash::make($defaultPassword),
                         'phone'    => $tenant->owner_phone,
-                        'role'     => 'admin',
+                        'role_id'  => 1,
                     ]
                 );
 
@@ -132,8 +135,13 @@ class TenantController extends Controller
                         $centralDomain = config('tenancy.central_domains')[0] ?? 'erp24by7.com';
                         $loginUrl = $scheme . $tenant->id . '.' . $centralDomain . '/login';
 
+                        Log::info("Before: ", $tenant->owner_email);
+
                         Notification::route('mail', $tenant->owner_email)
                             ->notify(new TenantCredentialsNotification($tenant, $defaultPassword, $loginUrl));
+
+                        Log::info("Before: ", $tenant->owner_email);
+
                     } catch (\Exception $mailException) {
                         Log::error('Tenant Credentials Mail Delivery Failed: ' . $mailException->getMessage());
                     }
@@ -143,6 +151,7 @@ class TenantController extends Controller
                 
             }else{
                 $tenant = Tenant::create($tenantParams);
+                $createdTenant = $tenant;
             }
 
             sleep(5);
@@ -173,12 +182,16 @@ class TenantController extends Controller
                 ]);
             });
 
-            DB::commit();
-
             return redirect()->back()->with('success', 'নতুন Tenant এবং Vendor Admin সফলভাবে অ্যাক্টিভেট হয়েছে!');
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            // Explicit cleanup if central insertion failed
+            if ($createdTenant && tenancy()->getTenant() === null) {
+                // Re-ensure we are on central context before deleting
+                tenancy()->central(function () use ($createdTenant) {
+                    $createdTenant->delete();
+                });
+            }
 
             Log::error('Tenant Creation Fatal Error: ' . $e->getMessage());
 

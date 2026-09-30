@@ -36,15 +36,15 @@ return [
     ],
 
     'menus' => [
-        'employee' => [
-            'label' => 'User Management',
-            'icon' => 'users',
-            'enabled' => true,
-            'business_types' => ['*'],
-            'items' => [
-                ['label' => 'Employee', 'route' => 'tenant.employee.index', 'enabled' => true, 'business_types' => ['*']],
-            ],
-        ],
+        // 'employee' => [
+        //     'label' => 'User Management',
+        //     'icon' => 'users',
+        //     'enabled' => true,
+        //     'business_types' => ['*'],
+        //     'items' => [
+        //         ['label' => 'Employee', 'route' => 'tenant.employee.index', 'enabled' => true, 'business_types' => ['*']],
+        //     ],
+        // ],
 
         // =====================================================================
         // CORE — INVENTORY  (shared skeleton; vertical-only leaves tagged)
@@ -229,15 +229,15 @@ return [
         'hrm' => [
             'label' => 'HRM',
             'icon' => 'users',
-            'enabled' => false,
+            'enabled' => true,
             'business_types' => ['*'],
             'items' => [
-                ['label' => 'Employees',    'route' => 'tenant.hrm.employees',    'enabled' => false],
-                ['label' => 'Departments',  'route' => 'tenant.hrm.departments',  'enabled' => false],
-                ['label' => 'Designation',  'route' => 'tenant.hrm.designation',  'enabled' => false],
-                ['label' => 'Attendance',   'route' => 'tenant.hrm.attendance',   'enabled' => false],
-                ['label' => 'Leave',        'route' => 'tenant.hrm.leave',        'enabled' => false],
-                ['label' => 'Payroll',      'route' => 'tenant.hrm.payroll',      'enabled' => false],
+                ['label' => 'Employee',    'route' => 'tenant.hrm.employee.index',    'enabled' => true],
+                ['label' => 'Departments',  'route' => 'tenant.hrm.departments',  'enabled' => true],
+                ['label' => 'Designation',  'route' => 'tenant.hrm.designation',  'enabled' => true],
+                ['label' => 'Attendance',   'route' => 'tenant.hrm.attendance.index',   'enabled' => true],
+                ['label' => 'Leave',        'route' => 'tenant.hrm.leave',        'enabled' => true],
+                ['label' => 'Payroll',      'route' => 'tenant.hrm.payroll',      'enabled' => true],
 
                 // Garment-specific: piece-rate/line-based wage tracking
                 ['label' => 'Line Wage / Piece Rate', 'route' => 'tenant.hrm.piece-rate', 'enabled' => false, 'business_types' => ['merchandising']],

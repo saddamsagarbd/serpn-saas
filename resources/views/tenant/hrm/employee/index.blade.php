@@ -1,5 +1,6 @@
 @extends('layouts.tenant')
 @section('title','Employee Master')
+
 @section('content')
 <div class="space-y-6" x-data="{
         currentTab: 'employees', 
@@ -13,13 +14,12 @@
         async fetchEmployees() {
             this.loading = true;
             try {
-                let url = `{{ route('tenant.employee.index') }}?page=${this.page}&per_page=${this.perPage}&search=${encodeURIComponent(this.search)}`;
+                let url = `{{ route('tenant.hrm.employee.index', tenant()) }}?page=${this.page}&per_page=${this.perPage}&search=${encodeURIComponent(this.search)}`;
                 let response = await fetch(url, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 });
                 let data = await response.json();
                 
-                // সার্ভার রেসপন্স ম্যাপ করা
                 this.employees = data.data;
                 this.lastPage = data.last_page;
                 this.total = data.total;
@@ -32,20 +32,21 @@
         nextPage() { if (this.page < this.lastPage) { this.page++; this.fetchEmployees(); } },
         prevPage() { if (this.page > 1) { this.page--; this.fetchEmployees(); } }
     }"
-    x-init="fetchemployees()">
+    x-init="fetchEmployees(); $watch('search', () => { page = 1; fetchEmployees(); })">
+
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <div x-show="currentTab === 'employees'" x-transition class="space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Employee List</h2>
-                <a href="{{ route('tenant.employee.form') }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('tenant.employee.form', tenant()) }}" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg hover:bg-indigo-700 shadow-sm transition">
                     + Add Employee
                 </a>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Yajra DataTables Server-Side Processing Active</span>
-                    <input type="text" placeholder="Search employees..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Server-Side Data Processing</span>
+                    <input type="text" x-model.debounce.300ms="search" placeholder="Search employees..." class="border border-gray-300 rounded-lg text-xs px-3 py-1.5 focus:outline-none focus:border-indigo-500 w-64">
                 </div>
                 
                 <table class="w-full text-left border-collapse">
@@ -61,22 +62,35 @@
                         </tr>
                     </thead>
                     <tbody class="text-sm text-gray-700 divide-y divide-gray-100">
+                        <!-- Loading State -->
+                        <tr x-show="loading">
+                            <td colspan="7" class="p-8 text-center text-slate-500 font-medium">
+                                Loading employees...
+                            </td>
+                        </tr>
+
+                        <!-- Employee List -->
                         <template x-for="employee in employees" :key="employee.id">
-                            <tr class="hover:bg-slate-50/50 transition-colors">
+                            <tr class="hover:bg-slate-50/50 transition-colors" x-show="!loading">
                                 <td class="p-4 font-semibold text-slate-800" x-text="employee.emp_id"></td>
-                                <td class="p-4 font-semibold text-slate-800" x-text="employee.name ?? 'Annonymous'"></td>
-                                <td class="p-4 font-semibold text-slate-800" x-text="employee.department ?? 'Annonymous'"></td>
-                                <td class="p-4 text-slate-500" x-text="employee.email ?? 'N/A'"></td>
-                                <td class="p-4 text-slate-500" x-text="employee.phone ?? 'N/A'"></td>
-                                <td class="p-4 font-mono" x-text="employee.status ?? 'N/A'"></td>
+                                <td class="p-4 font-semibold text-slate-800" x-text="employee.name"></td>
+                                <td class="p-4 font-semibold text-slate-800" x-text="employee.department"></td>
+                                <td class="p-4 text-slate-500" x-text="employee.email"></td>
+                                <td class="p-4 text-slate-500" x-text="employee.phone"></td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full" 
+                                          :class="employee.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" 
+                                          x-text="employee.status"></span>
+                                </td>
                                 <td class="p-4 text-center">
-                                    <a :href="`{{ route('tenant.employee.index', tenant()) }}/${employee.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
+                                    <a :href="`{{ route('tenant.hrm.employee.index', tenant()) }}/${employee.id}/edit`" class="text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-bold transition">
                                         Edit
                                     </a>
                                 </td>
                             </tr>
                         </template>
-                        
+
+                        <!-- Empty State -->
                         <tr x-show="employees.length === 0 && !loading" x-cloak>
                             <td colspan="7" class="p-8 text-center text-slate-400 font-medium">No records found matching criteria.</td>
                         </tr>
@@ -84,6 +98,7 @@
                 </table>
             </div>
 
+            <!-- Pagination Bar -->
             <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 text-xs font-semibold text-slate-500">
                 <div>
                     Showing <span class="text-slate-800" x-text="employees.length"></span> of <span class="text-slate-800" x-text="total"></span> records
@@ -91,8 +106,8 @@
                 
                 <div class="flex items-center gap-2">
                     <button @click="prevPage()" 
-                            :disabled="page === 1" 
-                            :class="page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
+                            :disabled="page === 1 || loading" 
+                            :class="page === 1 || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
                             class="px-3 py-1.5 border border-slate-200 rounded-lg transition">
                         ◀ Prev
                     </button>
@@ -102,8 +117,8 @@
                     </div>
 
                     <button @click="nextPage()" 
-                            :disabled="page === lastPage" 
-                            :class="page === lastPage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
+                            :disabled="page === lastPage || loading" 
+                            :class="page === lastPage || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-800'"
                             class="px-3 py-1.5 border border-slate-200 rounded-lg transition">
                         Next ▶
                     </button>

@@ -13,8 +13,8 @@
         </div>
 
         <!-- Submitted via saveTenant() in the parent Alpine scope (fetch/JSON) —
-             NOT a native form POST, so this stays inside the SPA and never
-             navigates away or fights the parent's tenants[] state. -->
+            NOT a native form POST, so this stays inside the SPA and never
+            navigates away or fights the parent's tenants[] state. -->
         <div class="p-6 space-y-5 text-xs overflow-y-auto">
 
             <template x-if="formErrors && formErrors.length">
@@ -119,7 +119,7 @@
 
             <div class="flex justify-end gap-2.5 border-t border-slate-100 pt-4 mt-6 text-xs font-bold bg-white sticky bottom-0">
                 <button type="button" @click="openModal = false" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-98">Cancel</button>
-                <button type="button" @click="saveTenant()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl shadow-md hover:shadow-indigo-200 hover:shadow-lg transition-all flex items-center gap-2 active:scale-98">
+                <button type="button" @click="saveTenant()" :disabled="isSubmit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl shadow-md hover:shadow-indigo-200 hover:shadow-lg transition-all flex items-center gap-2 active:scale-98">
                     <span>🚀</span> <span x-text="isEdit ? 'Update & Notify' : 'Save & Notify Vendor Admin'"></span>
                 </button>
             </div>

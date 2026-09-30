@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('tenants', function (Blueprint $table) {
             if (!Schema::hasColumn('tenants', 'business_type')) {
-            // Change string to enum here
+                // Change string to enum here
                 $table->string('business_type', 50)
                     ->nullable()
                     ->after('company_name');
@@ -23,6 +23,13 @@ return new class extends Migration
                 $table->enum('status', ['active', 'suspended'])
                     ->default('active')
                     ->after('owner_email');
+            }
+
+            if (Schema::hasColumn('tenants', 'business_type')) {
+                // Change string to enum here
+                $table->string('business_type', 50)
+                    ->nullable()
+                    ->change();
             }
         });
     }

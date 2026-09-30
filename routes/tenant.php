@@ -14,6 +14,7 @@ use App\Http\Controllers\Tenant\{
     SalesController,
     PurchaseController,
     AccountController,
+    AttendanceController,
     BuyerController,
     HrmController,
     CrmController,
@@ -266,10 +267,23 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
 
             // ---- HRM ----
             Route::prefix('hrm')->name('hrm.')->middleware('feature:hrm')->group(function () {
-                Route::get('employees', [HrmController::class, 'employees'])->name('employees');
+                Route::prefix('employee')->name('employee.')->middleware('feature:employee')->group(function () {
+                    Route::get('/all', [EmployeeController::class, 'index'])->name('index');
+                    Route::get('/form', [EmployeeController::class, 'create'])->name('form');
+                    Route::post('/', [EmployeeController::class, 'store'])->name('store');
+                    Route::get('/{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
+                    Route::put('/{id}', [EmployeeController::class, 'update'])->name('update');
+                });
+
+                Route::prefix('attendance')->name('attendance.')->group(function () {                    
+                    Route::get('/', [AttendanceController::class, 'index'])->name('index');
+                    Route::get('/filters', [AttendanceController::class, 'getFilterData'])->name('filters');
+                    Route::post('/sync', [AttendanceController::class, 'syncDeviceLogs'])->name('sync');
+                    Route::get('/sync-manual', [AttendanceController::class, 'syncDeviceLogs'])->name('sync');
+                });
+
                 Route::get('departments', [HrmController::class, 'departments'])->name('departments');
                 Route::get('designation', [HrmController::class, 'designation'])->name('designation');
-                Route::get('attendance', [HrmController::class, 'attendance'])->name('attendance');
                 Route::get('leave', [HrmController::class, 'leave'])->name('leave');
                 Route::get('payroll', [HrmController::class, 'payroll'])->name('payroll');
                 Route::get('piece-rate', [HrmController::class, 'pieceRate'])->name('piece-rate');
