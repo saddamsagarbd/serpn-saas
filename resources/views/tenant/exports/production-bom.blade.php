@@ -192,8 +192,9 @@
                 <th style="width: 4%;">#</th>
                 <th style="width: 15%;">Category</th>
                 <th style="width: 30%;">Item Description</th>
+                <th style="width: 12%;">Color</th>
                 <th style="width: 12%;">Matrix Target</th>
-                <th class="text-right" style="width: 10%;">Garment Qty</th>
+                <th class="text-right" style="width: 10%;">GMT Qty</th>
                 <th class="text-right" style="width: 9%;">Consumption</th>
                 <th class="text-right" style="width: 10%;">Req. Qty</th>
                 <th class="text-right" style="width: 10%;">Unit Price ($)</th>
@@ -206,6 +207,7 @@
                     <td class="text-center">{{ $loop->iteration }}</td>
                     <td>{{ $item->category_name ?? $item->cost_head ?? 'N/A' }}</td>
                     <td><span class="font-bold">{{ $item->item_name }}</span></td>
+                    <td class="text-center">{{ $item->item_color ?? 'n/a' }}</td>
                     <td class="text-center">{{ $item->matrix_target ?? 'ALL' }}</td>
                     <td class="text-right">{{ number_format($item->garment_qty) }}</td>
                     <td class="text-right">{{ number_format($item->consumption, 4) }}</td>

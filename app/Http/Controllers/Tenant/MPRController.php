@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\BomItem;
 use App\Models\ColorContext;
+use App\Models\ProductionBom;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\SizeChart;
@@ -418,7 +419,7 @@ class MPRController extends Controller
         
     }
 
-    public function getMprItems($tenant, String $style_id, String $supplier_id){
+    public function getMprItemsOld($tenant, String $style_id, String $supplier_id){
 
         $supplier = Supplier::where('tenant_id', tenant('id'))->findOrFail($supplier_id);
 
@@ -453,12 +454,12 @@ class MPRController extends Controller
         ->leftJoin('units', 'item_masters.unit_id', '=', 'units.id')
         ->where('bom_items.tenant_id', tenant('id'))
         ->where('style_costings.style_id', $style_id)
-        ->when($supplier->supplier_type, function ($query, $type) {
-            if ($type == "trims" || $type == "packaging") {
-                return $query->whereIn('item_masters.item_type', ['trims', 'accessories']);
-            }
-            return $query->where('item_masters.item_type', $type);
-        })
+        // ->when($supplier->supplier_type, function ($query, $type) {
+        //     if ($type == "trims" || $type == "packaging") {
+        //         return $query->whereIn('item_masters.item_type', ['trims', 'accessories']);
+        //     }
+        //     return $query->where('item_masters.item_type', $type);
+        // })
         ->select([
             'bom_items.id as bom_item_id',
             'item_masters.id as item_master_id',
@@ -494,6 +495,145 @@ class MPRController extends Controller
                     'unit_price' => (float) ($item->estimated_rate ?? 0.00),
                 ];
             }
+        }
+
+        return response()->json($mprItems);
+    }
+
+    public function getMprItems($tenant, String $style_id, String $supplier_id)
+    {
+        $supplier = Supplier::where('tenant_id', tenant('id'))->findOrFail($supplier_id);
+
+        // 1. Total Order Qty (Style Level)
+        $totalStyleQty = DB::table('sales_order_items')
+            ->join('sales_orders', 'sales_order_items.sales_order_id', '=', 'sales_orders.id')
+            ->where('sales_orders.tenant_id', tenant('id'))
+            ->where('sales_orders.style_id', $style_id)
+            ->sum('sales_order_items.quantity');
+
+        if ($totalStyleQty <= 0) {
+            return response()->json([]);
+        }
+
+        // 2. Color-wise Order Qty Summary
+        $colorBreakdown = DB::table('sales_order_items')
+            ->join('sales_orders', 'sales_order_items.sales_order_id', '=', 'sales_orders.id')
+            ->leftJoin('color_contexts', 'sales_order_items.color', '=', 'color_contexts.id')
+            ->where('sales_orders.tenant_id', tenant('id'))
+            ->where('sales_orders.style_id', $style_id)
+            ->select(
+                'sales_order_items.color as color_id',
+                'color_contexts.name as color_name',
+                DB::raw('SUM(sales_order_items.quantity) as total_qty')
+            )
+            ->groupBy('sales_order_items.color', 'color_contexts.name')
+            ->get();
+
+        // 3. Latest Active BOM ID fetch
+        $bomId = DB::table('production_boms')
+            ->where('tenant_id', tenant('id'))
+            ->where('style_id', $style_id)
+            ->latest('id')
+            ->value('id');
+
+        if (!$bomId) {
+            return response()->json([]);
+        }
+
+        // 4. Fetch BOM Items filtered strictly by latest BOM ID
+        $bomItems = DB::table('production_bom_items')
+            ->join('item_masters', 'production_bom_items.item_id', '=', 'item_masters.id')
+            ->leftJoin('units', 'item_masters.unit_id', '=', 'units.id')
+            ->where('production_bom_items.production_bom_id', $bomId)
+            ->select([
+                'production_bom_items.id as bom_item_id',
+                'item_masters.id as item_master_id',
+                'item_masters.name as item_name',
+                'item_masters.item_type',
+                'units.id as unit_id',
+                'units.short_name as unit_name',
+                'production_bom_items.consumption',
+                'production_bom_items.color_name',
+                'production_bom_items.wastage_percent',
+                'production_bom_items.unit_price as estimated_rate',
+            ])
+            ->get();
+
+        $mprItems = [];
+
+        // foreach ($bomItems as $item) {
+        //     if ($colorBreakdown->isNotEmpty()) {
+        //         foreach ($colorBreakdown as $c) {
+        //             $baseQty = $c->total_qty * $item->consumption;
+        //             $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
+        //             $totalReq = $baseQty + $wastageQty;
+
+        //             $mprItems[] = [
+        //                 'item_id'     => $item->item_master_id,
+        //                 'bom_item_id' => $item->bom_item_id,
+        //                 'name'        => $item->item_name,
+        //                 'color_id'    => $c->color_id,
+        //                 'color'       => $c->color_name ?? 'N/A',
+        //                 'size_id'     => null,
+        //                 'size'        => 'ALL SIZES',
+        //                 'mpr_qty'     => round($totalReq, 2),
+        //                 'order_qty'   => round($totalReq, 2),
+        //                 'unit'        => $item->unit_name ?? 'Pcs',
+        //                 'unit_id'     => $item->unit_id ?? 1,
+        //                 'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
+        //             ];
+        //         }
+        //     } else {
+        //         $baseQty = $totalStyleQty * $item->consumption;
+        //         $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
+        //         $totalReq = $baseQty + $wastageQty;
+
+        //         $mprItems[] = [
+        //             'item_id'     => $item->item_master_id,
+        //             'bom_item_id' => $item->bom_item_id,
+        //             'name'        => $item->item_name,
+        //             'color_id'    => null,
+        //             'color'       => 'N/A',
+        //             'size_id'     => null,
+        //             'size'        => 'ALL SIZES',
+        //             'mpr_qty'     => round($totalReq, 2),
+        //             'order_qty'   => round($totalReq, 2),
+        //             'unit'        => $item->unit_name ?? 'Pcs',
+        //             'unit_id'     => $item->unit_id ?? 1,
+        //             'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
+        //         ];
+        //     }
+        // }
+
+        // $mprItems = collect($mprItems)
+        // ->unique(function ($item) {
+        //     return $item['bom_item_id'] . '-' . $item['color_id'];
+        // })
+        // ->values()
+        // ->all();
+
+        foreach ($bomItems as $item) {
+            $applicableOrderQty = $totalStyleQty;
+
+            // Requirement calculation
+            $baseQty = $applicableOrderQty * $item->consumption;
+            $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
+            $totalReq = $baseQty + $wastageQty;
+
+            $mprItems[] = [
+                'item_id'     => $item->item_master_id,
+                'bom_item_id' => $item->bom_item_id,
+                'name'        => $item->item_name,
+                'color_id'    => $item->color_id ?? '',
+                'color'       => $item->color_name ?? 'N/A',
+                'size_id'     => null,
+                'size'        => 'ALL SIZES',
+                'mpr_qty'     => round($totalReq, 2),
+                'order_qty'   => round($totalReq, 2),
+                'unit'        => $item->unit_name ?? 'Pcs',
+                'unit_id'     => $item->unit_id ?? 1,
+                'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
+            ];
         }
 
         return response()->json($mprItems);
