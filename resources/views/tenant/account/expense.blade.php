@@ -73,7 +73,7 @@
 
         {{-- ক্যাশ বা ব্যাংক লেজার সিলেক্ট (Debit Side) --}}
         <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Deposit To (Cash Book / Bank Account) *</label>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transfered From (Cash Book / Bank Account) *</label>
             <select x-model="formData.payment_method_id" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
                 <option value="">-- Choose Asset Method --</option>
                 @foreach($assetHeads as $asset)
