@@ -59,7 +59,7 @@ class ProductionBomController extends Controller
                 ->addColumn('total_paid', function ($row) {
                     return (float) ($row->total_paid ?? 0);
                 })
-                ->addColumn('created_at_formatted', function ($row) {
+                ->addColumn('created_at', function ($row) {
                     return $row->created_at ? $row->created_at->format('Y-m-d') : 'N/A';
                 })
                 ->make(true);
@@ -93,27 +93,7 @@ class ProductionBomController extends Controller
 
     public function store(Request $request, $tenant, $id = null) 
     {
-        $validated = $request->validate([
-            'style_id'                    => 'required|exists:styles,id',
-            'sales_order_id'              => 'required|exists:sales_orders,id', // ba sales_orders,id
-            'grand_total'                 => 'required|numeric|min:0',
-            'remarks'                     => 'nullable|string',
-            'items'                       => 'required|array|min:1',
-            'items.*.cost_type'           => 'required|string|in:Material,Processing',
-            'items.*.cost_head'           => 'nullable|string',
-            'items.*.cat_id'              => 'nullable',
-            'items.*.cat_name'            => 'nullable|string',
-            'items.*.item_id'             => 'nullable',
-            'items.*.item_name'           => 'required|string',
-            'items.*.matrix_target'       => 'nullable|string',
-            'items.*.sales_order_item_id' => 'nullable',
-            'items.*.color_name'          => 'nullable|string',
-            'items.*.garment_qty'         => 'required|numeric|min:0',
-            'items.*.consumption'         => 'required|numeric|gt:0',
-            'items.*.req_qty'             => 'required|numeric|gt:0',
-            'items.*.unit_price'          => 'required|numeric|min:0',
-            'items.*.total_cost'          => 'required|numeric|min:0',
-        ]);
+        $validated = $request->validate($this->bomRules());
 
         $currentUserId = auth()->id();
 
@@ -147,34 +127,7 @@ class ProductionBomController extends Controller
 
             // 2. Purono items delete kora
             $bom->items()->delete();
-
-            // 3. Batch insert items with schema-matched array keys
-            $itemsData = [];
-
-            foreach ($validated['items'] as $item) {
-                $itemsData[] = [
-                    'cost_type'           => $item['cost_type'] ?? 'Material',
-                    'cost_head'           => $item['cost_head'] ?? null,
-                    'category_id'         => $item['cat_id'] ?? null,
-                    'category_name'       => $item['cat_name'] ?? null,
-                    
-                    // Fixed schema column: 'item_id'
-                    'item_id'         => is_numeric($item['item_id'] ?? null) ? $item['item_id'] : null,
-                    'item_name'           => $item['item_name'],
-                    
-                    'matrix_target'       => $item['matrix_target'] ?? 'ALL',
-                    'sales_order_item_id' => $item['sales_order_item_id'] ?? null,
-                    'color_name'          => $item['color_name'] ?? null,
-                    'garment_qty'         => $item['garment_qty'],
-                    'consumption'         => $item['consumption'],
-                    'req_qty'             => $item['req_qty'],
-                    'unit_price'          => $item['unit_price'],
-                    'total_cost'          => $item['total_cost'],
-                ];
-            }
-
-            // Single query bulk insert
-            $bom->items()->createMany($itemsData);
+            $bom->items()->createMany($this->buildItemsData($validated['items']));
 
             DB::commit();
 
@@ -214,5 +167,131 @@ class ProductionBomController extends Controller
         $pdfFileName = 'BOM_' . str_replace([' ', '/', '\\'], '_', $styleCode) . '.pdf';
 
         return $pdf->stream($pdfFileName);
+    }
+
+    public function bomEdit(Request $request, $tenant, String $id){
+        $bom = ProductionBom::with([
+            'salesOrder.style', 
+            'salesOrder.buyer', 
+            'salesOrder.items', 
+            'items'
+        ])->findOrFail($id);
+
+        $styles = Style::select('id', 'style_number as style_code', 'product_name as style_name')->get();
+        
+        $selectedStyleId = $request->query('style_id') 
+            ?? $bom->style_id 
+            ?? optional($bom->salesOrder)->style_id 
+            ?? '';
+            
+        $selectedMprId = $request->query('mpr_id') 
+            ?? $bom->sales_order_id 
+            ?? '';
+
+        $selectedMpr = null;
+        if ($selectedMprId) {
+            $selectedMpr = SalesOrder::with(['items.colorContext', 'items.sizeChart', 'buyer'])->find($selectedMprId);
+        }
+
+        $compactData = compact('bom', 'styles', 'selectedStyleId', 'selectedMpr', 'selectedMprId');
+
+        return view('tenant.merchandising.bom.create', $compactData);        
+        
+    }
+
+    public function bomUpdate(Request $request, $tenant, $id){
+
+        $validated = $request->validate($this->bomRules());
+ 
+        $bom = ProductionBom::findOrFail($id);
+
+        $currentUserId = auth()->id();
+
+        DB::beginTransaction();
+ 
+        try {
+            // 1. Header
+            $bom->update([
+                'style_id'       => $validated['style_id'],
+                'sales_order_id' => $validated['sales_order_id'],
+                'grand_total'    => $validated['grand_total'],
+                // blade does not send remarks, so keep the old value
+                'remarks'        => $validated['remarks'] ?? $bom->remarks,
+                'updated_by'     => $currentUserId,
+            ]);
+    
+            // 2. Replace all line items
+            $bom->items()->delete();
+            $bom->items()->createMany($this->buildItemsData($validated['items']));
+    
+            DB::commit();
+    
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Production BOM updated successfully!',
+                'redirect_url' => route('tenant.merch.bom.index'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating BOM: ' . $e->getMessage(),
+            ], 500);
+        }
+        
+    }
+
+    private function bomRules(): array
+    {
+        return [
+            'style_id'                    => 'required|exists:styles,id',
+            'sales_order_id'              => 'required|exists:sales_orders,id',
+            'grand_total'                 => 'required|numeric|min:0',
+            'remarks'                     => 'nullable|string',
+            'items'                       => 'required|array|min:1',
+            'items.*.cost_type'           => 'required|string|in:Material,Processing',
+            'items.*.cost_head'           => 'nullable|string',
+            'items.*.cat_id'              => 'nullable',
+            'items.*.cat_name'            => 'nullable|string',
+            'items.*.item_id'             => 'nullable',
+            'items.*.item_name'           => 'required|string',
+            'items.*.item_color'          => 'nullable|string',
+            'items.*.matrix_target'       => 'nullable|string',
+            'items.*.sales_order_item_id' => 'nullable',
+            'items.*.color_name'          => 'required|string',
+            'items.*.color_id'            => 'required|numeric|min:0',
+            'items.*.garment_qty'         => 'required|numeric|min:0',
+            'items.*.consumption'         => 'required|numeric|gt:0',
+            'items.*.wastage_percent'     => 'nullable|numeric|min:0',
+            'items.*.req_qty'             => 'required|numeric|gt:0',
+            'items.*.unit_price'          => 'required|numeric|min:0',
+            'items.*.total_cost'          => 'required|numeric|min:0',
+        ];
+    }
+
+    private function buildItemsData(array $items): array
+    {
+        return collect($items)->map(function ($item) {
+            return [
+                'cost_type'           => $item['cost_type'] ?? 'Material',
+                'cost_head'           => $item['cost_head'] ?? null,
+                'category_id'         => $item['cat_id'] ?: null,
+                'category_name'       => $item['cat_name'] ?? null,
+                'item_id'             => is_numeric($item['item_id'] ?? null) ? $item['item_id'] : null,
+                'item_name'           => $item['item_name'],
+                'item_color'          => $item['item_color'] ?? null,
+                'matrix_target'       => $item['matrix_target'] ?? 'ALL',
+                'sales_order_item_id' => $item['sales_order_item_id'] ?? null,
+                'color_name'          => $item['color_name'] ?? null,
+                'color_id'            => $item['color_id'] ?? null,
+                'garment_qty'         => $item['garment_qty'],
+                'consumption'         => $item['consumption'],
+                'wastage_percent'     => $item['wastage_percent'] ?? 0,
+                'req_qty'             => $item['req_qty'],
+                'unit_price'          => $item['unit_price'],
+                'total_cost'          => $item['total_cost'],
+            ];
+        })->all();
     }
 }
