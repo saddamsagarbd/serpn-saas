@@ -103,10 +103,16 @@ class AttendanceController extends Controller
                 ->whereBetween('CHECKINOUT.CHECKTIME', [$startDateTime, $endDateTime])
                 ->get();
 
+            $badgeNumbers = $punches->pluck('emp_id')->unique()->filter();
+
+            $employees = Employee::whereIn('employee_id', $badgeNumbers)
+                ->orWhereIn('sensor_id', $badgeNumbers)
+                ->get()
+                ->keyBy('employee_id');
+
             foreach ($punches->groupBy('emp_id') as $badgeNumber => $userPunches) {
                 
-                // আপনার Laravel DB-তে Employee খুঁজে বের করা
-                $employee = Employee::where('employee_id', $badgeNumber)->first();
+                $employee = $employees->get($badgeNumber);
 
                 if ($employee) {
                     // sorted by y-m-d format every punch
