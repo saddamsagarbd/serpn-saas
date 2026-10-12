@@ -8,7 +8,6 @@ use Stancl\Tenancy\Database\Models\Domain;
 return [
     'tenant_model' => Tenant::class,
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
-
     'domain_model' => Domain::class,
 
     /**
@@ -57,7 +56,7 @@ return [
          * Tenant database names are created like this:
          * prefix + tenant_id + suffix.
          */
-        'prefix' => 'erp247com_tenant_',
+        'prefix' => (getEnvironment() === "local") ? 'tenant_' : 'erp247com_tenant_',
         'suffix' => '',
 
         /**

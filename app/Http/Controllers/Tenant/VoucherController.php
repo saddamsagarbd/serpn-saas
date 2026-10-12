@@ -21,20 +21,30 @@ class VoucherController extends Controller
             'chart_of_account_id' => 'required|exists:chart_of_accounts,id', // মূল ইনকাম/এক্সপেন্স হেড
             'payment_method_id' => 'required|exists:chart_of_accounts,id', // ক্যাশ বা ব্যাংক হেড
             'amount' => 'required|numeric|min:0.01',
-            'narration' => 'nullable|string|max:500'
+            'narration' => 'nullable|string|max:500',
+            'payment_type' => 'required|string|max:500',
+            'payment_gateway' => 'required|string|max:500',
+            'reference_no' => 'nullable|string|max:500',
+            'party_name' => 'nullable|string|max:500',
         ]);
 
         DB::beginTransaction();
         try {
             // ১. অটোমেটিক ইউনিক ভাউচার নাম্বার জেনারেশন
-            $prefix = $request->type == 'income' ? 'INC-' : 'EXP-';
-            $voucherNo = $prefix . date('Ymd') . '-' . strtoupper(Str::random(4));
+            $prefix = $request->type == 'income' ? 'INC' : 'EXP';
+            $voucherNo = generateSequenceId($prefix, Voucher::class);
 
             // ২. ভাউচার মাস্টার রেকর্ড তৈরি
             $voucher = Voucher::create([
                 'voucher_no' => $voucherNo,
                 'type' => $request->type,
                 'date' => $request->date,
+                'chart_of_account_id' => $request->chart_of_account_id ?? null,
+                'payment_method_id' => $request->payment_method_id ?? null,
+                'payment_type' => $request->payment_type ?? null,
+                'payment_gateway' => $request->payment_gateway ?? null,
+                'reference_no' => $request->reference_no ?? null,
+                'party_name' => $request->party_name ?? null,
                 'narration' => $request->narration,
                 'total_amount' => $request->amount,
             ]);

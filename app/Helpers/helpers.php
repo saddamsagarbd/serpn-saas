@@ -86,3 +86,25 @@ if (!function_exists('canAccess')) {
         return $permission ? (bool) $permission->{$action} : false;
     }
 }
+
+if (!function_exists('getEnvironment')) {
+
+    function getEnvironment()
+    {
+        return 'local';
+    }
+}
+
+if (!function_exists('generateSequenceId')) {
+
+    function generateSequenceId(string $prefix, string $modelClass, string $column = 'id')
+    {
+        $yearMonth = date('Y-m');
+        
+        $lastRecord = $modelClass::latest('id')->first();
+
+        $nextId = $lastRecord ? ($lastRecord->$column + 1) : 1;
+
+        return $prefix . '-' . $yearMonth . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+    }
+}

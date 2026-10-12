@@ -254,7 +254,11 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::put('chart-of-accounts/update/{id}', [AccountController::class, 'updateCoa'])->name('coa.update');
                 
                 Route::get('income', [AccountController::class, 'income'])->name('income');
+                Route::get('income/list', [AccountController::class, 'incomeList'])->name('income.list');
+                
                 Route::get('expense', [AccountController::class, 'expense'])->name('expense');
+                Route::get('expense/list', [AccountController::class, 'expenseList'])->name('expense.list');
+                
                 Route::post('vouchers/store', [VoucherController::class, 'store'])->name('vouchers.store');
                 
                 Route::get('transactions', [AccountController::class, 'transactions'])->name('transactions');
@@ -262,6 +266,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::get('cash-book', [AccountController::class, 'cashBook'])->name('cash-book');
                 Route::get('bank-accounts', [AccountController::class, 'bankAccounts'])->name('bank-accounts');
                 Route::get('journal-entry', [AccountController::class, 'journalEntry'])->name('journal-entry');
+                Route::post('journal-store', [AccountController::class, 'storeJournal'])->name('journals.store');
                 Route::get('trial-balance', [AccountController::class, 'trialBalance'])->name('trial-balance');
                 Route::get('profit-loss', [AccountController::class, 'profitLoss'])->name('profit-loss');
                 Route::get('balance-sheet', [AccountController::class, 'balanceSheet'])->name('balance-sheet');

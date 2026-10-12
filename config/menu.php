@@ -210,8 +210,8 @@ return [
             'business_types' => ['*'],
             'items' => [
                 ['label' => 'Chart of Accounts', 'route' => 'tenant.accounts.coa.index',    'enabled' => true],
-                ['label' => 'Income',            'route' => 'tenant.accounts.income',       'enabled' => true],
-                ['label' => 'Expense',           'route' => 'tenant.accounts.expense',      'enabled' => true],
+                ['label' => 'Income',            'route' => 'tenant.accounts.income.list',       'enabled' => true],
+                ['label' => 'Expense',           'route' => 'tenant.accounts.expense.list',      'enabled' => true],
                 ['label' => 'Transactions',      'route' => 'tenant.accounts.transactions', 'enabled' => true],
                 ['label' => 'Ledger',            'route' => 'tenant.accounts.ledger',       'enabled' => true],
                 ['label' => 'Cash Book',         'route' => 'tenant.accounts.cash-book',    'enabled' => true],

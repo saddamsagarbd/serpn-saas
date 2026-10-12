@@ -9,6 +9,10 @@
             date: new Date().toISOString().split('T')[0],
             chart_of_account_id: '',
             payment_method_id: '',
+            payment_type: 'Final Payment',
+            payment_gateway: 'CASH',
+            reference_no: '',
+            party_name: '',
             amount: '',
             narration: ''
         },
@@ -28,9 +32,14 @@
             .then(data => {
                 this.loading = false;
                 if(data.success) {
-                    alert(data.message);
+                    window.location.href = `{{ route('tenant.accounts.income.list') }}`
                     {{-- ফর্ম রিসেট --}}
                     this.formData.chart_of_account_id = '';
+                    this.formData.payment_method_id = '';
+                    this.formData.payment_type = 'Final Payment';
+                    this.formData.payment_gateway = 'CASH';
+                    this.formData.reference_no = '';
+                    this.formData.party_name = '';
                     this.formData.amount = '';
                     this.formData.narration = '';
                 } else {
@@ -60,26 +69,71 @@
             </div>
         </div>
 
-        {{-- ইনকাম লেজার সিলেক্ট --}}
-        <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Income Account Head *</label>
-            <select x-model="formData.chart_of_account_id" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
-                <option value="">-- Choose Revenue Sector --</option>
-                @foreach($incomeHeads as $head)
-                    <option value="{{ $head->id }}">{{ $head->name }} ({{ $head->code }})</option>
-                @endforeach
-            </select>
+        <div class="grid grid-cols-1 gap-4">
+
+            {{-- বায়ার / ক্লায়েন্ট নাম --}}
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Buyer / Client Name</label>
+                <input type="text" x-model="formData.party_name" placeholder="e.g., Company X" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800 font-medium">
+            </div>
         </div>
 
-        {{-- ক্যাশ বা ব্যাংক লেজার সিলেক্ট (Debit Side) --}}
+        <div class="grid grid-cols-2 gap-4">
+
+            {{-- ইনকাম লেজার সিলেক্ট --}}
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Income Account Head *</label>
+                <select x-model="formData.chart_of_account_id" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
+                    <option value="">-- Choose Revenue Sector --</option>
+                    @foreach($incomeHeads as $head)
+                        <option value="{{ $head->id }}">{{ $head->name }} ({{ $head->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- ডিপোজিট অ্যাকাউন্ট (Cash Book / Bank / MFS) --}}
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Deposit To (Cash Book / Bank Account) *</label>
+                <select x-model="formData.payment_method_id" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
+                    <option value="">-- Choose Asset Method --</option>
+                    @foreach($assetHeads as $asset)
+                        <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        {{-- পেমেন্ট টাইপ এবং গেটওয়ে --}}
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Type *</label>
+                <select x-model="formData.payment_type" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700">
+                    <option value="">-- Choose payment type --</option>
+                    <option value="advance">Advance Payment</option>
+                    <option value="partial">Partial Payment</option>
+                    <option value="final">Final / Closing Payment</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Receiving Gateway *</label>
+                <select x-model="formData.payment_gateway" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700">
+                    <option value="">-- Choose gateway --</option>
+                    <option value="npsb">NPSB</option>
+                    <option value="rtgs">RTGS</option>
+                    <option value="cash">Cash</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="bkash">bKash</option>
+                    <option value="nagad">Nagad</option>
+                    <option value="rocket">Rocket</option>
+                </select>
+            </div>
+        </div>
+
+        {{-- রেফারেন্স বা চেক নম্বর --}}
         <div class="space-y-1">
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Deposit To (Cash Book / Bank Account) *</label>
-            <select x-model="formData.payment_method_id" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
-                <option value="">-- Choose Asset Method --</option>
-                @foreach($assetHeads as $asset)
-                    <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->code }})</option>
-                @endforeach
-            </select>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reference / Cheque No / Trx ID</label>
+            <input type="text" x-model="formData.reference_no" placeholder="e.g., TrxID or Cheque No" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800 font-mono">
         </div>
 
         {{-- ন্যারেশন বা নোট --}}

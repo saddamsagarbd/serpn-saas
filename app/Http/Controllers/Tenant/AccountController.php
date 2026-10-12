@@ -7,6 +7,7 @@ use App\Models\ChartOfAccount;
 use App\Models\LedgerEntry;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class AccountController extends Controller
@@ -115,9 +116,53 @@ class AccountController extends Controller
     {
         // ড্রপডাউনের জন্য ইনকাম হেড এবং ক্যাশ/ব্যাংক (Asset) হেড ফিল্টার
         $incomeHeads = ChartOfAccount::where('type', 'income')->where('status', 'active')->get();
-        $assetHeads = ChartOfAccount::where('type', 'asset')->where('status', 'active')->get();
+        $assetHeads = ChartOfAccount::where('type', 'asset')
+        ->where(function($query) {
+            $query->where('code', 'LIKE', '1001%')
+                  ->orWhere('code', 'LIKE', '1020%')
+                  ->orWhere('code', 'LIKE', '1030%');
+        })
+        ->get();
         
         return view('tenant.account.income', compact('incomeHeads', 'assetHeads'));
+    }
+
+    public function incomeList(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = Voucher::with(['coaHead', 'paymentHead'])->where('type', 'income')->latest();
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('date', function($row){
+                    return $row->date ?? 'N/A';
+                })
+                ->addColumn('voucher_no', function($row){
+                    return $row->voucher_no ?? 'N/A';
+                })
+                ->addColumn('party_name', function($row){
+                    return $row->party_name ?? 'N/A';
+                })
+                ->addColumn('income_head', function($row){
+                    return $row->coaHead->name ?? 'N/A';
+                })
+                ->addColumn('payment_head', function($row){
+                    return $row->paymentHead->name ?? 'N/A';
+                })
+                ->addColumn('payment_gateway', function($row){
+                    return $row->payment_gateway ? strtoupper($row->payment_gateway) : 'N/A';
+                })
+                ->addColumn('narration', function($row){
+                    return $row->narration ?? 'N/A';
+                })
+                ->addColumn('amount', function($row){
+                    return $row->total_amount ?? 0.00;
+                })
+                ->rawColumns(['action', 'status', 'image'])
+                ->make(true);
+        }
+        
+        return view('tenant.account.income-list');
     }
 
     /**
@@ -128,9 +173,53 @@ class AccountController extends Controller
     {
         // ড্রপডাউনের জন্য ইনকাম হেড এবং ক্যাশ/ব্যাংক (Asset) হেড ফিল্টার
         $expenseHeads = ChartOfAccount::where('type', 'expense')->where('status', 'active')->get();
-        $assetHeads = ChartOfAccount::where('type', 'asset')->where('status', 'active')->get();
+        $assetHeads = ChartOfAccount::where('type', 'asset')
+        ->where(function($query) {
+            $query->where('code', 'LIKE', '1001%')
+                  ->orWhere('code', 'LIKE', '1020%')
+                  ->orWhere('code', 'LIKE', '1030%');
+        })
+        ->get();
         
         return view('tenant.account.expense', compact('expenseHeads', 'assetHeads'));
+    }
+
+    public function expenseList(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = Voucher::with(['coaHead', 'paymentHead'])->where('type', 'expense')->latest();
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('date', function($row){
+                    return $row->date ?? 'N/A';
+                })
+                ->addColumn('voucher_no', function($row){
+                    return $row->voucher_no ?? 'N/A';
+                })
+                ->addColumn('party_name', function($row){
+                    return $row->party_name ?? 'N/A';
+                })
+                ->addColumn('expense_head', function($row){
+                    return $row->coaHead->name ?? 'N/A';
+                })
+                ->addColumn('payment_head', function($row){
+                    return $row->paymentHead->name ?? 'N/A';
+                })
+                ->addColumn('payment_gateway', function($row){
+                    return $row->payment_gateway ? strtoupper($row->payment_gateway) : 'N/A';
+                })
+                ->addColumn('narration', function($row){
+                    return $row->narration ?? 'N/A';
+                })
+                ->addColumn('amount', function($row){
+                    return $row->total_amount ?? 0.00;
+                })
+                ->rawColumns(['action', 'status', 'image'])
+                ->make(true);
+        }
+        
+        return view('tenant.account.expense-list');
     }
 
     /**
@@ -156,8 +245,10 @@ class AccountController extends Controller
         $cashAccount = ChartOfAccount::where('type', 'asset')
             ->where(function($q) {
                 $q->where('name', 'like', '%cash%')
-                ->orWhere('code', '1000');
+                ->orWhere('code', '1000')
+                ->orWhere('code', '1001');
             })->first();
+
 
         $entries = [];
         $openingBalance = 0;
@@ -170,7 +261,7 @@ class AccountController extends Controller
             $toDate = $request->input('to_date', date('Y-m-d'));
 
             // শুধুমাত্র ক্যাশ অ্যাকাউন্টের ডেবিট ও ক্রেডিট ট্রানজেকশন লোড
-            $entries = LedgerEntry::where('ledger_entries.tenant_id', tenant('id'))->where('ledger_entries.chart_of_account_id', $cashAccount->id)
+            $entries = LedgerEntry::where('ledger_entries.chart_of_account_id', $cashAccount->id)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
@@ -207,7 +298,7 @@ class AccountController extends Controller
             $fromDate = $request->input('from_date', date('Y-m-01'));
             $toDate = $request->input('to_date', date('Y-m-d'));
 
-            $entries = LedgerEntry::where('ledger_entries.tenant_id', tenant('id'))->where('ledger_entries.chart_of_account_id', $selectedAccountId)
+            $entries = LedgerEntry::where('ledger_entries.chart_of_account_id', $selectedAccountId)
                 ->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
@@ -237,7 +328,7 @@ class AccountController extends Controller
 
             $query = LedgerEntry::query();
             
-            if($selectedAccount) $query->where('chart_of_account_id', $selectedAccount);
+            if($selectedAccount) $query->where('ledger_entries.chart_of_account_id', $selectedAccount);
 
             $entries = $query->with('voucher')
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
@@ -253,7 +344,53 @@ class AccountController extends Controller
      */
     public function journalEntry()
     {
-        return view('tenant.account.journal-entry');
+        $accounts = ChartOfAccount::where('status', 'active')->get();
+        return view('tenant.account.journal-entry', compact('accounts'));
+    }
+
+    public function storeJournal(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'narration' => 'required|string',
+            'lines' => 'required|array|min:2',
+            'lines.*.account_id' => 'required|exists:chart_of_accounts,id',
+            'lines.*.debit' => 'required|numeric|min:0',
+            'lines.*.credit' => 'required|numeric|min:0',
+        ]);
+
+        // টোটাল ডেবিট ও ক্রেডিট সমান কিনা চেক করা
+        $totalDebit = collect($request->lines)->sum('debit');
+        $totalCredit = collect($request->lines)->sum('credit');
+
+        if (round($totalDebit, 2) !== round($totalCredit, 2)) {
+            return response()->json(['success' => false, 'message' => 'Debit and Credit totals must match.'], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // ১. ভাউচার ক্রিয়েট
+            $voucher = Voucher::create([
+                'voucher_no' => generateSequenceId('JV', Voucher::class),
+                'type' => 'journal',
+                'date' => $request->date,
+                'narration' => $request->narration,
+                'total_amount' => $totalDebit,
+            ]);
+
+            // ২. ট্রানজেকশন লাইন বা লেজার এন্ট্রি সেভ করা (আপনার লেজার টেবিল অনুযায়ী)
+            foreach ($request->lines as $line) {
+                // আপনার লেজার বা ট্রানজেকশন মডেলে ডেটা ইনসার্ট করুন
+                // Example:
+                // LedgerEntry::create([...]);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Journal entry posted successfully!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -317,11 +454,11 @@ class AccountController extends Controller
         $totalIncome = 0;
 
         foreach ($incomeAccounts as $account) {
-            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $creditTotal = LedgerEntry::where('ledger_entries.chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('ledger_entries.credit');
-            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $debitTotal = LedgerEntry::where('ledger_entries.chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('ledger_entries.debit');
@@ -339,11 +476,11 @@ class AccountController extends Controller
         $totalExpense = 0;
 
         foreach ($expenseAccounts as $account) {
-            $debitTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $debitTotal = LedgerEntry::where('ledger_entries.chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('ledger_entries.debit');
-            $creditTotal = LedgerEntry::where('chart_of_account_id', $account->id)
+            $creditTotal = LedgerEntry::where('ledger_entries.chart_of_account_id', $account->id)
                 ->join('vouchers', 'ledger_entries.voucher_id', '=', 'vouchers.id')
                 ->whereBetween('vouchers.date', [$fromDate, $toDate])
                 ->sum('ledger_entries.credit');
