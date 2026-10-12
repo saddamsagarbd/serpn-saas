@@ -74,9 +74,10 @@
                                         $itemTypes = $item['business_types'] ?? ($item['sub']['business_types'] ?? ['*']);
                                         $isItemAllowed = in_array('*', $itemTypes) || in_array($currentBusinessType, $itemTypes);
                                         $itemKey = $item['key'] ?? $key;
+                                        $isMenuEnabled = !isset($item['enabled']) || $item['enabled'] !== false;
                                     @endphp
 
-                                    @if((isset($item['enabled']) && $item['enabled'] === false) || !$isItemAllowed || !canAccess($item['route'] ?? '', 'read'))
+                                    @if(!$isMenuEnabled || !$isItemAllowed)
                                         @continue
                                     @endif
 

@@ -188,15 +188,15 @@ return [
         'sales' => [
             'label' => 'Sales',
             'icon' => 'shopping-cart',
-            'enabled' => true,
+            'enabled' => false,
             'business_types' => ['merchandising', 'manufacturing', 'general_retail'],
             'items' => [
-                ['label' => 'POS',            'route' => 'tenant.sales.pos',            'enabled' => true, 'business_types' => ['general_retail']],
-                ['label' => 'Sales Orders',   'route' => 'tenant.sales.index',          'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Export Invoice', 'route' => 'tenant.sales.export-invoice', 'enabled' => true, 'business_types' => ['merchandising']],
-                ['label' => 'Customers',      'route' => 'tenant.sales.customers',      'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Sales Return',   'route' => 'tenant.sales.sales-return',   'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Quotation',      'route' => 'tenant.sales.quotation',      'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'POS',            'route' => 'tenant.sales.pos',            'enabled' => false, 'business_types' => ['general_retail']],
+                ['label' => 'Sales Orders',   'route' => 'tenant.sales.index',          'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Export Invoice', 'route' => 'tenant.sales.export-invoice', 'enabled' => false, 'business_types' => ['merchandising']],
+                ['label' => 'Customers',      'route' => 'tenant.sales.customers',      'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Sales Return',   'route' => 'tenant.sales.sales-return',   'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Quotation',      'route' => 'tenant.sales.quotation',      'enabled' => false, 'business_types' => ['*']],
             ],
         ],
 
@@ -229,15 +229,15 @@ return [
         'hrm' => [
             'label' => 'HRM',
             'icon' => 'users',
-            'enabled' => true,
+            'enabled' => false,
             'business_types' => ['*'],
             'items' => [
-                ['label' => 'Employee',    'route' => 'tenant.hrm.employee.index',    'enabled' => true],
-                ['label' => 'Departments',  'route' => 'tenant.hrm.departments',  'enabled' => true],
-                ['label' => 'Designation',  'route' => 'tenant.hrm.designation',  'enabled' => true],
-                ['label' => 'Attendance',   'route' => 'tenant.hrm.attendance.index',   'enabled' => true],
-                ['label' => 'Leave',        'route' => 'tenant.hrm.leave',        'enabled' => true],
-                ['label' => 'Payroll',      'route' => 'tenant.hrm.payroll',      'enabled' => true],
+                ['label' => 'Employee',    'route' => 'tenant.hrm.employee.index',    'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Departments', 'route' => 'tenant.hrm.departments',  'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Designation', 'route' => 'tenant.hrm.designation',  'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Attendance',  'route' => 'tenant.hrm.attendance.index',   'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Leave',       'route' => 'tenant.hrm.leave',        'enabled' => false, 'business_types' => ['*']],
+                ['label' => 'Payroll',     'route' => 'tenant.hrm.payroll',      'enabled' => false, 'business_types' => ['*']],
 
                 // Garment-specific: piece-rate/line-based wage tracking
                 ['label' => 'Line Wage / Piece Rate', 'route' => 'tenant.hrm.piece-rate', 'enabled' => false, 'business_types' => ['merchandising']],

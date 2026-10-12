@@ -64,7 +64,9 @@ class SyncAttendanceDevice extends Command
 
             // N+1 Query কমানোর জন্য সব এমপ্লয়ি একবারে লোড করা
             $badgeNumbers = $punches->pluck('emp_id')->unique()->filter();
+
             $employees = Employee::whereIn('employee_id', $badgeNumbers)
+                ->orWhereIn('sensor_id', $badgeNumbers)
                 ->get()
                 ->keyBy('employee_id');
 
