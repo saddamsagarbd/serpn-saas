@@ -119,8 +119,8 @@ class AccountController extends Controller
         $assetHeads = ChartOfAccount::where('type', 'asset')
         ->where(function($query) {
             $query->where('code', 'LIKE', '1001%')
-                  ->orWhere('code', 'LIKE', '1020%')
-                  ->orWhere('code', 'LIKE', '1030%');
+                ->orWhere('code', 'LIKE', '1020%')
+                ->orWhere('code', 'LIKE', '1030%');
         })
         ->get();
         
@@ -176,8 +176,8 @@ class AccountController extends Controller
         $assetHeads = ChartOfAccount::where('type', 'asset')
         ->where(function($query) {
             $query->where('code', 'LIKE', '1001%')
-                  ->orWhere('code', 'LIKE', '1020%')
-                  ->orWhere('code', 'LIKE', '1030%');
+                ->orWhere('code', 'LIKE', '1020%')
+                ->orWhere('code', 'LIKE', '1030%');
         })
         ->get();
         
