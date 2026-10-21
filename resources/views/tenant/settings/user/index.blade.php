@@ -25,6 +25,53 @@
             this.loading = false;
         });
     },
+    
+    titleCase(str) {
+        return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+    },
+
+    async handleStatusUpdate(userId, statusType) {
+        const isApprove = statusType === 'active';
+        
+        const result = await Swal.fire({
+            title: this.titleCase(statusType)+` User?`,
+            text: `Are you sure you want to mark this user as ${statusType}?`,
+            icon: isApprove ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonColor: isApprove ? '#10B981' : '#EF4444',
+            confirmButtonText: 'Proceed',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/user/${userId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ status: statusType })
+                });
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'Updated!',
+                        text: `User is ${statusType}.`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    this.fetchUsers(); // Refresh table data
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Failed to update status.', 'error');
+            }
+        }
+    }
 }" x-init="fetchUsers()">
 
     @if(session('success'))
@@ -128,6 +175,17 @@
                                                         x-transition
                                                         class="absolute right-0 bottom-full mb-1 w-36 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 text-left text-xs"
                                                         style="display: none;">
+
+                                                    <button @click="open = false; handleStatusUpdate(user.id, 'active')" 
+                                                            x-show="user.status === 'suspend'"
+                                                            class="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 font-medium">
+                                                        Active
+                                                    </button>
+                                                    <button @click="open = false; handleStatusUpdate(user.id, 'suspend')" 
+                                                            x-show="user.status === 'active'"
+                                                            class="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-medium">
+                                                        Suspend
+                                                    </button>
                                                     
                                                     <a :href="`/user/${user.id}/permission`" 
                                                         class="block px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">

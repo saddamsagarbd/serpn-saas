@@ -27,11 +27,12 @@ class LoginForm extends Form
      * @throws ValidationException
      */
     public function authenticate(): void
-    {
-        
+    {        
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        $credentials = array_merge($this->only(['email', 'password']), ['status' => 'active']);
+
+        if (! Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

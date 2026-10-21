@@ -77,14 +77,15 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
             Route::post('company-store', [SettingController::class, 'companyStore'])->name('company.store');
             Route::put('company-update/{id}', [SettingController::class, 'companyUpdate'])->name('company.update');
 
-
             Route::get('department', [SettingController::class, 'department'])->name('department.index');
             Route::get('designation', [SettingController::class, 'designation'])->name('designation.index');
+            
             Route::get('user', [SettingController::class, 'user'])->name('user.index');
             Route::get('user/create-form', [SettingController::class, 'userCreate'])->name('user.create');
             Route::post('user/store', [SettingController::class, 'userSave'])->name('user.store');
             Route::get('user/{id}/permission', [SettingController::class, 'userPermission'])->name('user.permission');
             Route::put('user/permission/save', [SettingController::class, 'userPermissionSave'])->name('user.permission.save');
+            Route::post('user/{id}/status', [SettingController::class, 'updateUserStatus'])->name('user.status');
 
             Route::get('/api/item-masters/search', [InventoryController::class, 'searchApi'])->name('api.item_masters.search');
             Route::get('/api/category-masters/search', [InventoryController::class, 'searchCategoryApi'])->name('api.category_masters.search');

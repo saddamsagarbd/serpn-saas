@@ -119,7 +119,7 @@ class SettingController extends Controller
 
     public function user(Request $request){
         if($request->ajax()){
-            $users = User::where('tenant_id', tenant('id'))->get();
+            $users = User::where('tenant_id', tenant('id'))->select("id", "name", "email", "phone", "role_id", "status")->get();
 
             return DataTables::of($users)
                 ->addIndexColumn()
@@ -280,5 +280,41 @@ class SettingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Permissions updated successfully!');
+    }
+
+    public function updateUserStatus(Request $request, $tenant, String $id){
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status provided.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+        
+        return DB::transaction(function () use ($request, $id) {
+            $now = Carbon::now();
+
+            // Style খুঁজে বের করা
+            $user = User::where('tenant_id', tenant('id'))->findOrFail($id);
+
+            $user->update([
+                'status'     => $request->status,
+                'updated_by' => auth()->id(),
+                'updated_at' => $now,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'data'    => [
+                    'user_id' => $user->id,
+                    'status'   => $user->status,
+                ]
+            ], 200);
+        });        
     }
 }
