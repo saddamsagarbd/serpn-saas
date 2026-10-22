@@ -87,6 +87,14 @@ if (!function_exists('canAccess')) {
     }
 }
 
+if (!function_exists('getEnvironment')) {
+
+    function getEnvironment()
+    {
+        return 'local';
+    }
+}
+
 if (!function_exists('generateSequenceId')) {
 
     function generateSequenceId(string $prefix, string $modelClass, string $column = 'id')
