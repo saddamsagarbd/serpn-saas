@@ -95,7 +95,7 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item Description</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Color / Size</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Color</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-blue-50 text-blue-700">Ordered</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-orange-50 text-orange-700">Prev Received</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold uppercase bg-green-50 text-green-700 w-32">Current Receive</th>
@@ -114,13 +114,12 @@
                                                 <div class="text-xs text-gray-400 font-mono" x-text="'Code: ' + (item.item_code || 'N/A')"></div>
                                             </td>
                                             <td class="px-4 py-3 text-center text-xs font-semibold text-gray-600">
-                                                <span x-text="item.color"></span> / <span x-text="item.size"></span>
+                                                <span x-text="item.color"></span>
                                             </td>
                                             <td class="px-4 py-3 text-center font-bold bg-blue-50/50" x-text="item.ordered + ' ' + item.unit"></td>
                                             <td class="px-4 py-3 text-center font-medium bg-orange-50/50" x-text="item.prev_received + ' ' + item.unit"></td>
                                             <td class="px-4 py-2 bg-green-50/30">
-                                                <input type="number" 
-                                                       step="0.01" 
+                                                <input type="text"
                                                        :name="`items[${index}][receiving_qty]`" 
                                                        x-model.number="item.receiving" 
                                                        :max="item.ordered - item.prev_received" 

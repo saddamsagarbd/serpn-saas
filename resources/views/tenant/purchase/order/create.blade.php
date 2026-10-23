@@ -137,7 +137,7 @@
                                     <input type="text" x-model="item.name" class="w-full border border-slate-200 rounded px-2 py-1 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-indigo-500">
                                 </td>
                                 <td class="p-1">
-                                    <input type="text" x-model="item.color" class="w-full border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500">
+                                    <input type="text" readonly x-model="item.color" class="w-full border border-slate-200 rounded px-1 py-1 text-xs font-mono bg-slate-50 text-slate-500">
                                 </td>
                                 <td class="p-1 text-right font-mono text-slate-500 text-xs font-semibold" x-text="item.mpr_qty"></td>
                                 <td class="p-1">

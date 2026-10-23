@@ -346,6 +346,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                         matrix_target: target,
                         sales_order_item_id: item.sales_order_item_id || null,
                         color_name: item.color_name || null,
+                        color_id: item.color_id || null,
                         garment_qty: item.garment_qty || 0,
                         consumption: parseFloat(item.consumption) || (item.cost_type === 'Processing' ? 1.0 : 0),
                         wastage_percent: parseFloat(item.wastage_percent) || 0,
@@ -430,16 +431,25 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
             this.availableMprMatrix = selectedMpr.matrix_items || selectedMpr.items || [];
 
             const colorMap = {};
+            const colorIdMap = {}; // <-- Color ID mapping track korar jonno
+
             if (this.availableMprMatrix.length) {
                 this.availableMprMatrix.forEach(m => {
                     const cName = m.color_name || (m.color_context ? m.color_context.name : 'Unassigned');
-                    const cid = m.id || '';
+                    
+                    // sales_orders ba sales_order_items theke color_id collect kora
+                    const cId = m.color_id || (m.color_context ? m.color_context.id : null) || null;
+                    
                     colorMap[cName] = (colorMap[cName] || 0) + (parseInt(m.quantity || m.qty || 0));
+                    if (cId) {
+                        colorIdMap[cName] = cId;
+                    }
                 });
             }
 
             this.colorTotals = Object.keys(colorMap).map(cName => ({
                 color_name: cName,
+                color_id: colorIdMap[cName] || null, // <-- Ekhane color_id bind kora holo
                 total_quantity: colorMap[cName]
             }));
 
@@ -471,6 +481,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                                 matrix_target: `COLOR:${col.color_name}`,
                                 sales_order_item_id: null,
                                 color_name: col.color_name,
+                                color_id: col.color_id, // <-- Auto-populate er somoy o pass hobe
                                 garment_qty: col.total_quantity,
                                 consumption: b.consumption,
                                 wastage_percent: b.wastage_percent || 0,
@@ -497,7 +508,8 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                             matrix_target: 'ALL',
                             sales_order_item_id: null,
                             color_name: 'ALL COLORS',
-                            garment_qty: totalGmt, // Ensure garment_qty is set to MPR total Qty
+                            color_id: null,
+                            garment_qty: totalGmt,
                             consumption: cons,
                             wastage_percent: 0,
                             req_qty: reqQty,
@@ -518,7 +530,6 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                     .forEach(r => this.splitRowByColor(r));
             }
 
-            // Keep every row (incl. value addition rows) in sync with the selected MPR qty
             this.items.forEach(row => this.calculateRowQty(row));
         },
 
@@ -529,6 +540,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                 row.matrix_target = 'ALL';
                 row.sales_order_item_id = null;
                 row.color_name = null;
+                row.color_id = null;
                 row.garment_qty = mprQty;
                 row.consumption = 1;
                 row.wastage_percent = 0;
@@ -544,16 +556,19 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                 const matrix = this.availableMprMatrix.find(m => String(m.id) === String(itemId));
                 row.sales_order_item_id = itemId;
                 row.color_name = matrix ? matrix.color_name : null;
+                row.color_id = matrix ? (matrix.color_id || null) : null;
                 row.garment_qty = matrix ? (parseInt(matrix.quantity || matrix.qty || 0)) : 0;
             } else if (target.startsWith('COLOR:')) {
                 const cName = target.replace('COLOR:', '');
                 const colGroup = this.colorTotals.find(c => c.color_name === cName);
                 row.sales_order_item_id = null;
                 row.color_name = cName;
+                row.color_id = colGroup ? colGroup.color_id : null;
                 row.garment_qty = colGroup ? colGroup.total_quantity : 0;
             } else { // 'ALL' Matrix Selected
                 row.sales_order_item_id = null;
                 row.color_name = null;
+                row.color_id = null;
                 row.garment_qty = this.totalMprOrderQty || 0;
             }
 
@@ -606,7 +621,9 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                         cost_type: 'Material', cost_head: 'Fabric',
                         cat_id: '', cat_name: '', item_id: '', item_name: '', item_color: '',
                         matrix_target: `COLOR:${col.color_name}`, group_key: groupKey,
-                        sales_order_item_id: null, color_name: col.color_name,
+                        sales_order_item_id: null, 
+                        color_name: col.color_name,
+                        color_id: col.color_id || null,
                         garment_qty: col.total_quantity, consumption: 0, wastage_percent: 0,
                         req_qty: '0.00', unit_price: 0, total_cost: 0
                     };
@@ -630,6 +647,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                 matrix_target: 'ALL',
                 sales_order_item_id: null,
                 color_name: null,
+                color_id: null,
                 garment_qty: initialGmtQty,
                 consumption: initialCons,
                 wastage_percent: 0,
@@ -671,13 +689,15 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
                 const copy = Object.assign({}, row, {
                     matrix_target: `COLOR:${col.color_name}`,
                     sales_order_item_id: null,
-                    color_name: col.color_name
+                    color_name: col.color_name,
+                    color_id: col.color_id || null
                 });
                 this.calculateRowQty(copy);
                 return copy;
             });
 
             row.matrix_target = `COLOR:${this.colorTotals[0].color_name}`;
+            row.color_id = this.colorTotals[0].color_id || null;
             this.calculateRowQty(row);
             this.items.splice(idx + 1, 0, ...extraRows);
         },
@@ -697,6 +717,7 @@ function productionBomApp(stylesData, initStyleId = null, initMprId = null, init
             row.matrix_target = 'ALL';
             row.sales_order_item_id = null;
             row.color_name = null;
+            row.color_id = null;
             row.garment_qty = 0;
             row.consumption = row.cost_type === 'Processing' ? 1 : 0;
             row.wastage_percent = 0;

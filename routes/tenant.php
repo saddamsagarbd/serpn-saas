@@ -215,6 +215,7 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::put('/po-update/{id}', [PurchaseOrderController::class, 'update'])->name('po.update');
                 Route::post('/po/{id}/status', [PurchaseOrderController::class, 'updateStatus'])->name('po.status');
 
+                Route::get('/grn-list', [GrnController::class, 'getGRNs'])->name('grn.list');
                 Route::get('/grn', [GrnController::class, 'goodsReceivedNotes'])->name('grn.index');
                 Route::post('/grn-transaction', [GrnController::class, 'saveGRNTransaction'])->name('grn.store');
                 Route::get('/grn/{id}/items', [GrnController::class, 'getGrnItems'])->name('grn.items');
@@ -224,9 +225,14 @@ Route::domain('{tenant}.' . config('tenancy.central_domains.0'))
                 Route::post('/suppliers/save', [SupplierController::class, 'store'])->name('suppliers.store');
                 Route::get('/suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
                 Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
+                Route::get('/suppliers/{id}/unpaid-invoices', [SupplierController::class, 'getUnpaidInvoices'])->name('suppliers.unpaid-invoices');
 
                 Route::get('/invoices/get-grn-data', [SupplierInvoiceController::class, 'getGrnData'])->name('invoice.get-grn-data');
                 Route::get('suppliers/invoice/{id}/print', [SupplierInvoiceController::class, 'print'])->name('invoice.print');
+                Route::get('supplier/payments', [SupplierInvoiceController::class, 'payment'])->name('invoice.payment');
+                Route::get('supplier/make-payment', [SupplierInvoiceController::class, 'makePayment'])->name('invoice.payment.create');
+                Route::post('supplier/store-payment', [SupplierInvoiceController::class, 'paymentStore'])->name('invoice.payment.store');
+                Route::get('supplier/payment/{id}/print', [SupplierInvoiceController::class, 'printReceipt'])->name('invoice.payment.print');
                 Route::resource('suppliers/invoice', SupplierInvoiceController::class)->names('invoice');
 
                 Route::get('/purchase-return', [GrnController::class, 'purchaseReturn'])->name('return');

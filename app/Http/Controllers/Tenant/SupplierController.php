@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\ChartOfAccount;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
+use App\Models\SupplierPayment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -192,5 +193,26 @@ class SupplierController extends Controller
         return redirect()
             ->route('tenant.purchase.suppliers.index', $tenant)
             ->with('success', 'Supplier updated successfully.');
+    }
+
+    public function getUnpaidInvoices($tenant, string $id){
+        $tenantId = tenant('id');
+        
+        $unpaidInvoices = SupplierInvoice::where('tenant_id', $tenantId)->where('supplier_id', $id)->whereIn('status', ['unpaid','partially_paid'])->get();
+
+        $totalAdvanced = SupplierPayment::where('tenant_id', $tenantId)
+            ->where('supplier_id', $id)
+            ->sum('advance_amount');
+
+        $totalAdvanceUsed = SupplierPayment::where('tenant_id', $tenantId)
+            ->where('supplier_id', $id)
+            ->sum('advance_used');
+
+        $availableAdvance = max(0, $totalAdvanced - $totalAdvanceUsed);
+
+        return response()->json([
+            'invoices'          => $unpaidInvoices,
+            'available_advance' => $availableAdvance,
+        ]);
     }
 }

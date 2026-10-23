@@ -176,9 +176,10 @@ return [
                 ['label' => 'Purchase Order (PO)',   'route' => 'tenant.purchase.po.index',    'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'GRN / MRR',        'route' => 'tenant.purchase.grn.index',         'enabled' => true, 'business_types' => ['*']],
                 ['label' => 'Suppliers',        'route' => 'tenant.purchase.suppliers.index',   'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Purchase Return',  'route' => 'tenant.purchase.return',      'enabled' => false, 'business_types' => ['*']],
                 ['label' => 'Supplier Invoice',  'route' => 'tenant.purchase.invoice.index',      'enabled' => true, 'business_types' => ['*']],
-                ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => true, 'business_types' => ['merchandising']],
+                ['label' => 'Supplier Payment',  'route' => 'tenant.purchase.invoice.payment',      'enabled' => true, 'business_types' => ['*']],
+                ['label' => 'Fabric/Trim Booking', 'route' => 'tenant.purchase.fabric-booking', 'enabled' => false, 'business_types' => ['merchandising']],
             ],
         ],
 

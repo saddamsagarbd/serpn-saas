@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\GoodsReceivedNote;
 use App\Models\GoodsReceivedNoteItem;
@@ -11,9 +12,12 @@ use App\Models\PurchaseReturn;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
 use App\Models\SupplierInvoiceItem;
+use App\Models\SupplierPayment;
+use App\Models\SupplierPaymentItem;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class SupplierInvoiceController extends Controller
@@ -470,5 +474,215 @@ class SupplierInvoiceController extends Controller
                 'redirect_url' => route('tenant.purchase.invoice.index')
             ]);
         });
+    }
+
+    public function payment(Request $request, $tenant)
+    {
+        if ($request->ajax()) {
+            $payments = SupplierPayment::with(['supplier', 'bankAccount', 'voucher', 'items.invoice'])
+            ->where('tenant_id', tenant('id'))->latest();
+
+            return DataTables::of($payments)
+                ->addIndexColumn()
+                ->addColumn('supplier_name', function ($row) {
+                    return $row->supplier ? $row->supplier->name : 'N/A';
+                })
+                ->editColumn('payment_date', function ($row) {
+                    return $row->payment_date;
+                })
+                ->editColumn('total_paid_amount', function ($row) {
+                    return (float) $row->total_paid_amount;
+                })
+                ->make(true);
+        }
+
+        return view('tenant.purchase.invoice.payment');
+    }
+
+    public function makePayment(Request $request, $tenant)
+    {
+        $suppliers = Supplier::where('tenant_id', tenant('id'))->where('is_active', 1)->get();
+        $bankAccounts = ChartOfAccount::where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%bank%')
+                ->orWhere('name', 'like', '%A/C%')
+                ->orWhere('code', 'like', '%1001%')
+                ->orWhere('code', 'like', '%1020%');
+            })->get();
+        return view('tenant.purchase.invoice.payment-form', compact('suppliers', 'bankAccounts'));
+    }
+
+    public function paymentStore(Request $request) 
+    {
+        $request->validate([
+            'supplier_id'           => 'required|exists:suppliers,id',
+            'bank_account_id'       => 'required|exists:chart_of_accounts,id',
+            'payment_date'          => 'required|date',
+            'paid_amount'           => 'required|numeric|min:0',
+            'advance_amount_to_use' => 'nullable|numeric|min:0',
+            'payment_method'        => 'required|string',
+            'reference_no'          => 'nullable|string|max:255',
+        ]);
+
+        try {
+
+            return DB::transaction(function () use ($request) {
+                $tenantId = tenant('id');
+                $cashPaidAmount = (float) $request->paid_amount;
+                $advanceUsedAmount = (float) ($request->advance_amount_to_use ?? 0);
+
+                // Total effective payment = Bank/Cash payment + Advance adjusted
+                $totalEffectivePayment = $cashPaidAmount + $advanceUsedAmount;
+
+                if ($totalEffectivePayment <= 0) {
+                    throw new \Exception("Payment amount or advance adjustment must be greater than zero.");
+                }
+
+                // ১. Payment Header তৈরি
+                $payment = SupplierPayment::create([
+                    'tenant_id'         => $tenantId,
+                    'payment_no'        => generateSequenceId('SP', SupplierPayment::class),
+                    'supplier_id'       => $request->supplier_id,
+                    'bank_account_id'   => $request->bank_account_id,
+                    'total_paid_amount' => $cashPaidAmount,
+                    'advance_used'      => $advanceUsedAmount,
+                    'payment_date'      => $request->payment_date,
+                    'payment_method'    => $request->payment_method,
+                    'reference_no'      => $request->reference_no,
+                    'created_by'        => auth()->id(),
+                ]);
+
+                // ২. FIFO akare Unpaid Invoices gulo pull kora (Purono invoice age)
+                $unpaidInvoices = SupplierInvoice::where('tenant_id', $tenantId)
+                    ->where('supplier_id', $request->supplier_id)
+                    ->whereIn('status', ['unpaid','partially_paid'])
+                    ->orderBy('invoice_date', 'asc')
+                    ->get();
+
+                $remainingAmountToAllocate = $totalEffectivePayment;
+                $totalAllocatedAmount = 0;
+
+                foreach ($unpaidInvoices as $invoice) {
+                    if ($remainingAmountToAllocate <= 0) {
+                        break;
+                    }
+
+                    $dueAmount = ($invoice->net_amount - $invoice->paid_amount);
+
+                    $allocateAmount = min($remainingAmountToAllocate, $dueAmount);
+
+                    SupplierPaymentItem::create([
+                        'tenant_id'           => $tenantId,
+                        'supplier_payment_id' => $payment->id,
+                        'supplier_invoice_id' => $invoice->id,
+                        'allocated_amount'    => $allocateAmount ?? 0,
+                    ]);
+
+                    $invoice->increment('paid_amount', $allocateAmount);
+
+                    $dueAmountAfterPayment = ($invoice->net_amount - $invoice->paid_amount);
+                    
+                    if ($dueAmountAfterPayment <= 0) {
+                        $invoice->update(['status' => 'paid']);
+                    } else {
+                        $invoice->update(['status' => 'partially_paid']);
+                    }
+
+                    $totalAllocatedAmount += $allocateAmount;
+                    $remainingAmountToAllocate -= $allocateAmount;
+                }
+
+                // ৩. Extra advance amount থাকলে save করা
+                $newAdvanceGenerated = $remainingAmountToAllocate;
+                if ($newAdvanceGenerated > 0) {
+                    $payment->update([
+                        'advance_amount' => $newAdvanceGenerated
+                    ]);
+                }
+
+                // ৪. Accounting Double Entry Voucher Posting
+                $voucher = Voucher::create([
+                    'tenant_id'    => $tenantId,
+                    'voucher_no'   => generateSequenceId('PV', Voucher::class),
+                    'date'         => $request->payment_date,
+                    'total_amount' => $totalEffectivePayment,
+                    'narration'    => "Payment made to supplier via " . $request->payment_method . ($advanceUsedAmount > 0 ? " (Including advance adjustment)" : ""),
+                ]);
+
+                // Accounts Payable (Liability) Debit Entry (Invoice adjust howar amount-er jonno)
+                if ($totalAllocatedAmount > 0) {
+                    $accountsPayableHead = ChartOfAccount::where('code', '2100') // Accounts Payable Code
+                        ->firstOrFail();
+
+                    LedgerEntry::create([
+                        'tenant_id'           => $tenantId,
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $accountsPayableHead->id,
+                        'debit'               => $totalAllocatedAmount,
+                        'credit'              => 0,
+                    ]);
+                }
+
+                // Advance to Supplier (Asset) Credit Entry (Age joma thaka advance kete/adjust hole asset kombe)
+                if ($advanceUsedAmount > 0) {
+                    $advanceHead = ChartOfAccount::where('code', '1000-101') // Advance to Supplier Code
+                        ->firstOrFail();
+
+                    LedgerEntry::create([
+                        'tenant_id'           => $tenantId,
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $advanceHead->id,
+                        'debit'               => 0,
+                        'credit'              => $advanceUsedAmount,
+                    ]);
+                }
+
+                // Notun Advance Generate hole Debit Entry (Asset barbe)
+                if ($newAdvanceGenerated > 0) {
+                    $advanceHead = ChartOfAccount::where('code', '1000-101')
+                        ->firstOrFail();
+
+                    LedgerEntry::create([
+                        'tenant_id'           => $tenantId,
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $advanceHead->id,
+                        'debit'               => $newAdvanceGenerated,
+                        'credit'              => 0,
+                    ]);
+                }
+
+                // Bank / Cash Account Credit Entry (Shudhu cash/bank theke je tototaka ber hoyeche)
+                if ($cashPaidAmount > 0) {
+                    LedgerEntry::create([
+                        'tenant_id'           => $tenantId,
+                        'voucher_id'          => $voucher->id,
+                        'chart_of_account_id' => $request->bank_account_id,
+                        'debit'               => 0,
+                        'credit'              => $cashPaidAmount,
+                    ]);
+                }
+
+                $payment->update(['voucher_id' => $voucher->id]);
+
+                return redirect()->route('tenant.purchase.invoice.payment.print', $payment->id)
+                    ->with('success', 'Supplier payment, FIFO allocation, and advance adjustments successfully processed!');
+            });
+        } catch (\Exception $e) {
+
+            Log::error($e->getMessage());
+            
+            return redirect()->back()
+            ->withInput()
+            ->with('error', 'Failed to process payment: ' . $e->getMessage());
+        }
+    }
+
+    public function printReceipt($tenant, $paymentId)
+    {
+        $payment = SupplierPayment::with(['supplier', 'bankAccount', 'voucher', 'items.invoice'])
+            ->where('tenant_id', tenant('id'))
+            ->findOrFail($paymentId);
+
+        return view('tenant.purchase.invoice.payment-receipt', compact('payment'));
     }
 }

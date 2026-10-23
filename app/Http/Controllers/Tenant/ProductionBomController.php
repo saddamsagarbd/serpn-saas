@@ -93,6 +93,7 @@ class ProductionBomController extends Controller
 
     public function store(Request $request, $tenant, $id = null) 
     {
+        
         $validated = $request->validate($this->bomRules());
 
         $currentUserId = auth()->id();
@@ -259,8 +260,8 @@ class ProductionBomController extends Controller
             'items.*.item_color'          => 'nullable|string',
             'items.*.matrix_target'       => 'nullable|string',
             'items.*.sales_order_item_id' => 'nullable',
-            'items.*.color_name'          => 'required|string',
-            'items.*.color_id'            => 'required|numeric|min:0',
+            'items.*.color_name'          => 'nullable|string',
+            'items.*.color_id'            => 'nullable|numeric|min:0',
             'items.*.garment_qty'         => 'required|numeric|min:0',
             'items.*.consumption'         => 'required|numeric|gt:0',
             'items.*.wastage_percent'     => 'nullable|numeric|min:0',

@@ -91,7 +91,7 @@ if (!function_exists('getEnvironment')) {
 
     function getEnvironment()
     {
-        return 'production';
+        return 'live';
     }
 }
 

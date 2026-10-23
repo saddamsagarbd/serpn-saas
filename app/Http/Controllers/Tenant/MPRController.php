@@ -552,71 +552,22 @@ class MPRController extends Controller
                 'item_masters.item_type',
                 'units.id as unit_id',
                 'units.short_name as unit_name',
+                'production_bom_items.garment_qty',
                 'production_bom_items.consumption',
                 'production_bom_items.color_name',
+                'production_bom_items.color_id',
                 'production_bom_items.wastage_percent',
                 'production_bom_items.unit_price as estimated_rate',
             ])
             ->get();
 
+        // dd($bomItems);
+
         $mprItems = [];
 
-        // foreach ($bomItems as $item) {
-        //     if ($colorBreakdown->isNotEmpty()) {
-        //         foreach ($colorBreakdown as $c) {
-        //             $baseQty = $c->total_qty * $item->consumption;
-        //             $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
-        //             $totalReq = $baseQty + $wastageQty;
-
-        //             $mprItems[] = [
-        //                 'item_id'     => $item->item_master_id,
-        //                 'bom_item_id' => $item->bom_item_id,
-        //                 'name'        => $item->item_name,
-        //                 'color_id'    => $c->color_id,
-        //                 'color'       => $c->color_name ?? 'N/A',
-        //                 'size_id'     => null,
-        //                 'size'        => 'ALL SIZES',
-        //                 'mpr_qty'     => round($totalReq, 2),
-        //                 'order_qty'   => round($totalReq, 2),
-        //                 'unit'        => $item->unit_name ?? 'Pcs',
-        //                 'unit_id'     => $item->unit_id ?? 1,
-        //                 'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
-        //             ];
-        //         }
-        //     } else {
-        //         $baseQty = $totalStyleQty * $item->consumption;
-        //         $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
-        //         $totalReq = $baseQty + $wastageQty;
-
-        //         $mprItems[] = [
-        //             'item_id'     => $item->item_master_id,
-        //             'bom_item_id' => $item->bom_item_id,
-        //             'name'        => $item->item_name,
-        //             'color_id'    => null,
-        //             'color'       => 'N/A',
-        //             'size_id'     => null,
-        //             'size'        => 'ALL SIZES',
-        //             'mpr_qty'     => round($totalReq, 2),
-        //             'order_qty'   => round($totalReq, 2),
-        //             'unit'        => $item->unit_name ?? 'Pcs',
-        //             'unit_id'     => $item->unit_id ?? 1,
-        //             'unit_price'  => (float) ($item->estimated_rate ?? 0.00),
-        //         ];
-        //     }
-        // }
-
-        // $mprItems = collect($mprItems)
-        // ->unique(function ($item) {
-        //     return $item['bom_item_id'] . '-' . $item['color_id'];
-        // })
-        // ->values()
-        // ->all();
-
         foreach ($bomItems as $item) {
-            $applicableOrderQty = $totalStyleQty;
-
             // Requirement calculation
-            $baseQty = $applicableOrderQty * $item->consumption;
+            $baseQty =  $item->garment_qty * $item->consumption;
             $wastageQty = ($baseQty * ($item->wastage_percent ?? 0)) / 100;
             $totalReq = $baseQty + $wastageQty;
 

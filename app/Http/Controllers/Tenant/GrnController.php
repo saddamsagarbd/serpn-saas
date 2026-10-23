@@ -35,6 +35,7 @@ class GrnController extends Controller
         ])->whereIn('status', ['approved', 'partially_received'])->get();
 
         $warehouses = Warehouse::where('tenant_id', tenant('id'))->get();
+        
         return view('tenant.purchase.goods-received-notes', compact('purchaseOrders', 'warehouses'));
     }
 
@@ -72,11 +73,9 @@ class GrnController extends Controller
             $hasReceivedAnyItem = false;
             $grnItemGlTotals = [];
 
-            $grniHead = ChartOfAccount::where('tenant_id', tenant('id'))
-                ->where(function ($q) {
-                    $q->where('code', 'like', '%GRNI%')
-                    ->orWhere('name', 'like', '%Goods Received Not Invoiced%')
-                    ->orWhere('name', 'like', '%Unbilled GRN%');
+            $grniHead = ChartOfAccount::where(function ($q) {
+                    $q->where('name', 'like', '%GRNI%')
+                    ->orWhere('code', '2110');
                 })->first();
 
             if (!$grniHead) {
@@ -124,6 +123,7 @@ class GrnController extends Controller
                             'tenant_id'    => tenant('id'),
                             'warehouse_id' => $request->warehouse_id,
                             'item_id'      => $incomingItem['item_id'],
+                            'color_id'      => $colorId,
                         ],
                         [
                             'available_qty' => DB::raw("available_qty + {$receivingQty}"),
@@ -138,6 +138,7 @@ class GrnController extends Controller
                         'tenant_id'      => tenant('id'),
                         'stock_id'       => $stock->id,
                         'item_id'        => $incomingItem['item_id'],
+                        'color_id'        => $colorId,
                         'warehouse_id'   => $request->warehouse_id,
                         'reference_type' => GoodsReceivedNote::class,
                         'reference_id'   => $grn->id,
